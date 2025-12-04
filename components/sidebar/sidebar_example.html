@@ -1,0 +1,278 @@
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+    .mitra-component-root { 
+        width: 100%; 
+        height: 100%; 
+        font-family: 'Inter', sans-serif; 
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow: hidden; 
+        background-color: #FFFFFF; 
+        color: #0F172A; /* Slate 900 */
+        display: flex; 
+        flex-direction: column; 
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+    .collapsible-content { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.2s ease-out; overflow: hidden; }
+    .collapsible-content.open { grid-template-rows: 1fr; }
+    .collapsible-inner { min-height: 0; }
+</style>
+
+<div class="mitra-component-root">
+    
+    <header id="topbar" class="sticky top-0 z-50 flex h-[50px] w-full shrink-0 items-center gap-2 border-b border-[#E2E8F0] bg-white px-4">
+        <button id="toggle-sidebar" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-[#F1F5F9] h-8 w-8 -ml-2 text-[#0F172A]">
+            <i data-lucide="panel-left" class="h-[18px] w-[18px]"></i>
+        </button>
+        
+        <div class="h-4 w-[1px] bg-[#E2E8F0] mx-1"></div>
+        
+        <nav class="flex items-center text-sm font-normal text-[#64748B]">
+            <ol id="breadcrumbs-list" class="flex items-center gap-1.5"></ol>
+        </nav>
+
+        <div class="ml-auto">
+            <button id="search-trigger" class="inline-flex items-center whitespace-nowrap rounded-md text-sm font-normal border border-[#E2E8F0] bg-white hover:bg-[#F1F5F9] h-8 px-3 py-1 relative w-full justify-start text-[#64748B] sm:w-40 lg:w-64">
+                <span class="inline-flex items-center gap-2"><i data-lucide="search" class="h-4 w-4"></i><span class="hidden lg:inline-flex font-normal">Buscar...</span></span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative w-full">
+        
+        <aside id="sidebar" class="group/sidebar flex h-full w-64 flex-col border-r border-[#E2E8F0] bg-white transition-all duration-300">
+            
+            <div id="sidebar-header" class="flex items-center px-4 py-2 mt-1 hidden shrink-0">
+                <button id="brand-link" class="flex items-center gap-3 w-full hover:bg-[#F1F5F9] p-2 -ml-2 rounded-md transition-colors text-left">
+                    <div id="brand-logo-wrapper" class="flex items-center justify-center w-8 h-8 rounded-lg bg-[#0F172A] text-white shrink-0 overflow-hidden"></div>
+                    <div class="grid flex-1 text-left text-sm leading-tight overflow-hidden">
+                        <span id="brand-title" class="truncate font-semibold text-[#0F172A]"></span>
+                        <span id="brand-subtitle" class="truncate text-xs font-normal text-[#64748B]"></span>
+                    </div>
+                </button>
+            </div>
+
+            <div id="sidebar-content" class="flex-1 overflow-y-auto custom-scrollbar px-3 pt-6 pb-2 flex flex-col"></div>
+
+            <div id="sidebar-footer" class="p-3 mt-auto relative shrink-0">
+                <div id="user-profile-trigger" class="flex items-center gap-3 p-2 rounded-md hover:bg-[#F1F5F9] cursor-pointer transition-colors group">
+                    <div class="h-8 w-8 rounded-lg overflow-hidden shrink-0 border border-[#E2E8F0] bg-[#F1F5F9]">
+                        <img id="user-avatar" src="" alt="" class="h-full w-full object-cover hidden">
+                        <div id="user-avatar-fallback" class="h-full w-full flex items-center justify-center font-bold text-xs text-[#0F172A]">?</div>
+                    </div>
+                    <div class="grid flex-1 text-left text-sm leading-tight overflow-hidden">
+                        <span id="user-name" class="truncate font-medium text-[#0F172A]">...</span>
+                        <span id="user-email" class="truncate text-xs font-normal text-[#64748B]"></span>
+                    </div>
+                    <i data-lucide="chevrons-up-down" class="ml-auto h-4 w-4 text-[#64748B]"></i>
+                </div>
+
+                <div id="user-dropdown" class="absolute bottom-full left-2 w-[calc(100%-1rem)] mb-2 rounded-md border border-[#E2E8F0] bg-white text-[#0F172A] shadow-md hidden z-50">
+                    <div id="user-dropdown-content" class="p-1"></div>
+                </div>
+            </div>
+        </aside>
+
+        <main id="main-area-wrapper" class="flex-1 overflow-hidden relative w-full h-full bg-white">
+            <div id="mitra-main-content" class="w-full h-full">
+                 <div id="mitra-initial-placeholder" class="flex flex-col items-center justify-center h-full text-[#64748B]">
+                    <i data-lucide="layout-template" class="w-12 h-12 mb-4 opacity-20"></i>
+                    <p>Selecione um item no menu.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="search-dialog-backdrop" class="fixed inset-0 z-[60] bg-black/80 hidden backdrop-blur-sm">
+    <div class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#E2E8F0] bg-white p-0 shadow-lg duration-200 sm:rounded-lg">
+        <div class="flex items-center border-b border-[#E2E8F0] px-3">
+            <i data-lucide="search" class="mr-2 h-4 w-4 shrink-0 opacity-50 text-[#0F172A]"></i>
+            <input id="search-input" class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-[#94A3B8] text-[#0F172A]" placeholder="Digite para buscar..." autocomplete="off">
+        </div>
+        <div class="max-h-[300px] overflow-y-auto overflow-x-hidden custom-scrollbar p-1" id="search-results"></div>
+        <div id="search-empty" class="py-6 text-center text-sm text-[#64748B] hidden">Nenhum resultado encontrado.</div>
+    </div>
+</div>
+
+<script>
+    // SETUP
+
+    function updateMitra() {
+       // <-- quando o componenteMitra atualizar, ao invéz de atualizar o componente todo, ele vai chamar esse metodo apenas.
+      }
+    const DEFAULT_LOGO = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNiIgZmlsbD0iIzFBMUExQSIvPgogIDxyZWN0IHg9IjI0IiB5PSIxOCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjQiIHJ4PSIxIiBmaWxsPSJ3aGl0ZSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjQiIHJ4PSIxIiBmaWxsPSIjQzRDNEM0Ii8+CiAgPHJlY3QgeD0iMjAiIHk9IjMwIiB3aWR0aD0iMjQiIGhlaWdodD0iMTgiIHJ4PSIyIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+`;
+    const state = { items: [], groups: {}, idMap: {}, activeUrl: '', sidebarOpen: true };
+    
+    const toKebabCase = (str) => str ? String(str).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase() : 'circle';
+    
+    const resolveScreenId = (input) => {
+        if (!input) return null;
+        const str = String(input).trim();
+        if (/^\d+$/.test(str)) return parseInt(str);
+        const match = str.match(/[?&]inlineScreenId=(\d+)/);
+        if (match && match[1]) return parseInt(match[1]);
+        return null;
+    };
+
+    const applyTheme = () => {
+        const t = componentData.theme || 'white';
+        const s = document.createElement('style');
+        s.textContent = themes[t] || themes.white;
+        document.head.appendChild(s);
+    };
+
+    // NAVEGAÇÃO
+    window.handleNavigation = async (itemId) => {
+        const item = state.idMap[itemId];
+        if (!item || !item.url) return;
+
+        state.activeUrl = item.url;
+        renderSidebar();
+        updateBreadcrumbs(item);
+
+        const screenId = resolveScreenId(item.url);
+        const mainWrapper = document.getElementById('main-area-wrapper');
+
+        if (screenId) {
+            // Hard Reset do Container (Sem loading customizado)
+            const oldContainer = document.getElementById('mitra-main-content');
+            if (oldContainer) oldContainer.remove();
+
+            const newContainer = document.createElement('div');
+            newContainer.id = 'mitra-main-content';
+            newContainer.className = 'w-full h-full';
+            mainWrapper.appendChild(newContainer);
+
+            try {
+                await modalMitra({ id: screenId, parent: 'mitra-main-content', width: 100, height: 100 });
+            } catch (e) {
+                console.error("Erro Mitra:", e);
+                newContainer.innerHTML = `<div class="flex h-full items-center justify-center text-red-500">Erro ao carregar</div>`;
+            }
+        }
+    };
+
+    const updateBreadcrumbs = (item) => {
+        const list = [];
+        if (item.grupo && item.grupo !== 'undefined') list.push(item.grupo);
+        let curr = item;
+        const tempParents = [];
+        while (curr.parentID && state.idMap[curr.parentID]) {
+            curr = state.idMap[curr.parentID];
+            tempParents.unshift(curr.nome);
+        }
+        list.push(...tempParents);
+        list.push(item.nome);
+
+        document.getElementById('breadcrumbs-list').innerHTML = list.map((label, i) => {
+            const isLast = i === list.length - 1;
+            const color = isLast ? 'text-[#0F172A]' : 'text-[#64748B]';
+            const weight = isLast ? 'font-medium' : 'font-normal';
+            return `<li class="flex items-center"><span class="${weight} ${color}">${label}</span>${!isLast ? '<i data-lucide="chevron-right" class="mx-1 h-4 w-4 text-[#64748B]"></i>' : ''}</li>`;
+        }).join('');
+        if(window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.5' } });
+    };
+
+    // RENDER SIDEBAR
+    const renderSidebar = () => {
+        const content = document.getElementById('sidebar-content');
+        const groups = Object.entries(state.groups);
+        content.innerHTML = groups.map(([group, items], index) => {
+            const mtClass = index > 0 ? 'mt-4' : '';
+            return `<div class="${mtClass}"><h4 class="mb-2 px-2 text-[10px] font-medium uppercase tracking-wider text-[#64748B]">${group}</h4><div class="flex flex-col gap-1">${items.map(item => renderMenuItem(item)).join('')}</div></div>`;
+        }).join('');
+        if(window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.5' } });
+    };
+
+    const renderMenuItem = (item) => {
+        const hasChild = item.children && item.children.length > 0;
+        const icon = toKebabCase(item.icone);
+        const isActive = item.url === state.activeUrl;
+        
+        const activeClass = isActive ? 'bg-[#F1F5F9] text-[#0F172A]' : 'text-[#0F172A] hover:bg-[#F1F5F9] hover:text-[#0F172A]';
+        const btnClass = `w-full h-9 flex items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors ${activeClass}`;
+
+        if (!hasChild) return `<button onclick="handleNavigation('${item.id}')" class="${btnClass}">${icon ? `<i data-lucide="${icon}" class="h-[18px] w-[18px] shrink-0 text-[#0F172A]"></i>` : ''}<span class="truncate text-[#0F172A]">${item.nome}</span></button>`;
+        
+        return `<div class="collapsible-wrapper"><button onclick="toggleCollapsible(this)" class="${btnClass} justify-between group"><div class="flex items-center gap-3 truncate">${icon ? `<i data-lucide="${icon}" class="h-[18px] w-[18px] shrink-0 text-[#0F172A]"></i>` : ''}<span class="truncate text-[#0F172A]">${item.nome}</span></div><i data-lucide="chevron-right" class="h-4 w-4 shrink-0 transition-transform text-[#64748B]"></i></button><div class="collapsible-content pl-4 ml-4 my-1 border-l border-[#E2E8F0]"><div class="collapsible-inner flex flex-col gap-1">${item.children.map(renderMenuItem).join('')}</div></div></div>`;
+    };
+
+    window.toggleCollapsible = (btn) => { const c = btn.nextElementSibling; const i = btn.querySelector('[data-lucide="chevron-right"]'); c.classList.toggle('open'); i.style.transform = c.classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)'; };
+
+    const fetchMenu = async () => {
+        const { menuQuery, menuIdColumn, menuNameColumn, menuIconColumn, menuGroupColumn, menuParentIdColumn, menuUrlColumn } = componentData;
+        if (!menuQuery) return;
+        try {
+            const res = await queryMitra(menuQuery);
+            if(!res || !res.data) throw new Error("Sem dados");
+            const mapIdx = res.headers.reduce((acc, h, i) => ({...acc, [h.name]: i}), {});
+            const rawItems = res.data.map(r => ({ id: r[mapIdx[menuIdColumn]], nome: r[mapIdx[menuNameColumn]], icone: r[mapIdx[menuIconColumn]], grupo: r[mapIdx[menuGroupColumn]] || 'Geral', parentID: r[mapIdx[menuParentIdColumn]], url: r[mapIdx[menuUrlColumn]], children: [] }));
+            
+            const idMap = {}; rawItems.forEach(it => idMap[it.id] = it); state.idMap = idMap; state.items = rawItems;
+            const roots = []; rawItems.forEach(it => { if (it.parentID && idMap[it.parentID]) idMap[it.parentID].children.push(it); else roots.push(it); });
+            state.groups = roots.reduce((acc, it) => { if (!acc[it.grupo]) acc[it.grupo] = []; acc[it.grupo].push(it); return acc; }, {});
+            renderSidebar();
+            if(roots.length > 0) {
+                const firstGroup = Object.keys(state.groups)[0];
+                if (firstGroup) { const findFirst = (nodes) => { for(let n of nodes) { if (n.url && resolveScreenId(n.url)) return n; if (n.children.length) { const f = findFirst(n.children); if(f) return f; } } return null; }; const first = findFirst(state.groups[firstGroup]); if (first) handleNavigation(first.id); }
+            }
+        } catch (e) { console.error("Erro menu:", e); }
+    };
+
+    const fetchUser = async () => {
+        const { userQuery, userName, userEmail, userAvatar, userMenu } = componentData;
+        try { state.userMenu = typeof userMenu === 'string' ? JSON.parse(userMenu) : (userMenu || []); } catch { state.userMenu = []; }
+        let uName = 'Usuário', uEmail = '', uAvatar = '';
+        if (userQuery && userQuery.trim() !== '' && userQuery !== 'userQuery') {
+            try {
+                const res = await queryMitra(userQuery);
+                if (res.data.length) { const map = res.headers.reduce((acc, h, i) => ({...acc, [h.name]: i}), {}); const r = res.data[0]; uName = r[map[userName]]; uEmail = r[map[userEmail]]; uAvatar = r[map[userAvatar]]; }
+            } catch(e) { console.error(e); }
+        }
+        document.getElementById('user-name').textContent = uName;
+        document.getElementById('user-email').textContent = uEmail;
+        const img = document.getElementById('user-avatar');
+        const fall = document.getElementById('user-avatar-fallback');
+        if (uAvatar) { img.src = uAvatar; img.classList.remove('hidden'); fall.classList.add('hidden'); } else { fall.textContent = uName[0].toUpperCase(); img.classList.add('hidden'); fall.classList.remove('hidden'); }
+        const drop = document.getElementById('user-dropdown-content');
+        drop.innerHTML = state.userMenu.length ? state.userMenu.map(i => `<div class="flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm font-medium hover:bg-[#F1F5F9] text-[#0F172A]" onclick="handleUserAction(${i.idInteracao}, '${i.tipoInteracao}')"><i data-lucide="${toKebabCase(i.icone)}" class="mr-2 h-4 w-4"></i><span>${i.nome}</span></div>`).join('') : '<div class="px-2 py-1 text-xs text-muted">Sem ações</div>';
+    };
+
+    window.handleUserAction = async (id, type) => { document.getElementById('user-dropdown').classList.add('hidden'); if(!id) return; const t = type.toLowerCase(); try { if (t === 'form') await formMitra({ id }); else if (t === 'modal') await modalMitra({ id, width: 100, height: 100 }); else if (t === 'action') await actionMitra({ id }); else if (t === 'dbaction') await dbactionMitra(id); } catch(e) { console.error(e); } };
+
+    // INIT
+    window.onload = async () => {
+        try {
+            const { headerTitle, headerSubtitle, headerLogo } = componentData;
+            if (headerTitle || headerLogo) { 
+                document.getElementById('sidebar-header').classList.remove('hidden'); 
+                document.getElementById('brand-title').textContent = headerTitle || ''; 
+                document.getElementById('brand-subtitle').textContent = headerSubtitle || ''; 
+                document.getElementById('brand-logo-wrapper').innerHTML = (headerLogo && headerLogo !== 'DEFAULTLOGO') ? `<img src="${headerLogo}" class="w-full h-full object-contain">` : `<img src="${DEFAULT_LOGO}" class="w-6 h-6">`; 
+            }
+
+            document.getElementById('toggle-sidebar').onclick = () => { const s = document.getElementById('sidebar'); const isOpen = s.classList.contains('w-64') || !s.classList.contains('w-0'); if (isOpen) { s.classList.remove('w-64'); s.classList.add('w-0'); s.classList.add('opacity-0'); } else { s.classList.add('w-64'); s.classList.remove('w-0'); s.classList.remove('opacity-0'); } };
+            document.getElementById('user-profile-trigger').onclick = (e) => { e.stopPropagation(); document.getElementById('user-dropdown').classList.toggle('hidden'); };
+            document.addEventListener('click', () => document.getElementById('user-dropdown')?.classList.add('hidden'));
+            const searchOverlay = document.getElementById('search-dialog-backdrop'); document.getElementById('search-trigger').onclick = () => { searchOverlay.classList.remove('hidden'); document.getElementById('search-input').focus(); renderSearchResults(''); }; searchOverlay.onclick = (e) => { if(e.target === searchOverlay) searchOverlay.classList.add('hidden'); }; document.getElementById('search-input').oninput = (e) => renderSearchResults(e.target.value);
+            
+            const renderSearchResults = (term) => { const res = document.getElementById('search-results'); const filter = state.items.filter(i => i.nome.toLowerCase().includes(term.toLowerCase())); if(!filter.length) { res.innerHTML = ''; document.getElementById('search-empty').classList.remove('hidden'); return; } document.getElementById('search-empty').classList.add('hidden'); res.innerHTML = filter.map(i => `<div onclick="handleNavigation('${i.id}'); document.getElementById('search-dialog-backdrop').classList.add('hidden');" class="flex cursor-pointer items-center rounded-sm px-2 py-3 text-sm font-medium hover:bg-[#F1F5F9] text-[#0F172A]"><i data-lucide="${toKebabCase(i.icone)}" class="mr-2 h-4 w-4 opacity-50"></i><span>${i.nome}</span><span class="ml-auto text-xs opacity-50 font-normal">${i.grupo}</span></div>`).join(''); if(window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.5' } }); };
+            document.addEventListener('keydown', (e) => { if (e.key === 'k' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); document.getElementById('search-trigger').click(); } if (e.key === 'Escape') searchOverlay.classList.add('hidden'); });
+
+            await Promise.all([fetchMenu(), fetchUser()]);
+            if(window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.5' } });
+            
+        } catch (err) { console.error("Erro init:", err); }
+    };
+    
+    const themes = { white: "", gray: "", dark: "" };
+</script>

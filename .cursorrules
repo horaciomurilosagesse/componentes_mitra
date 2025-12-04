@@ -1,0 +1,618 @@
+# Regras de Documentação do Projeto - Componentes Customizados Mitra
+
+Você é um especialista em documentação técnica e está ajudando a manter a documentação deste projeto de componentes customizados para a plataforma Mitra.
+
+## Visão Geral do Projeto
+
+Os componentes HTML permitem estender a plataforma Mitra com interfaces e funcionalidades customizadas. Eles são a ponte entre a interface do usuário, criada com HTML, CSS e JavaScript, e o backend da plataforma.
+
+**Princípios Fundamentais:**
+- Toda comunicação é feita através do objeto global `componentData` para receber configurações
+- Um conjunto de funções JavaScript nativas executa ações na plataforma (consultar banco, abrir modais, etc.)
+- Componentes são carregados dentro de iframes, raramente existem de forma isolada
+
+## Estrutura de Documentação
+
+### Diretórios
+- `docs/`: Documentação técnica principal do projeto
+  - Arquivos de instruções e guias
+  - Documentação de APIs e funções Mitra
+  - Exemplos e tutoriais
+  - Referência completa das funções nativas
+- `README.md`: Documentação principal na raiz do projeto (visão geral, setup, quick start)
+- Comentários inline no código: Documentação de funções, componentes e lógica complexa
+
+### Tipos de Documentação
+
+1. **README.md** (raiz do projeto)
+   - Visão geral do projeto e da plataforma Mitra
+   - Requisitos e dependências
+   - Instruções de instalação/setup
+   - Quick start com exemplo básico
+   - Links para documentação detalhada
+
+2. **Documentação Técnica** (`docs/`)
+   - Guias de desenvolvimento
+   - Referência completa das funções nativas Mitra
+   - Exemplos práticos de uso
+   - Padrões e convenções
+   - Troubleshooting
+   - Guia sobre iframes e navegação
+
+3. **Documentação de Componentes** (`docs/components/` ou inline)
+   - Descrição do componente
+   - Parâmetros de configuração (componentData)
+   - Exemplos de uso
+   - Dependências e requisitos
+   - DBActions e Actions necessárias
+
+4. **Comentários no Código**
+   - JSDoc para funções públicas
+   - Explicações de lógica complexa
+   - Notas importantes sobre integração com Mitra
+
+## Padrões de Escrita
+
+### Idioma
+- Sempre escrever em **português brasileiro (pt-BR)**
+- Usar linguagem clara e objetiva
+- Evitar jargões desnecessários
+- Ser direto e objetivo, especialmente em exemplos de código
+
+### Formatação Markdown
+- Usar títulos hierárquicos (H1, H2, H3)
+- Código deve estar em blocos com syntax highlighting apropriado (javascript, html, sql, json)
+- Exemplos práticos sempre que possível
+- Listas numeradas para passos sequenciais
+- Listas com marcadores para informações não ordenadas
+- Usar blocos de código inline com backticks para referências a variáveis, funções e objetos
+
+### Estrutura de Exemplos
+```markdown
+### Título do Exemplo
+
+**Descrição:** Breve explicação do que o exemplo demonstra.
+
+**Contexto:** Quando usar este exemplo.
+
+```javascript
+// Código de exemplo aqui
+```
+
+**Explicação:** Detalhes importantes sobre o código acima.
+```
+
+## Conceitos Fundamentais da Plataforma Mitra
+
+### O Objeto `componentData`
+
+**Conceito Central:** Toda configuração definida para o componente no editor da plataforma, dentro da área `variables`, fica acessível dentro do código através do objeto global `componentData`. Ele é a principal forma de tornar o componente dinâmico e reutilizável.
+
+**Regra Crítica:** Todas as propriedades de `componentData` chegam como **string**. É responsabilidade do desenvolvedor convertê-las para o tipo correto. Para objetos JSON, utilize sempre `JSON.parse()`.
+
+**Exemplo de Mapeamento:**
+```json
+// No campo "variables" do editor Mitra
+{
+  "configTabela": "{\"titulo\": \"Minha Tabela\", \"colunas\": [\"ID\", \"Nome\"]}"
+}
+```
+
+```javascript
+// No código JavaScript do componente
+const config = JSON.parse(componentData.configTabela);
+console.log(config.titulo); // Saída: "Minha Tabela"
+console.log(config.colunas); // Saída: ["ID", "Nome"]
+```
+
+### Funções Nativas do Mitra
+
+Estas funções globais são a API para interagir com os recursos do Mitra. Elas já estão disponíveis no escopo do componente.
+
+#### queryMitra(query)
+
+**Descrição:** Executa uma query SQL de leitura (SELECT) no banco de dados do projeto.
+
+**Características:**
+- Função assíncrona (deve usar `async/await`)
+- Sempre usar dentro de bloco `try...catch`
+- Retorna um objeto com propriedade `data` que é um array de arrays
+
+**Formato do Retorno:**
+```javascript
+resultado.data = [
+  ["1", "Cliente A", "a@a.com"],
+  ["2", "Cliente B", "b@b.com"]
+]
+```
+
+**Exemplo:**
+```javascript
+async function buscarClientes() {
+  try {
+    const query = "SELECT ID, NOME, EMAIL FROM CLIENTES LIMIT 10";
+    const resultado = await queryMitra(query);
+    console.log(resultado.data);
+  } catch (error) {
+    console.error("Falha ao buscar clientes:", error);
+  }
+}
+```
+
+#### setVariableMitra({ name, content })
+
+**Descrição:** Cria ou altera o valor de uma Variável Global do Mitra (variável de sessão).
+
+**Regra Crítica:** O nome da variável **deve começar com `:VAR_`**.
+
+**Características:**
+- Função assíncrona
+- Usar antes de chamar outras funções que dependem da variável (ex: antes de `modalMitra` ou `dbactionMitra`)
+
+**Exemplo:**
+```javascript
+async function selecionarCliente(idCliente) {
+  try {
+    await setVariableMitra({ 
+      name: ':VAR_CLIENTE_SELECIONADO', 
+      content: idCliente 
+    });
+    console.log('Variável :VAR_CLIENTE_SELECIONADO definida com o valor ' + idCliente);
+  } catch (error) {
+    console.error("Falha ao definir variável:", error);
+  }
+}
+```
+
+#### dbactionMitra(id)
+
+**Descrição:** Executa uma DBAction (script SQL de escrita: INSERT, UPDATE ou DELETE) previamente cadastrada na plataforma. A função recebe o ID numérico da DBAction.
+
+**Nota Importante para Documentação:** 
+Como desenvolvedores não têm acesso direto à plataforma Mitra para criar DBActions, se precisar de uma nova, deve-se documentar:
+- O script SQL completo
+- A lista de variáveis que utilizará (ex: `:VAR_ID_REGISTRO`)
+- Qual operação realiza (INSERT, UPDATE, DELETE)
+
+**Boas Práticas:**
+- O ID da DBAction deve vir de `componentData` para reutilização
+- Sempre definir variáveis necessárias antes de executar a DBAction
+
+**Exemplo:**
+```javascript
+async function deletarRegistro(idRegistro) {
+  // O ID da DBAction deve vir de componentData para ser reutilizável
+  const idDaDBActionDeDelete = parseInt(componentData.dbActionDeleteId);
+  
+  try {
+    // Antes de executar, definimos as variáveis que a DBAction usará
+    await setVariableMitra({ name: ':VAR_ID_REGISTRO', content: idRegistro });
+    await dbactionMitra(idDaDBActionDeDelete);
+    console.log('Registro deletado com sucesso!');
+  } catch (error) {
+    console.error("Falha ao executar a DBAction:", error);
+  }
+}
+```
+
+#### modalMitra({ id, width, height })
+
+**Descrição:** Abre uma tela do Mitra (identificada pelo seu ID numérico) em uma janela modal sobre a tela atual.
+
+**Parâmetros:**
+- `id`: ID numérico da tela
+- `width`: Largura percentual do modal
+- `height`: Altura percentual do modal
+
+**Exemplo:**
+```javascript
+function abrirModalDetalhes() {
+  const idDaTelaDeDetalhes = parseInt(componentData.screenDetailsId);
+  modalMitra({ id: idDaTelaDeDetalhes, width: 80, height: 90 });
+}
+```
+
+#### actionMitra({ id })
+
+**Descrição:** Executa uma Action, que é uma automação com múltiplos passos (ex: definir variável, executar DBAction, navegar para outra tela) previamente cadastrada na plataforma.
+
+**Exemplo:**
+```javascript
+function executarFluxoCompleto() {
+  const idDaAction = parseInt(componentData.actionFluxoId);
+  actionMitra({ id: idDaAction });
+}
+```
+
+#### uploadFileAsPublic(file) / uploadFileAsLoadable(file, fileName)
+
+**Descrição:** Funções para fazer upload de arquivos.
+
+**Diferenças:**
+- `uploadFileAsPublic(file)`: Retorna uma URL pública, ideal para anexos
+- `uploadFileAsLoadable(file, fileName)`: Prepara o arquivo para ser carregado em uma tabela do banco com `LOAD DATA`
+
+**Características:**
+- Funções assíncronas
+- Recebem objeto File como parâmetro
+
+**Exemplo:**
+```html
+<input type="file" id="meu-arquivo">
+```
+
+```javascript
+document.getElementById('meu-arquivo').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    try {
+      // Para anexos comuns
+      const urlPublica = await uploadFileAsPublic(file);
+      console.log('Arquivo disponível em:', urlPublica);
+      
+      // Para carregar dados (ex: CSV)
+      // await uploadFileAsLoadable(file, 'meu_arquivo_de_dados.csv');
+      // console.log('Arquivo enviado e pronto para ser carregado no banco!');
+    } catch (error) {
+      console.error('Erro no upload:', error);
+    }
+  }
+});
+```
+
+### Trabalhando com a Estrutura da Aplicação: Iframes, Menus e Abas
+
+#### Conceito de Iframe
+
+**Regra Fundamental:** Componentes HTML customizados raramente existem de forma isolada. Na maioria das vezes, serão carregados dentro de um **iframe**, orquestrado por componentes de navegação nativos do Mitra, como o Menu ou o Componente de Abas (Tabs).
+
+**Como Funciona:** Quando um usuário clica em um item de menu ou em uma aba, a plataforma Mitra não recarrega a página inteira. Em vez disso, ela carrega a tela de destino dentro de um iframe. Isso significa que o componente vive em um documento HTML aninhado dentro de outro.
+
+#### Regra Crítica de Navegação
+
+**É ESTRITAMENTE PROIBIDO** usar métodos de navegação tradicionais como:
+- `<a href="...">`
+- `window.location`
+
+Isso quebraria a estrutura de navegação da plataforma.
+
+#### A Forma Correta de Navegar e Interagir
+
+Toda navegação e interação entre telas deve ser feita utilizando as funções nativas do Mitra:
+
+1. **Para abrir uma nova tela sobre a atual:** Use `modalMitra({ id: ... })`
+2. **Para executar um fluxo que pode levar a outra tela:** Use `actionMitra({ id: ... })`
+3. **Para passar informações para a tela que será aberta:** Use `setVariableMitra({ name: '...', content: '...' })` **antes** de chamar a função de navegação
+
+**Exemplo Prático - Botão "Ver Detalhes":**
+```html
+<button id="btn-detalhes" data-product-id="123">Ver Detalhes do Produto</button>
+```
+
+```javascript
+document.getElementById('btn-detalhes').addEventListener('click', async (event) => {
+  const productId = event.currentTarget.dataset.productId;
+  const idTelaDetalhes = parseInt(componentData.screenDetailsId);
+  
+  try {
+    // 1. Passa o contexto para a plataforma
+    await setVariableMitra({ name: ':VAR_PRODUTO_ID', content: productId });
+    // 2. Abre o modal
+    modalMitra({ id: idTelaDetalhes, width: 80, height: 90 });
+  } catch (error) {
+    console.error('Falha ao abrir detalhes do produto:', error);
+  }
+});
+```
+
+### Boas Práticas
+
+#### 1. Estilização com Tailwind CSS
+
+Utilize as classes utilitárias do Tailwind CSS para toda a estilização. Isso garante:
+- Consistência visual com o restante da plataforma
+- Facilita a manutenção
+- Reduz conflitos de estilo
+
+#### 2. Nunca Hardcode
+
+**Evite "hardcodar"** valores como:
+- Queries SQL
+- IDs de ações, DBActions ou telas
+- Cores ou textos
+- URLs ou caminhos
+
+**Sempre passe** esses valores através do objeto `componentData`. Isso torna o componente:
+- Flexível
+- Configurável
+- Reutilizável em diferentes contextos
+
+**Exemplo Ruim:**
+```javascript
+const query = "SELECT * FROM CLIENTES"; // ❌ Hardcoded
+const idTela = 5; // ❌ Hardcoded
+```
+
+**Exemplo Bom:**
+```javascript
+const query = componentData.queryClientes; // ✅ Do componentData
+const idTela = parseInt(componentData.screenDetailsId); // ✅ Do componentData
+```
+
+#### 3. Debugging com `console.error`
+
+**Regra Importante:** A plataforma Mitra monitora ativamente o `console.error`. 
+
+**Quando usar:**
+- Erros críticos que impedem o funcionamento do componente
+- Falhas ao buscar dados iniciais
+- Problemas de integração com funções Mitra
+
+**Como usar:**
+- Seja descritivo para facilitar a identificação de problemas
+- Inclua contexto relevante (ex: nome do componente, função que falhou)
+- Isso habilita a ferramenta de "auto-correção" da plataforma
+
+**Exemplo:**
+```javascript
+try {
+  const resultado = await queryMitra(componentData.queryInicial);
+  // processar dados...
+} catch (error) {
+  console.error(`Falha ao buscar dados iniciais no componente ${componentData.nomeComponente}:`, error);
+}
+```
+
+## Quando Atualizar Documentação
+
+### Sempre atualizar quando:
+1. Adicionar novos componentes ou funcionalidades
+2. Modificar APIs ou interfaces públicas
+3. Mudar comportamento existente de forma significativa
+4. Adicionar novas dependências ou requisitos
+5. Descobrir limitações ou considerações importantes
+6. Adicionar novos usos de funções Mitra não documentados anteriormente
+7. Mudar IDs de DBActions, Actions ou telas utilizadas
+
+### Não é necessário atualizar para:
+- Correções de bugs menores que não alteram comportamento documentado
+- Refatorações internas que não afetam a interface pública
+- Melhorias de performance que não mudam o uso
+- Correções de typos ou melhorias de texto
+
+## Diretrizes Específicas para Documentação de Componentes
+
+### Template de Documentação de Componente
+
+Cada componente customizado deve ter documentação que inclua:
+
+```markdown
+## [Nome do Componente]
+
+### Descrição
+[Breve descrição do que o componente faz e quando/por que usá-lo]
+
+### Configuração
+
+#### Variáveis do componentData
+
+| Variável | Tipo | Obrigatório | Descrição | Exemplo |
+|----------|------|-------------|-----------|---------|
+| `var1` | string | Sim | [descrição] | `"valor"` |
+
+**Observação:** Todas as variáveis chegam como string. Use `JSON.parse()` para objetos JSON e `parseInt()` para números quando necessário.
+
+**Exemplo de configuração no editor Mitra:**
+```json
+{
+  "var1": "valor1",
+  "var2": "{\"chave\": \"valor\"}"
+}
+```
+
+**Exemplo de acesso no código:**
+```javascript
+const valor1 = componentData.var1;
+const config = JSON.parse(componentData.var2);
+```
+
+### Dependências
+
+#### Funções Mitra Utilizadas
+- `queryMitra()` - [Descrição de uso]
+- `setVariableMitra()` - [Descrição de uso]
+- [Outras funções...]
+
+#### DBActions Necessárias
+- **ID:** [ID da DBAction]
+  - **Descrição:** [O que a DBAction faz]
+  - **Variáveis Utilizadas:** `:VAR_*` [Lista de variáveis]
+  - **Operação:** INSERT/UPDATE/DELETE
+
+#### Actions Necessárias
+- **ID:** [ID da Action]
+  - **Descrição:** [O que a Action faz]
+
+#### Variáveis Globais Utilizadas
+- `:VAR_*` - [Descrição de quando e como é usada]
+
+#### Telas Utilizadas
+- **ID:** [ID da tela]
+  - **Uso:** Modal/Iframe/Navegação
+  - **Contexto:** [Quando é chamada]
+
+### Exemplos
+
+#### Exemplo Básico
+[Exemplo simples de uso do componente]
+
+#### Exemplo Avançado
+[Exemplo mais complexo, se aplicável]
+
+### Notas Importantes
+- [Nota 1: Limitações conhecidas]
+- [Nota 2: Requisitos específicos da plataforma]
+- [Nota 3: Comportamentos especiais ou edge cases]
+```
+
+## Integração com Código
+
+### Comentários no Código
+
+Funções que interagem com Mitra devem ter comentários explicando:
+
+```javascript
+/**
+ * Busca clientes do banco de dados usando queryMitra
+ * 
+ * Utiliza a query definida em componentData.queryClientes
+ * Os resultados são retornados como array de arrays no formato:
+ * [["id", "nome", "email"], ...]
+ * 
+ * @returns {Promise<Array>} Array de arrays com os dados dos clientes
+ * @throws {Error} Quando a query falha ou não há dados
+ */
+async function buscarClientes() {
+  try {
+    const query = componentData.queryClientes;
+    const resultado = await queryMitra(query);
+    return resultado.data;
+  } catch (error) {
+    console.error("Falha ao buscar clientes:", error);
+    throw error;
+  }
+}
+```
+
+### JSDoc para Funções Públicas
+
+Sempre incluir:
+- Descrição da função
+- Parâmetros com tipos e descrições
+- Tipo de retorno
+- Exceções que podem ser lançadas
+- Exemplo de uso quando apropriado
+
+```javascript
+/**
+ * Abre modal de detalhes de um produto
+ * 
+ * Define a variável :VAR_PRODUTO_ID antes de abrir o modal
+ * para que a tela de detalhes possa acessar o ID do produto.
+ * 
+ * @param {string|number} productId - ID do produto a ser visualizado
+ * @returns {Promise<void>}
+ * @throws {Error} Quando falha ao definir variável ou abrir modal
+ * 
+ * @example
+ * await abrirDetalhesProduto('123');
+ */
+async function abrirDetalhesProduto(productId) {
+  // implementação...
+}
+```
+
+## Manutenção e Organização
+
+### Versionamento
+- Manter histórico de mudanças importantes na documentação
+- Usar formato de changelog quando apropriado
+- Documentar breaking changes claramente
+
+### Links e Referências Cruzadas
+- Linkar entre documentos relacionados
+- Referenciar seções específicas quando apropriado
+- Manter índices atualizados em documentos longos
+- Referenciar documentação oficial do Mitra quando relevante
+
+### Validação
+- Verificar que todos os exemplos de código estão atualizados
+- Confirmar que IDs, nomes de variáveis e referências estão corretos
+- Testar links internos e externos
+- Validar que exemplos de componentData estão no formato correto (tudo como string)
+
+## Estrutura de Arquivos de Documentação
+
+### Organização Recomendada
+
+```
+docs/
+├── README.md                          # Índice geral da documentação
+├── introducao.md                      # Introdução ao desenvolvimento de componentes
+├── component-data.md                  # Documentação completa sobre componentData
+├── funcoes-nativas/
+│   ├── queryMitra.md
+│   ├── setVariableMitra.md
+│   ├── dbactionMitra.md
+│   ├── modalMitra.md
+│   ├── actionMitra.md
+│   └── uploadFile.md
+├── iframes-navegacao.md              # Guia sobre iframes e navegação
+├── boas-praticas.md                  # Boas práticas gerais
+├── componentes/
+│   ├── [nome-componente-1].md
+│   ├── [nome-componente-2].md
+│   └── ...
+└── troubleshooting.md                # Problemas comuns e soluções
+```
+
+## Exemplos de Boa Documentação
+
+### Boa Documentação
+- ✅ Clara e objetiva
+- ✅ Com exemplos práticos e funcionais
+- ✅ Atualizada e precisa
+- ✅ Bem organizada e navegável
+- ✅ Inclui contexto e casos de uso
+- ✅ Documenta todas as dependências Mitra
+- ✅ Explica claramente o formato dos dados (strings no componentData)
+- ✅ Mostra exemplos completos de configuração e uso
+
+### Má Documentação
+- ❌ Vaga ou genérica
+- ❌ Sem exemplos ou exemplos incompletos
+- ❌ Desatualizada (IDs ou funções incorretas)
+- ❌ Mal organizada
+- ❌ Faltando contexto importante
+- ❌ Não menciona dependências Mitra necessárias
+- ❌ Não explica que componentData retorna strings
+- ❌ Não mostra exemplos práticos de uso
+
+## Comandos e Tarefas Comuns
+
+### Ao criar novo componente:
+1. Criar arquivo de documentação em `docs/components/[nome].md`
+2. Usar o template completo de documentação
+3. Documentar todas as variáveis do `componentData` com tipos e exemplos
+4. Listar todas as dependências Mitra (funções, DBActions, Actions, variáveis globais, telas)
+5. Adicionar exemplo básico de uso
+6. Adicionar exemplo avançado se aplicável
+7. Atualizar índice de componentes (se existir)
+8. Incluir notas sobre limitações ou comportamentos especiais
+
+### Ao modificar componente existente:
+1. Verificar documentação atual
+2. Atualizar seções relevantes
+3. Atualizar exemplos se necessário
+4. Adicionar notas sobre mudanças (especialmente breaking changes)
+5. Atualizar tabela de variáveis do componentData se mudou
+6. Atualizar lista de dependências se mudou
+
+### Ao adicionar nova funcionalidade:
+1. Verificar se precisa de documentação nova
+2. Adicionar à seção apropriada
+3. Incluir exemplos práticos e completos
+4. Atualizar índice/navegação se necessário
+5. Documentar novas dependências Mitra necessárias
+
+## Observações Importantes
+
+- A documentação deve sempre refletir o estado atual do código
+- Quando houver dúvida entre documentar demais ou de menos, prefira documentar mais
+- Sempre inclua exemplos práticos e funcionais quando possível
+- Mantenha consistência de formato e estilo em toda a documentação
+- Considere o público-alvo: desenvolvedores que usarão os componentes Mitra
+- Lembre-se sempre de mencionar que `componentData` retorna strings
+- Documente claramente todas as dependências Mitra necessárias
+- Sempre use as funções nativas do Mitra para navegação (nunca métodos tradicionais)
+- Destaque regras críticas (como o formato de strings no componentData e navegação via iframes)

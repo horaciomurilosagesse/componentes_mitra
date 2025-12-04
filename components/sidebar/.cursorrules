@@ -1,0 +1,428 @@
+# Regras de Desenvolvimento - Componente Menu/Sidebar Mitra
+
+Você é um especialista em desenvolvimento de componentes de navegação para a plataforma Mitra, com foco em sidebars e menus de navegação.
+
+## Visão Geral do Componente Menu Mitra
+
+O componente Menu é a espinha dorsal da navegação em aplicações web na plataforma Mitra. Ele cria uma interface completa com:
+- Barra lateral (sidebar) com navegação
+- Cabeçalho com logo e informações
+- Informações do usuário logado
+- Menu de ações de perfil (dropdown)
+- Gerenciamento de navegação via iframes
+
+## Arquitetura: Tela Wrapper e Iframe Interno
+
+### Conceito Fundamental
+
+O Menu funciona com base no conceito de **"Tela Wrapper"**. Esta é uma tela raiz que serve apenas como contêiner para o componente Menu.
+
+### Carregamento de Telas em Iframe Interno
+
+O componente carrega telas Mitra **dentro de um iframe interno**, substituindo o conteúdo principal ao invés de abrir modais sobrepostos. Isso cria uma experiência de navegação fluida similar a uma SPA (Single Page Application).
+
+#### Como Funciona
+
+1. **Container Principal:** O componente possui um container `#mitra-main-content` no conteúdo principal
+2. **Hard Reset:** Antes de carregar uma nova tela, o componente faz "hard reset":
+   - Remove o container anterior completamente
+   - Cria um novo container com o mesmo ID
+   - Garante que não há conflitos entre telas
+3. **Carregamento via modalMitra:** Usa `modalMitra({ id, parent: 'mitra-main-content', width: 100, height: 100 })`:
+   - O parâmetro `parent` especifica o ID do elemento onde a tela será renderizada
+   - A tela é carregada como iframe dentro do container especificado
+   - Substitui completamente o conteúdo anterior
+
+#### Função resolveScreenId
+
+O componente inclui uma função `resolveScreenId()` que extrai IDs de telas de diferentes formatos:
+
+- **URLs embedded:** `/embedded?inlineToken=...&inlineScreenId=123` → retorna `123`
+- **Valores diretos:** `"123"` → retorna `123`
+- **Valores inválidos:** retorna `null`
+
+### Boas Práticas de Implementação
+
+1. **Criar Tela Raiz:**
+   - Crie uma tela principal (ex: "AppWrapper", "MainLayout", "AppContainer")
+   - Defina-a como tela inicial (`isHomeScreen: true`)
+   - Adicione o componente Menu ocupando 100% da largura e altura
+
+2. **Gerenciamento de Navegação:**
+   - O Menu carrega todas as outras telas dentro de um `iframe` interno usando `modalMitra({ id, parent })`
+   - Toda navegação é gerenciada pelo componente Menu
+   - Nunca use navegação tradicional (`<a href>`, `window.location`) dentro do Menu
+   - O componente faz "hard reset" do container automaticamente antes de cada navegação
+
+3. **Estrutura de Telas:**
+   ```
+   AppWrapper (Tela Raiz - isHomeScreen: true)
+   └── Menu Component (100% width, 100% height)
+       └── #mitra-main-content (container para iframes)
+           └── iframe interno (carrega telas dinamicamente via modalMitra)
+   ```
+
+## Configuração das Variáveis
+
+### menuQuery e Mapeamento de Colunas
+
+A `menuQuery` é uma query SQL que retorna os itens de navegação. **Todas as colunas devem ser mapeadas corretamente.**
+
+#### Variáveis Obrigatórias
+
+| Variável | Tipo | Descrição | Exemplo |
+|----------|------|-----------|---------|
+| `menuIdColumn` | string | Nome da coluna com ID único do item | `"ID"` |
+| `menuNameColumn` | string | Nome da coluna com texto do item | `"NAME"` |
+| `menuIconColumn` | string | Nome da coluna com ícone Lucide (PascalCase) | `"ICON"` |
+| `menuGroupColumn` | string | Nome da coluna que define a seção do menu | `"GRUPO"` |
+| `menuUrlColumn` | string | Nome da coluna com URL da tela a ser carregada | `"MENUURL"` |
+
+#### Variáveis Opcionais
+
+| Variável | Tipo | Descrição | Exemplo |
+|----------|------|-----------|---------|
+| `menuParentIdColumn` | string | Nome da coluna com ID do item-pai (para submenus) | `"PARENTID"` |
+
+#### Regras para Ícones
+
+- **Formato obrigatório:** PascalCase (ex: `Users`, `PieChart`, `LayoutDashboard`)
+- **Biblioteca:** Ícones Lucide React
+- **Exemplos válidos:** `Home`, `User`, `Settings`, `Bell`, `FileText`, `BarChart3`
+- **Exemplos inválidos:** `home`, `user-icon`, `settings_icon`
+
+### Dados do Usuário
+
+#### userQuery
+
+Query SQL que retorna **uma única linha** com os dados do usuário logado.
+
+**Estrutura esperada:**
+```sql
+SELECT 
+    NOME,
+    EMAIL,
+    FOTO_URL
+FROM USUARIOS 
+WHERE ID = :VAR_USER
+```
+
+#### Mapeamento de Colunas do Usuário
+
+| Variável | Tipo | Descrição | Exemplo |
+|----------|------|-----------|---------|
+| `userName` | string | Nome da coluna com nome do usuário | `"NOME"` |
+| `userEmail` | string | Nome da coluna com e-mail do usuário | `"EMAIL"` |
+| `userAvatar` | string | Nome da coluna com URL da foto do usuário | `"FOTO_URL"` |
+
+#### userMenu
+
+JSON em formato de string que define as ações no dropdown do perfil.
+
+**Estrutura obrigatória:**
+- Deve conter pelo menos uma ação de "Sair"
+- Cada ação tem: `nome`, `icone`, `tipoInteracao`, `idInteracao`
+
+**Tipos de interação:**
+- `"form"`: Abre um formulário
+- `"action"`: Executa uma Action do Mitra
+- `"modal"`: Abre uma tela em modal
+
+**Exemplo:**
+```json
+[
+  {
+    "nome": "Minha Conta",
+    "icone": "User",
+    "tipoInteracao": "form",
+    "idInteracao": 1
+  },
+  {
+    "nome": "Sair",
+    "icone": "LogOut",
+    "tipoInteracao": "action",
+    "idInteracao": 99
+  }
+]
+```
+
+**No componentData (como string):**
+```json
+{
+  "userMenu": "[{\\\"nome\\\":\\\"Minha Conta\\\",\\\"icone\\\":\\\"User\\\",\\\"tipoInteracao\\\":\\\"form\\\",\\\"idInteracao\\\":1},{\\\"nome\\\":\\\"Sair\\\",\\\"icone\\\":\\\"LogOut\\\",\\\"tipoInteracao\\\":\\\"action\\\",\\\"idInteracao\\\":99}]"
+}
+```
+
+### Cabeçalho do Menu
+
+| Variável | Tipo | Descrição | Exemplo |
+|----------|------|-----------|---------|
+| `headerLogo` | string | URL da imagem do logo ou "DEFAULTLOGO" | `"DEFAULTLOGO"` ou `"https://..."` |
+| `headerTitle` | string | Texto principal ao lado do logo | `"Meu App"` |
+| `headerSubtitle` | string | Texto secundário ao lado do logo | `"Gestão de Vendas"` |
+
+## Regra Crítica: Construção da URL
+
+### ⚠️ ATENÇÃO: Formato Obrigatório
+
+A coluna mapeada em `menuUrlColumn` **DEVE** ser construída usando a fórmula SQL abaixo. Esta fórmula utiliza variáveis nativas da plataforma para garantir autenticação e carregamento correto da tela no iframe.
+
+### Fórmula SQL Obrigatória
+
+```sql
+CONCAT(
+    :VAR_URL, 
+    '/embedded', 
+    '?inlineToken=', 
+    :VAR_TOKEN, 
+    '&inlineScreenId=', 
+    (SELECT ID FROM INT_SCREEN WHERE NAME = 'NomeDaSuaTela')
+)
+```
+
+### Variáveis Nativas Utilizadas
+
+- `:VAR_URL`: URL base da plataforma Mitra
+- `:VAR_TOKEN`: Token de autenticação para carregamento seguro
+- `INT_SCREEN`: Tabela do sistema que armazena as telas
+
+### Exemplo Completo de Query
+
+```sql
+SELECT
+    1 AS ID,
+    'Dashboard' AS NAME,
+    'LayoutDashboard' AS ICON,
+    'Principal' AS GRUPO,
+    '' AS PARENTID,
+    CONCAT(
+        :VAR_URL, 
+        '/embedded', 
+        '?inlineToken=', 
+        :VAR_TOKEN, 
+        '&inlineScreenId=', 
+        (SELECT ID FROM INT_SCREEN WHERE NAME = 'Dashboard')
+    ) AS MENUURL
+FROM DUAL
+
+UNION ALL
+
+SELECT
+    2 AS ID,
+    'Clientes' AS NAME,
+    'Users' AS ICON,
+    'Cadastros' AS GRUPO,
+    '' AS PARENTID,
+    CONCAT(
+        :VAR_URL, 
+        '/embedded', 
+        '?inlineToken=', 
+        :VAR_TOKEN, 
+        '&inlineScreenId=', 
+        (SELECT ID FROM INT_SCREEN WHERE NAME = 'Clientes')
+    ) AS MENUURL
+FROM DUAL
+```
+
+### Regras Importantes
+
+1. **Sempre use a fórmula completa:** Não simplifique ou altere a estrutura da URL
+2. **Use subquery para obter ID da tela:** `(SELECT ID FROM INT_SCREEN WHERE NAME = 'NomeDaTela')`
+3. **Mantenha a ordem dos parâmetros:** `inlineToken` antes de `inlineScreenId`
+4. **Não hardcode URLs:** Sempre use `:VAR_URL` e `:VAR_TOKEN`
+5. **Valide nomes de telas:** Certifique-se de que o nome da tela em `INT_SCREEN.NAME` está correto
+
+## Exemplo Completo de Configuração
+
+### Query SQL (`menuQuery`)
+
+```sql
+SELECT
+    1 AS ID,
+    'Dashboard' AS NAME,
+    'LayoutDashboard' AS ICON,
+    'Principal' AS GRUPO,
+    '' AS PARENTID,
+    CONCAT(:VAR_URL, '/embedded', '?inlineToken=', :VAR_TOKEN, '&inlineScreenId=', (SELECT ID FROM INT_SCREEN WHERE NAME = 'Dashboard')) AS MENUURL
+FROM DUAL
+UNION ALL
+SELECT
+    2 AS ID,
+    'Clientes' AS NAME,
+    'Users' AS ICON,
+    'Cadastros' AS GRUPO,
+    '' AS PARENTID,
+    CONCAT(:VAR_URL, '/embedded', '?inlineToken=', :VAR_TOKEN, '&inlineScreenId=', (SELECT ID FROM INT_SCREEN WHERE NAME = 'Clientes')) AS MENUURL
+FROM DUAL
+```
+
+### JSON de Configuração (`variables`)
+
+```json
+{
+  "menuQuery": "SELECT 1 AS ID, 'Dashboard' AS NAME, 'LayoutDashboard' AS ICON, 'Principal' AS GRUPO, '' AS PARENTID, CONCAT(:VAR_URL, '/embedded', '?inlineToken=', :VAR_TOKEN, '&inlineScreenId=', (SELECT ID FROM INT_SCREEN WHERE NAME = 'Dashboard')) AS MENUURL FROM DUAL UNION ALL SELECT 2 AS ID, 'Clientes' AS NAME, 'Users' AS ICON, 'Cadastros' AS GRUPO, '' AS PARENTID, CONCAT(:VAR_URL, '/embedded', '?inlineToken=', :VAR_TOKEN, '&inlineScreenId=', (SELECT ID FROM INT_SCREEN WHERE NAME = 'Clientes')) AS MENUURL FROM DUAL",
+  "menuIdColumn": "ID",
+  "menuNameColumn": "NAME",
+  "menuIconColumn": "ICON",
+  "menuGroupColumn": "GRUPO",
+  "menuParentIdColumn": "PARENTID",
+  "menuUrlColumn": "MENUURL",
+  "headerLogo": "DEFAULTLOGO",
+  "headerTitle": "Meu App",
+  "headerSubtitle": "Gestão de Vendas",
+  "userQuery": "SELECT NOME, EMAIL, FOTO_URL FROM USUARIOS WHERE ID = :VAR_USER",
+  "userName": "NOME",
+  "userEmail": "EMAIL",
+  "userAvatar": "FOTO_URL",
+  "userMenu": "[{\\\"nome\\\":\\\"Minha Conta\\\",\\\"icone\\\":\\\"User\\\",\\\"tipoInteracao\\\":\\\"form\\\",\\\"idInteracao\\\":1},{\\\"nome\\\":\\\"Sair\\\",\\\"icone\\\":\\\"LogOut\\\",\\\"tipoInteracao\\\":\\\"action\\\",\\\"idInteracao\\\":99}]"
+}
+```
+
+## Boas Práticas
+
+### 1. Estrutura de Queries
+
+- Use `UNION ALL` para combinar múltiplos itens de menu
+- Sempre inclua todas as colunas obrigatórias
+- Use aliases claros e consistentes (ex: `AS ID`, `AS NAME`)
+
+### 2. Organização de Grupos
+
+- Agrupe itens relacionados em seções lógicas
+- Use nomes descritivos para grupos (ex: "Cadastros", "Relatórios", "Configurações")
+- Mantenha consistência na nomenclatura
+
+### 3. Submenus
+
+- Use `menuParentIdColumn` para criar hierarquia
+- O item-pai deve ter `PARENTID` vazio ou NULL
+- Subitens referenciam o `ID` do item-pai
+
+### 4. Validação
+
+- Sempre valide que todas as colunas obrigatórias estão presentes
+- Verifique se os nomes de telas existem em `INT_SCREEN`
+- Teste a construção das URLs antes de usar em produção
+
+### 5. Performance
+
+- Otimize queries para retornar apenas dados necessários
+- Use índices nas tabelas referenciadas quando possível
+- Evite subqueries complexas desnecessárias
+
+## Troubleshooting
+
+### Problema: Menu não carrega itens
+
+**Possíveis causas:**
+- Query SQL com erro de sintaxe
+- Colunas não mapeadas corretamente
+- Variáveis `:VAR_URL` ou `:VAR_TOKEN` não disponíveis
+
+**Solução:**
+- Valide a query SQL diretamente no banco
+- Verifique o mapeamento de todas as colunas
+- Confirme que está executando dentro do contexto Mitra
+
+### Problema: URLs não funcionam
+
+**Possíveis causas:**
+- Fórmula de URL incorreta ou incompleta
+- Nome da tela incorreto em `INT_SCREEN.NAME`
+- Token de autenticação inválido
+
+**Solução:**
+- Use exatamente a fórmula obrigatória fornecida
+- Verifique se o nome da tela existe e está correto
+- Confirme que `:VAR_TOKEN` está sendo gerado corretamente
+
+### Problema: Ícones não aparecem
+
+**Possíveis causas:**
+- Formato do nome do ícone incorreto (deve ser PascalCase)
+- Ícone não existe na biblioteca Lucide
+
+**Solução:**
+- Verifique se o nome está em PascalCase (ex: `Users`, não `users`)
+- Consulte a documentação do Lucide para nomes válidos
+
+### Problema: Submenus não aparecem
+
+**Possíveis causas:**
+- `menuParentIdColumn` não configurado
+- IDs de parent incorretos ou não existentes
+
+**Solução:**
+- Configure `menuParentIdColumn` no componentData
+- Verifique se os IDs de parent correspondem a IDs válidos de itens
+
+## Integração com Componentes Customizados
+
+Ao criar componentes customizados que interagem com o Menu:
+
+1. **Respeite a arquitetura de iframes:** Componentes são carregados dentro de iframes usando `modalMitra({ id, parent })`
+2. **Use funções nativas Mitra:** Para navegação, use `modalMitra({ id, parent: 'mitra-main-content', width: 100, height: 100 })` para iframe interno
+3. **Hard Reset automático:** O componente faz "hard reset" do container antes de carregar cada nova tela
+4. **Função resolveScreenId:** Use `resolveScreenId()` para extrair IDs de URLs embedded ou valores diretos
+5. **Mantenha consistência visual:** Siga o design system do Menu nativo
+6. **Documente dependências:** Liste todas as variáveis e queries necessárias
+
+### Regras Críticas de Navegação
+
+- **Sempre use `modalMitra` com parâmetro `parent`:** Para carregar telas em iframe interno, sempre especifique `parent: 'mitra-main-content'`
+- **Nunca use navegação tradicional:** Não use `<a href>` ou `window.location` - isso quebraria a estrutura de navegação
+- **Hard Reset é automático:** O componente remove e recria o container automaticamente - não é necessário fazer manualmente
+- **URLs embedded são preferenciais:** Use URLs no formato `/embedded?inlineScreenId=123` para máxima compatibilidade
+
+## Sistema de Filtros por Tela
+
+### Conceito
+
+O componente inclui um botão flutuante (FAB) no canto inferior direito que abre um modal lateral deslizante com filtros customizáveis. Cada tela pode ter sua própria configuração de filtros através do campo `filtersByScreen` no `componentData`.
+
+### Configuração
+
+Use `filtersByScreen` para configurar filtros por tela. **Formato recomendado (array de objetos):**
+
+```json
+{
+  "filtersByScreen": "[{\"id\":\"10\",\"title\":\"Filtros de Clientes\",\"fields\":[...]},{\"id\":\"15\",\"title\":\"Filtros de Pedidos\",\"fields\":[...]}]"
+}
+```
+
+**Estrutura de cada objeto:**
+- `id` (obrigatório): ID da tela (string ou número)
+- `title` (opcional): Título exibido no header do modal
+- `fields` (obrigatório): Array de campos de filtro
+
+**Formato alternativo (compatibilidade):** Também suporta objeto com IDs como chaves: `{"10": {"title": "...", "fields": [...]}}`
+
+### Tipos de Campos Suportados
+
+- **text**: Campo de texto livre
+- **select**: Dropdown seleção única
+- **checkbox**: Múltipla seleção (valores separados por vírgula)
+- **dateRange**: Período com duas variáveis (início e fim)
+
+### Integração com Variáveis Mitra
+
+Ao aplicar filtros, as variáveis são definidas via `setVariableMitra()` e ficam disponíveis para uso em queries SQL de componentes dentro do iframe. A tela atual é recarregada automaticamente após aplicar filtros.
+
+### Boas Práticas
+
+- Use nomes descritivos para variáveis (ex: `:VAR_FILTER_STATUS`, `:VAR_FILTER_NOME`)
+- Sempre inclua opção "Todos" em selects quando apropriado
+- Para checkboxes, use valores separados por vírgula na variável
+- Para date ranges, use formato YYYY-MM-DD nas variáveis
+
+## Notas Finais
+
+- O componente Menu é nativo do Mitra e não pode ser modificado diretamente
+- Componentes customizados devem seguir os mesmos padrões de configuração
+- **Telas são carregadas em iframe interno:** Todas as telas são renderizadas dentro do container `#mitra-main-content` usando `modalMitra({ id, parent })`
+- **Hard Reset automático:** O componente remove e recria o container antes de carregar cada nova tela para evitar conflitos
+- **Sistema de filtros dinâmico:** Filtros são configurados por tela via `filtersByScreen`
+- Sempre teste em ambiente de desenvolvimento antes de produção
+- Mantenha documentação atualizada com exemplos práticos
+- A função `resolveScreenId()` extrai automaticamente IDs de URLs embedded ou valores diretos
+

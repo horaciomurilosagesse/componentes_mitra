@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Filtros - Sidebar Mitra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: {
+              DEFAULT: 'hsl(var(--card))',
+              foreground: 'hsl(var(--card-foreground))',
+            },
+            popover: {
+              DEFAULT: 'hsl(var(--popover))',
+              foreground: 'hsl(var(--popover-foreground))',
+            },
+            primary: {
+              DEFAULT: 'hsl(var(--primary))',
+              foreground: 'hsl(var(--primary-foreground))',
+            },
+            secondary: {
+              DEFAULT: 'hsl(var(--secondary))',
+              foreground: 'hsl(var(--secondary-foreground))',
+            },
+            muted: {
+              DEFAULT: 'hsl(var(--muted))',
+              foreground: 'hsl(var(--muted-foreground))',
+            },
+            accent: {
+              DEFAULT: 'hsl(var(--accent))',
+              foreground: 'hsl(var(--accent-foreground))',
+            },
+            destructive: {
+              DEFAULT: 'hsl(var(--destructive))',
+              foreground: 'hsl(var(--destructive-foreground))',
+            },
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+          },
+          borderRadius: {
+            lg: 'var(--radius)',
+            md: 'calc(var(--radius) - 2px)',
+            sm: 'calc(var(--radius) - 4px)',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 240 10% 3.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 240 10% 3.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 240 10% 3.9%;
+      --primary: 240 5.9% 10%;
+      --primary-foreground: 0 0% 98%;
+      --secondary: 240 4.8% 95.9%;
+      --secondary-foreground: 240 5.9% 10%;
+      --muted: 240 4.8% 95.9%;
+      --muted-foreground: 240 3.8% 46.1%;
+      --accent: 240 4.8% 95.9%;
+      --accent-foreground: 240 5.9% 10%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 240 5.9% 90%;
+      --input: 240 5.9% 90%;
+      --ring: 240 5.9% 10%;
+      --radius: 0.5rem;
+    }
+    
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    body {
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- Header -->
+    <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6 mb-6">
+      <h1 class="text-2xl font-semibold leading-none tracking-tight mb-2">Gerador de Filtros</h1>
+      <p class="text-sm text-muted-foreground mb-3">Configure filtros personalizados para suas telas e gere o JSON de campos.</p>
+      <div class="text-xs text-muted-foreground bg-muted p-3 rounded-md">
+        <p class="font-medium mb-1">Como usar:</p>
+        <ol class="list-decimal list-inside space-y-1 ml-2">
+          <li>Configure os campos de filtro abaixo</li>
+          <li>Copie o JSON gerado (contém apenas os fields)</li>
+          <li>Na interface "Configurar JSON", crie uma nova linha com: id (da tela), title (título do modal) e fields (cole o JSON copiado)</li>
+          <li>Salve a configuração</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Painel de Configuração -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Configuração da Tela -->
+        <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <h2 class="text-lg font-semibold mb-4">Configuração da Tela</h2>
+          <div class="space-y-4">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">ID da Tela</label>
+                <button 
+                  type="button"
+                  onclick="loadScreens()"
+                  class="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+                >
+                  Carregar Telas
+                </button>
+              </div>
+              <select 
+                id="screen-id" 
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                onchange="onScreenSelected()"
+              >
+                <option value="">Selecione uma tela...</option>
+              </select>
+              <p class="text-xs text-muted-foreground mt-2">
+                Não encontrou sua tela? 
+                <button type="button" onclick="showManualInput()" class="text-primary underline-offset-4 hover:underline">
+                  Digite manualmente
+                </button>
+              </p>
+              <!-- Input manual (oculto por padrão) -->
+              <input 
+                type="text" 
+                id="screen-id-manual" 
+                placeholder="Ex: 10"
+                class="hidden flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+              />
+            </div>
+            <div>
+              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Título do Modal</label>
+              <input 
+                type="text" 
+                id="screen-title" 
+                placeholder="Ex: Filtros de Clientes"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Campos de Filtro -->
+        <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Campos de Filtro</h2>
+            <button 
+              onclick="addField()"
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Adicionar Campo
+            </button>
+          </div>
+          <div id="fields-container" class="space-y-4">
+            <!-- Campos serão adicionados aqui dinamicamente -->
+          </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <div class="flex gap-3">
+            <button 
+              onclick="addScreenConfig()"
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 flex-1"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Adicionar Tela à Lista
+            </button>
+            <button 
+              onclick="clearAll()"
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+            >
+              Limpar Tudo
+            </button>
+          </div>
+        </div>
+
+        <!-- Telas Configuradas -->
+        <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <h2 class="text-lg font-semibold mb-4">Telas Configuradas</h2>
+          <div id="screens-list" class="space-y-3">
+            <div class="text-center py-8 px-4">
+              <p class="text-sm text-muted-foreground">Nenhuma tela configurada ainda. Configure uma tela acima e clique em "Adicionar Tela à Lista".</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Painel de Resultado -->
+      <div class="lg:col-span-1">
+        <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6 sticky top-6">
+          <h2 class="text-lg font-semibold mb-4">Campos de Filtro (JSON)</h2>
+          <p class="text-xs text-muted-foreground mb-4">
+            Este JSON contém apenas os campos de filtro. Use-o na interface "Configurar JSON" para criar a configuração completa do filtersByScreen.
+          </p>
+          <div class="mb-4">
+              <textarea 
+                id="json-output" 
+                readonly
+                class="flex min-h-[16rem] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                placeholder="Os campos de filtro aparecerão aqui (apenas o array de fields)..."
+              ></textarea>
+          </div>
+          <button 
+            onclick="copyToClipboard()"
+            id="copy-btn"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 w-full px-4 py-2"
+            disabled
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            Copiar para Clipboard
+          </button>
+          <div id="copy-success" class="hidden mt-3 p-3 bg-green-50 text-green-700 rounded-md text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Copiado com sucesso!
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let fieldCounter = 0;
+    let screensConfig = [];
+    let screensList = []; // Lista de telas disponíveis
+
+    // Tipos de campo disponíveis
+    const fieldTypes = {
+      text: {
+        name: 'Texto',
+        icon: '📝',
+        fields: ['id', 'label', 'placeholder', 'variable']
+      },
+      select: {
+        name: 'Select (Dropdown)',
+        icon: '📋',
+        fields: ['id', 'label', 'variable'],
+        hasOptions: true
+      },
+      checkbox: {
+        name: 'Checkbox (Múltipla Seleção)',
+        icon: '☑️',
+        fields: ['id', 'label', 'variable'],
+        hasOptions: true
+      },
+      dateRange: {
+        name: 'Período (Data Início/Fim)',
+        icon: '📅',
+        fields: ['id', 'label', 'variableStart', 'variableEnd']
+      }
+    };
+
+    /**
+     * Adiciona um novo campo de filtro
+     */
+    function addField() {
+      fieldCounter++;
+      const container = document.getElementById('fields-container');
+      
+      const fieldCard = document.createElement('div');
+      fieldCard.className = 'rounded-lg border bg-card text-card-foreground shadow-sm p-4';
+      fieldCard.id = `field-${fieldCounter}`;
+      
+      fieldCard.innerHTML = `
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-sm font-medium">Campo ${fieldCounter}</h3>
+          <button 
+            onclick="removeField('field-${fieldCounter}')"
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 w-8"
+            title="Remover campo"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Tipo de Campo</label>
+            <select 
+              onchange="updateFieldType('field-${fieldCounter}', this.value)"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="">Selecione...</option>
+              ${Object.entries(fieldTypes).map(([key, type]) => 
+                `<option value="${key}">${type.icon} ${type.name}</option>`
+              ).join('')}
+            </select>
+          </div>
+          
+          <div id="field-${fieldCounter}-config" class="space-y-3">
+            <!-- Configurações específicas do campo aparecerão aqui -->
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(fieldCard);
+      updateJSON();
+    }
+
+    /**
+     * Atualiza o tipo do campo e mostra os campos específicos
+     */
+    function updateFieldType(fieldId, type) {
+      const configDiv = document.getElementById(`${fieldId}-config`);
+      if (!type) {
+        configDiv.innerHTML = '';
+        return;
+      }
+
+      const fieldType = fieldTypes[type];
+      let html = '';
+
+      // Campos comuns
+      if (fieldType.fields.includes('id')) {
+        html += `
+          <div>
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">ID do Campo</label>
+            <input 
+              type="text" 
+              data-field="id"
+              placeholder="Ex: nome"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+        `;
+      }
+
+      if (fieldType.fields.includes('label')) {
+        html += `
+          <div>
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Label</label>
+            <input 
+              type="text" 
+              data-field="label"
+              placeholder="Ex: Nome do Cliente"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+        `;
+      }
+
+      // Campos específicos por tipo
+      if (type === 'text' && fieldType.fields.includes('placeholder')) {
+        html += `
+          <div>
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Placeholder</label>
+            <input 
+              type="text" 
+              data-field="placeholder"
+              placeholder="Ex: Buscar por nome..."
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+        `;
+      }
+
+      if (fieldType.fields.includes('variable')) {
+        html += `
+          <div>
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Variável Mitra</label>
+            <input 
+              type="text" 
+              data-field="variable"
+              placeholder="Ex: :VAR_FILTER_NOME"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <p class="text-xs text-muted-foreground mt-1">Formato: :VAR_NOME_VARIAVEL</p>
+          </div>
+        `;
+      }
+
+      if (type === 'dateRange') {
+        html += `
+          <div>
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Variável Data Início</label>
+            <input 
+              type="text" 
+              data-field="variableStart"
+              placeholder="Ex: :VAR_DATA_INICIO"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+          <div>
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Variável Data Fim</label>
+            <input 
+              type="text" 
+              data-field="variableEnd"
+              placeholder="Ex: :VAR_DATA_FIM"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+        `;
+      }
+
+      // Opções para select e checkbox
+      if (fieldType.hasOptions) {
+        html += `
+          <div>
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Opções</label>
+            <div id="${fieldId}-options" class="space-y-2 mb-2">
+              <!-- Opções serão adicionadas aqui -->
+            </div>
+            <button 
+              type="button"
+              onclick="addOption('${fieldId}')"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3"
+            >
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Adicionar Opção
+            </button>
+          </div>
+        `;
+      }
+
+      configDiv.innerHTML = html;
+      
+      // Adiciona atributo data-type para identificar o tipo
+      const fieldCard = document.getElementById(fieldId);
+      fieldCard.setAttribute('data-field-type', type);
+      
+      // Adiciona listeners para atualizar JSON quando inputs mudarem
+      setTimeout(() => {
+        const inputs = configDiv.querySelectorAll('input, select');
+        inputs.forEach(input => {
+          input.addEventListener('input', updateJSON);
+          input.addEventListener('change', updateJSON);
+        });
+        updateJSON();
+      }, 100);
+    }
+
+    /**
+     * Adiciona uma opção para select/checkbox
+     */
+    function addOption(fieldId) {
+      const optionsContainer = document.getElementById(`${fieldId}-options`);
+      const optionIndex = optionsContainer.children.length;
+      
+      const optionDiv = document.createElement('div');
+      optionDiv.className = 'flex gap-2 items-center p-2 rounded-md border';
+      optionDiv.innerHTML = `
+        <input 
+          type="text" 
+          data-option-value
+          placeholder="Valor"
+          class="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        />
+        <input 
+          type="text" 
+          data-option-label
+          placeholder="Label"
+          class="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        />
+        <button 
+          type="button"
+          onclick="this.parentElement.remove()"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+          title="Remover opção"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      `;
+      
+      optionsContainer.appendChild(optionDiv);
+      
+      // Adiciona listeners para atualizar JSON quando opções mudarem
+      const inputs = optionDiv.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('input', updateJSON);
+      });
+      updateJSON();
+    }
+
+    /**
+     * Remove um campo
+     */
+    function removeField(fieldId) {
+      document.getElementById(fieldId).remove();
+      updateJSON();
+      updateScreensList();
+    }
+
+    /**
+     * Coleta dados de um campo
+     */
+    function collectFieldData(fieldCard) {
+      const type = fieldCard.getAttribute('data-field-type');
+      if (!type) return null;
+
+      const field = { type };
+      const inputs = fieldCard.querySelectorAll('[data-field]');
+      
+      inputs.forEach(input => {
+        const fieldName = input.getAttribute('data-field');
+        const value = input.value.trim();
+        if (value) {
+          field[fieldName] = value;
+        }
+      });
+
+      // Coleta opções se houver
+      if (fieldTypes[type].hasOptions) {
+        const optionsContainer = fieldCard.querySelector(`[id$="-options"]`);
+        if (optionsContainer) {
+          const options = [];
+          const optionDivs = optionsContainer.querySelectorAll('div');
+          
+          optionDivs.forEach(div => {
+            const valueInput = div.querySelector('[data-option-value]');
+            const labelInput = div.querySelector('[data-option-label]');
+            
+            if (valueInput && labelInput) {
+              const value = valueInput.value.trim();
+              const label = labelInput.value.trim();
+              if (value !== '' || label !== '') {
+                options.push({ value: value || '', label: label || '' });
+              }
+            }
+          });
+          
+          if (options.length > 0) {
+            field.options = options;
+          }
+        }
+      }
+
+      return field;
+    }
+
+    /**
+     * Adiciona configuração da tela à lista
+     */
+    function addScreenConfig() {
+      const screenSelectEl = document.getElementById('screen-id');
+      const manualInputEl = document.getElementById('screen-id-manual');
+      const screenId = (screenSelectEl.value || (manualInputEl ? manualInputEl.value : '') || '').trim();
+      const screenTitle = document.getElementById('screen-title').value.trim();
+      
+      if (!screenId) {
+        alert('Por favor, informe o ID da tela.');
+        return;
+      }
+
+      const fieldsContainer = document.getElementById('fields-container');
+      const fieldCards = fieldsContainer.querySelectorAll('[id^="field-"]');
+      
+      if (fieldCards.length === 0) {
+        alert('Por favor, adicione pelo menos um campo de filtro.');
+        return;
+      }
+
+      const fields = [];
+      let hasError = false;
+      
+      fieldCards.forEach(card => {
+        const field = collectFieldData(card);
+        if (field && field.id && field.label) {
+          // Validação básica
+          if (field.type === 'dateRange') {
+            if (!field.variableStart || !field.variableEnd) {
+              alert(`Campo "${field.label}": variáveis de data início e fim são obrigatórias.`);
+              hasError = true;
+              return;
+            }
+          } else if (!field.variable) {
+            alert(`Campo "${field.label}": variável é obrigatória.`);
+            hasError = true;
+            return;
+          }
+          fields.push(field);
+        }
+      });
+
+      if (hasError) {
+        return;
+      }
+
+      if (fields.length === 0) {
+        alert('Nenhum campo válido encontrado. Verifique se preencheu todos os campos obrigatórios.');
+        return;
+      }
+
+      const screenConfig = {
+        id: screenId,
+        title: screenTitle || 'Filtros',
+        fields: fields
+      };
+
+      screensConfig.push(screenConfig);
+      updateScreensList();
+      updateJSON();
+      
+      // Limpa formulário
+      screenSelectEl.value = '';
+      if (manualInputEl) {
+        manualInputEl.value = '';
+        manualInputEl.classList.add('hidden');
+      }
+      screenSelectEl.classList.remove('hidden');
+      document.getElementById('screen-title').value = '';
+      fieldsContainer.innerHTML = '';
+      fieldCounter = 0;
+    }
+
+    /**
+     * Atualiza lista de telas configuradas
+     */
+    function updateScreensList() {
+      const listContainer = document.getElementById('screens-list');
+      
+      if (screensConfig.length === 0) {
+        listContainer.innerHTML = '<p class="text-sm text-muted-foreground text-center py-8">Nenhuma tela configurada ainda.</p>';
+        return;
+      }
+
+      listContainer.innerHTML = screensConfig.map((screen, index) => `
+        <div class="rounded-lg border p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <p class="text-sm font-medium mb-1">Tela ID: ${screen.id}</p>
+              <p class="text-sm text-muted-foreground mb-2">${screen.title}</p>
+              <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors bg-secondary text-secondary-foreground">${screen.fields.length} campo(s)</span>
+            </div>
+            <button 
+              onclick="removeScreen(${index})"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 w-8 ml-2"
+              title="Remover tela"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    /**
+     * Remove uma tela da lista
+     */
+    function removeScreen(index) {
+      screensConfig.splice(index, 1);
+      updateScreensList();
+      updateJSON();
+    }
+
+    /**
+     * Atualiza o JSON de saída com apenas os fields do formulário atual
+     */
+    function updateJSON() {
+      const output = document.getElementById('json-output');
+      const copyBtn = document.getElementById('copy-btn');
+      
+      const fieldsContainer = document.getElementById('fields-container');
+      const fieldCards = fieldsContainer.querySelectorAll('[id^="field-"]');
+      
+      if (fieldCards.length === 0) {
+        output.value = '';
+        copyBtn.disabled = true;
+        return;
+      }
+
+      const fields = [];
+      fieldCards.forEach(card => {
+        const field = collectFieldData(card);
+        if (field && field.id && field.label) {
+          // Validação básica
+          if (field.type === 'dateRange') {
+            if (field.variableStart && field.variableEnd) {
+              fields.push(field);
+            }
+          } else if (field.variable) {
+            fields.push(field);
+          }
+        }
+      });
+
+      if (fields.length === 0) {
+        output.value = '';
+        copyBtn.disabled = true;
+        return;
+      }
+
+      const jsonString = JSON.stringify(fields, null, 2);
+      output.value = jsonString;
+      copyBtn.disabled = false;
+    }
+
+    /**
+     * Copia JSON para clipboard
+     */
+    async function copyToClipboard() {
+      const output = document.getElementById('json-output');
+      const successMsg = document.getElementById('copy-success');
+      
+      try {
+        await navigator.clipboard.writeText(output.value);
+        successMsg.classList.remove('hidden');
+        setTimeout(() => {
+          successMsg.classList.add('hidden');
+        }, 3000);
+      } catch (err) {
+        // Fallback para navegadores antigos
+        output.select();
+        document.execCommand('copy');
+        alert('JSON copiado para a área de transferência!');
+      }
+    }
+
+    /**
+     * Limpa tudo
+     */
+    function clearAll() {
+      if (confirm('Tem certeza que deseja limpar todas as configurações?')) {
+        screensConfig = [];
+        document.getElementById('screen-id').value = '';
+        document.getElementById('screen-title').value = '';
+        document.getElementById('fields-container').innerHTML = '';
+        fieldCounter = 0;
+        updateScreensList();
+        updateJSON();
+      }
+    }
+
+    /**
+     * Carrega lista de telas do sistema
+     */
+    async function loadScreens() {
+      const screenSelect = document.getElementById('screen-id');
+      const loadBtn = screenSelect.previousElementSibling.querySelector('button');
+      
+      // Verifica se queryMitra está disponível (contexto Mitra)
+      if (typeof queryMitra === 'function') {
+        try {
+          loadBtn.innerHTML = '<span class="flex items-center gap-1"><svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Carregando...</span>';
+          loadBtn.disabled = true;
+          loadBtn.classList.add('opacity-70', 'cursor-not-allowed');
+          
+          const query = "SELECT ID, NAME FROM INT_SCREEN WHERE ID > 0 ORDER BY NAME";
+          const resultado = await queryMitra(query);
+          
+          if (resultado && resultado.data && resultado.data.length > 0) {
+            screensList = [];
+            
+            // Processa resultado (array de arrays)
+            resultado.data.forEach((row, index) => {
+              // Se primeira linha parece ser cabeçalho, pula
+              if (index === 0 && row.some(cell => String(cell).toUpperCase() === 'ID' || String(cell).toUpperCase() === 'NAME')) {
+                return;
+              }
+              
+              const id = String(row[0] || '');
+              const name = String(row[1] || '');
+              
+              if (id && name) {
+                screensList.push({ id, name });
+              }
+            });
+            
+            // Se não encontrou dados, tenta sem pular primeira linha
+            if (screensList.length === 0 && resultado.data.length > 0) {
+              resultado.data.forEach(row => {
+                const id = String(row[0] || '');
+                const name = String(row[1] || '');
+                if (id && name && id !== 'ID' && name !== 'NAME') {
+                  screensList.push({ id, name });
+                }
+              });
+            }
+            
+            populateScreenSelect();
+            loadBtn.innerHTML = '<span class="flex items-center gap-1 text-green-600"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Carregado</span>';
+            setTimeout(() => {
+              loadBtn.innerHTML = '🔄 Carregar Telas';
+              loadBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }, 2000);
+          } else {
+            alert('Nenhuma tela encontrada.');
+            loadBtn.innerHTML = '🔄 Carregar Telas';
+            loadBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+          }
+        } catch (error) {
+          console.error('Erro ao carregar telas:', error);
+          alert('Erro ao carregar telas. Verifique se você está no contexto Mitra ou use a opção manual.');
+          loadBtn.innerHTML = '🔄 Carregar Telas';
+          loadBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        } finally {
+          loadBtn.disabled = false;
+        }
+      } else {
+        // Se não está no contexto Mitra, mostra opção para colar dados
+        showManualScreenInput();
+      }
+    }
+
+    /**
+     * Popula o select com as telas carregadas
+     */
+    function populateScreenSelect() {
+      const screenSelect = document.getElementById('screen-id');
+      screenSelect.innerHTML = '<option value="">Selecione uma tela...</option>';
+      
+      screensList.forEach(screen => {
+        const option = document.createElement('option');
+        option.value = screen.id;
+        option.textContent = `${screen.name} (ID: ${screen.id})`;
+        screenSelect.appendChild(option);
+      });
+    }
+
+    /**
+     * Quando uma tela é selecionada, atualiza o título automaticamente se vazio
+     */
+    function onScreenSelected() {
+      const screenSelect = document.getElementById('screen-id');
+      const screenTitle = document.getElementById('screen-title');
+      const selectedValue = screenSelect.value;
+      
+      if (selectedValue && !screenTitle.value) {
+        const selectedScreen = screensList.find(s => s.id === selectedValue);
+        if (selectedScreen) {
+          screenTitle.value = `Filtros de ${selectedScreen.name}`;
+        }
+      }
+    }
+
+    /**
+     * Mostra input manual para digitar ID
+     */
+    function showManualInput() {
+      const screenSelect = document.getElementById('screen-id');
+      const manualInput = document.getElementById('screen-id-manual');
+      
+      screenSelect.classList.add('hidden');
+      manualInput.classList.remove('hidden');
+      manualInput.focus();
+      
+      // Quando digitar no manual, atualiza o select também
+      manualInput.addEventListener('blur', function() {
+        if (this.value) {
+          // Cria opção temporária se não existir
+          const exists = Array.from(screenSelect.options).some(opt => opt.value === this.value);
+          if (!exists) {
+            const option = document.createElement('option');
+            option.value = this.value;
+            option.textContent = `Tela ID: ${this.value}`;
+            screenSelect.appendChild(option);
+          }
+          screenSelect.value = this.value;
+        }
+      });
+    }
+
+    /**
+     * Mostra modal para colar dados de telas manualmente (quando não está no contexto Mitra)
+     */
+    function showManualScreenInput() {
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4';
+      modal.innerHTML = `
+        <div class="rounded-lg border bg-background shadow-lg p-6 max-w-2xl w-full">
+          <h3 class="text-lg font-semibold mb-2">Carregar Telas Manualmente</h3>
+          <p class="text-sm text-muted-foreground mb-4">
+            Execute a query abaixo no Mitra e cole o resultado aqui (formato: ID|NOME, um por linha):
+          </p>
+          <div class="bg-muted p-3 rounded-md mb-4">
+            <code class="text-xs font-mono">SELECT ID, NAME FROM INT_SCREEN WHERE ID > 0</code>
+          </div>
+          <textarea 
+            id="manual-screens-data"
+            placeholder="Cole aqui o resultado da query (formato: ID|NOME ou ID,NOME, um por linha)"
+            class="flex min-h-[10rem] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+          ></textarea>
+          <div class="flex gap-3 mt-4">
+            <button 
+              onclick="processManualScreens(this.closest('.fixed'))"
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 flex-1"
+            >
+              Processar
+            </button>
+            <button 
+              onclick="this.closest('.fixed').remove()"
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    /**
+     * Processa dados de telas colados manualmente
+     */
+    function processManualScreens(modal) {
+      const textarea = document.getElementById('manual-screens-data');
+      const data = textarea.value.trim();
+      
+      if (!data) {
+        alert('Por favor, cole os dados das telas.');
+        return;
+      }
+      
+      screensList = [];
+      const lines = data.split('\n');
+      
+      lines.forEach((line, index) => {
+        line = line.trim();
+        if (!line) return;
+        
+        // Tenta diferentes formatos: ID|NOME, ID,NOME, ID\tNOME
+        let parts = [];
+        if (line.includes('|')) {
+          parts = line.split('|');
+        } else if (line.includes('\t')) {
+          parts = line.split('\t');
+        } else if (line.includes(',')) {
+          parts = line.split(',');
+        } else {
+          // Se só tem um valor, assume que é o ID
+          parts = [line, `Tela ${line}`];
+        }
+        
+        const id = String(parts[0] || '').trim();
+        const name = String(parts[1] || `Tela ${id}`).trim();
+        
+        // Pula cabeçalhos
+        if (id.toUpperCase() === 'ID' || name.toUpperCase() === 'NAME' || name.toUpperCase() === 'NOME') {
+          return;
+        }
+        
+        if (id) {
+          screensList.push({ id, name });
+        }
+      });
+      
+      if (screensList.length === 0) {
+        alert('Nenhuma tela válida encontrada. Verifique o formato dos dados.');
+        return;
+      }
+      
+      populateScreenSelect();
+      modal.remove();
+      alert(`${screensList.length} tela(s) carregada(s) com sucesso!`);
+    }
+
+    // Tenta carregar telas automaticamente ao iniciar (se estiver no contexto Mitra)
+    if (typeof queryMitra === 'function') {
+      // Aguarda um pouco para garantir que a página carregou
+      setTimeout(() => {
+        loadScreens();
+      }, 500);
+    }
+
+    // Inicialização
+    updateJSON();
+  </script>
+</body>
+</html>
+
