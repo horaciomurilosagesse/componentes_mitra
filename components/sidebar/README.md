@@ -327,9 +327,16 @@ O campo `filtersByScreen` é um JSON que pode ser configurado em dois formatos:
 | Tipo | Descrição | Propriedades | Formato da Variável |
 |------|-----------|--------------|---------------------|
 | `text` | Campo de texto livre | `id`, `label`, `placeholder`, `variable` | String digitada |
-| `select` | Dropdown seleção única | `id`, `label`, `options` (array de `{value, label}`), `variable` | Valor selecionado |
+| `select` | Dropdown seleção única | `id`, `label`, `options` (array de `{value, label}`) **ou** `optionsQuery`, `optionsValueColumn`, `optionsLabelColumn`, `variable` | Valor selecionado |
 | `checkbox` | Múltipla seleção | `id`, `label`, `options` (array de `{value, label}`), `variable` | Valores separados por vírgula |
 | `dateRange` | Período (início/fim) | `id`, `label`, `variableStart`, `variableEnd` | Duas variáveis: início e fim (formato YYYY-MM-DD) |
+
+**Nota sobre campos `select`:** Os campos do tipo `select` suportam duas formas de definir opções:
+
+1. **Opções Estáticas:** Use a propriedade `options` com um array de objetos `{value, label}`
+2. **Opções Dinâmicas via Query:** Use `optionsQuery` para carregar opções do banco de dados dinamicamente
+
+Veja exemplos detalhados abaixo.
 
 #### Exemplo Completo de Configuração
 
@@ -347,6 +354,52 @@ O campo `filtersByScreen` é um JSON que pode ser configurado em dois formatos:
 - Consistente com outras estruturas do componente
 - Facilita adicionar/remover filtros
 - Cada configuração tem seu próprio campo `id` explícito
+
+#### Select com Opções Dinâmicas via Query
+
+Para campos `select`, você pode carregar opções dinamicamente do banco de dados usando uma query SQL. Isso é útil quando as opções mudam frequentemente ou são muitas para definir manualmente.
+
+**Exemplo com Query Dinâmica:**
+
+```json
+{
+  "type": "select",
+  "id": "centro_resultado",
+  "label": "Centro de Resultado",
+  "variable": ":VAR_FILTRO_CENTRO",
+  "optionsQuery": "SELECT ID, DESCR FROM CENTRO_RESULTADO",
+  "optionsValueColumn": "ID",
+  "optionsLabelColumn": "DESCR"
+}
+```
+
+**Propriedades para Query Dinâmica:**
+
+- `optionsQuery` (obrigatório): Query SQL que retorna as opções. Deve retornar pelo menos 2 colunas.
+- `optionsValueColumn` (opcional): Nome da coluna que será usada como valor da opção. Se não informado, usa a primeira coluna do resultado.
+- `optionsLabelColumn` (opcional): Nome da coluna que será usada como label da opção. Se não informado, usa a segunda coluna do resultado.
+
+**Como Funciona:**
+
+1. Quando o modal de filtros é aberto, o sistema executa a query definida em `optionsQuery` usando `queryMitra()`
+2. O resultado é mapeado para o formato `{value, label}` usando as colunas especificadas
+3. As opções são renderizadas no dropdown
+4. Se a query falhar ou não retornar dados, o dropdown ficará vazio (com apenas a opção "Selecione...")
+
+**Exemplo Completo com Select Dinâmico:**
+
+```json
+{
+  "filtersByScreen": "[{\"id\":\"10\",\"title\":\"Filtros de Análise\",\"fields\":[{\"type\":\"select\",\"id\":\"centro_resultado\",\"label\":\"Centro de Resultado\",\"variable\":\":VAR_FILTRO_CENTRO\",\"optionsQuery\":\"SELECT ID, DESCR FROM CENTRO_RESULTADO\",\"optionsValueColumn\":\"ID\",\"optionsLabelColumn\":\"DESCR\"},{\"type\":\"select\",\"id\":\"status\",\"label\":\"Status\",\"options\":[{\"value\":\"ativo\",\"label\":\"Ativo\"},{\"value\":\"inativo\",\"label\":\"Inativo\"}],\"variable\":\":VAR_FILTER_STATUS\"}]}]"
+}
+```
+
+**Observações Importantes:**
+
+- A query é executada toda vez que o modal de filtros é aberto
+- Use queries simples e rápidas para melhor performance
+- A primeira linha do resultado pode ser tratada como cabeçalho se contiver strings em maiúsculas
+- Se não especificar `optionsValueColumn` ou `optionsLabelColumn`, o sistema usa a primeira e segunda colunas respectivamente
 
 #### Como Configurar filtersByScreen Usando o Gerador de Filtros
 

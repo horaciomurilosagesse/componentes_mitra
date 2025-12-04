@@ -424,6 +424,19 @@
       if (fieldType.hasOptions) {
         html += `
           <div>
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Tipo de Opções</label>
+            <select 
+              id="${fieldId}-options-type"
+              onchange="toggleOptionsType('${fieldId}', this.value)"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="static">Opções Estáticas</option>
+              <option value="query">Via Query SQL</option>
+            </select>
+          </div>
+          
+          <!-- Container para opções estáticas -->
+          <div id="${fieldId}-options-static" class="mt-3">
             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Opções</label>
             <div id="${fieldId}-options" class="space-y-2 mb-2">
               <!-- Opções serão adicionadas aqui -->
@@ -439,6 +452,40 @@
               Adicionar Opção
             </button>
           </div>
+          
+          <!-- Container para opções via query -->
+          <div id="${fieldId}-options-query" class="mt-3 hidden space-y-3">
+            <div>
+              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Query SQL</label>
+              <textarea 
+                data-field="optionsQuery"
+                placeholder="Ex: SELECT ID, DESCR FROM CENTRO_RESULTADO"
+                rows="3"
+                class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+              ></textarea>
+              <p class="text-xs text-muted-foreground mt-1">Query que retorna as opções do dropdown. Deve retornar pelo menos 2 colunas.</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Coluna de Valor</label>
+              <input 
+                type="text" 
+                data-field="optionsValueColumn"
+                placeholder="Ex: ID"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <p class="text-xs text-muted-foreground mt-1">Nome da coluna que será usada como valor da opção. Se não informado, usa a primeira coluna.</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Coluna de Label</label>
+              <input 
+                type="text" 
+                data-field="optionsLabelColumn"
+                placeholder="Ex: DESCR"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <p class="text-xs text-muted-foreground mt-1">Nome da coluna que será usada como label da opção. Se não informado, usa a segunda coluna.</p>
+            </div>
+          </div>
         `;
       }
 
@@ -450,13 +497,31 @@
       
       // Adiciona listeners para atualizar JSON quando inputs mudarem
       setTimeout(() => {
-        const inputs = configDiv.querySelectorAll('input, select');
+        const inputs = configDiv.querySelectorAll('input, select, textarea');
         inputs.forEach(input => {
           input.addEventListener('input', updateJSON);
           input.addEventListener('change', updateJSON);
         });
         updateJSON();
       }, 100);
+    }
+
+    /**
+     * Alterna entre opções estáticas e via query
+     */
+    function toggleOptionsType(fieldId, type) {
+      const staticContainer = document.getElementById(`${fieldId}-options-static`);
+      const queryContainer = document.getElementById(`${fieldId}-options-query`);
+      
+      if (type === 'static') {
+        staticContainer.classList.remove('hidden');
+        queryContainer.classList.add('hidden');
+      } else {
+        staticContainer.classList.add('hidden');
+        queryContainer.classList.remove('hidden');
+      }
+      
+      updateJSON();
     }
 
     /**
@@ -532,26 +597,49 @@
 
       // Coleta opções se houver
       if (fieldTypes[type].hasOptions) {
-        const optionsContainer = fieldCard.querySelector(`[id$="-options"]`);
-        if (optionsContainer) {
-          const options = [];
-          const optionDivs = optionsContainer.querySelectorAll('div');
+        const optionsTypeSelect = fieldCard.querySelector('[id$="-options-type"]');
+        const optionsType = optionsTypeSelect ? optionsTypeSelect.value : 'static';
+        
+        if (optionsType === 'query') {
+          // Coleta dados da query
+          const optionsQueryInput = fieldCard.querySelector('[data-field="optionsQuery"]');
+          const optionsValueColumnInput = fieldCard.querySelector('[data-field="optionsValueColumn"]');
+          const optionsLabelColumnInput = fieldCard.querySelector('[data-field="optionsLabelColumn"]');
           
-          optionDivs.forEach(div => {
-            const valueInput = div.querySelector('[data-option-value]');
-            const labelInput = div.querySelector('[data-option-label]');
+          if (optionsQueryInput && optionsQueryInput.value.trim()) {
+            field.optionsQuery = optionsQueryInput.value.trim();
             
-            if (valueInput && labelInput) {
-              const value = valueInput.value.trim();
-              const label = labelInput.value.trim();
-              if (value !== '' || label !== '') {
-                options.push({ value: value || '', label: label || '' });
-              }
+            if (optionsValueColumnInput && optionsValueColumnInput.value.trim()) {
+              field.optionsValueColumn = optionsValueColumnInput.value.trim();
             }
-          });
-          
-          if (options.length > 0) {
-            field.options = options;
+            
+            if (optionsLabelColumnInput && optionsLabelColumnInput.value.trim()) {
+              field.optionsLabelColumn = optionsLabelColumnInput.value.trim();
+            }
+          }
+        } else {
+          // Coleta opções estáticas
+          const optionsContainer = fieldCard.querySelector(`[id$="-options"]`);
+          if (optionsContainer) {
+            const options = [];
+            const optionDivs = optionsContainer.querySelectorAll('div');
+            
+            optionDivs.forEach(div => {
+              const valueInput = div.querySelector('[data-option-value]');
+              const labelInput = div.querySelector('[data-option-label]');
+              
+              if (valueInput && labelInput) {
+                const value = valueInput.value.trim();
+                const label = labelInput.value.trim();
+                if (value !== '' || label !== '') {
+                  options.push({ value: value || '', label: label || '' });
+                }
+              }
+            });
+            
+            if (options.length > 0) {
+              field.options = options;
+            }
           }
         }
       }

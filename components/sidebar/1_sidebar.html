@@ -1169,7 +1169,7 @@
     /**
      * Abre o modal de filtros
      */
-    function toggleFilterModal() {
+    async function toggleFilterModal() {
       const drawer = domCache.get('filter-drawer');
       const backdrop = domCache.get('filter-backdrop');
       
@@ -1177,7 +1177,7 @@
         // Abre
         drawer.classList.remove('translate-x-full');
         backdrop.classList.remove('hidden');
-        loadFilterFields();
+        await loadFilterFields();
         loadFilterValues();
       } else {
         // Fecha
@@ -1199,7 +1199,7 @@
     /**
      * Carrega e renderiza campos de filtro para a tela atual
      */
-    function loadFilterFields() {
+    async function loadFilterFields() {
       const content = domCache.get('filter-content');
       const empty = domCache.get('filter-empty');
       const title = domCache.get('filter-title');
@@ -1215,15 +1215,32 @@
       const config = filtersByScreen[currentScreenId];
       title.textContent = config.title || 'Filtros';
       
+      // Mostra loading enquanto carrega campos com queries
+      content.innerHTML = '<div class="flex items-center justify-center py-8"><div class="text-sm text-slate-500">Carregando filtros...</div></div>';
+      
       let html = '';
       
-      config.fields.forEach(field => {
+      // Processa campos sequencialmente para aguardar queries
+      for (const field of config.fields) {
         switch (field.type) {
           case 'text':
             html += renderTextField(field);
             break;
           case 'select':
-            html += renderSelectField(field);
+            // Se tiver optionsQuery, carrega opções dinamicamente
+            if (field.optionsQuery) {
+              try {
+                const options = await loadSelectOptions(field);
+                html += renderSelectField(field, options);
+              } catch (error) {
+                console.error(`Erro ao carregar opções do campo ${field.id}:`, error);
+                // Renderiza select vazio em caso de erro
+                html += renderSelectField(field, []);
+              }
+            } else {
+              // Usa opções estáticas
+              html += renderSelectField(field, field.options || []);
+            }
             break;
           case 'checkbox':
             html += renderCheckboxField(field);
@@ -1232,7 +1249,7 @@
             html += renderDateRangeField(field);
             break;
         }
-      });
+      }
       
       content.innerHTML = html;
     }
@@ -1259,15 +1276,95 @@
     }
 
     /**
-     * Renderiza campo select
+     * Carrega opções de um campo select via query SQL
+     * @param {Object} field - Configuração do campo com optionsQuery
+     * @returns {Promise<Array>} Array de opções no formato {value, label}
      */
-    function renderSelectField(field) {
-      const value = filterValues[field.id] || '';
-      let optionsHtml = '';
+    async function loadSelectOptions(field) {
+      if (!field.optionsQuery) {
+        return [];
+      }
       
-      if (field.options) {
-        optionsHtml = field.options.map(opt => 
-          `<option value="${opt.value}" ${opt.value === value ? 'selected' : ''}>${opt.label}</option>`
+      try {
+        const resultado = await queryMitra(field.optionsQuery);
+        if (!resultado || !resultado.data || resultado.data.length === 0) {
+          return [];
+        }
+        
+        // Detecta índices das colunas
+        const valueCol = field.optionsValueColumn || null;
+        const labelCol = field.optionsLabelColumn || null;
+        
+        // Tenta detectar cabeçalhos na primeira linha
+        let startIndex = 0;
+        let valueIndex = 0;
+        let labelIndex = 1;
+        
+        if (resultado.data.length > 0 && Array.isArray(resultado.data[0])) {
+          const firstRow = resultado.data[0];
+          
+          // Verifica se primeira linha parece ser cabeçalho
+          const isHeader = firstRow.some(cell => typeof cell === 'string' && cell.toUpperCase() === cell);
+          
+          if (isHeader) {
+            // Mapeia índices pelos nomes das colunas
+            firstRow.forEach((colName, idx) => {
+              const colUpper = String(colName).toUpperCase();
+              if (valueCol && colUpper === valueCol.toUpperCase()) {
+                valueIndex = idx;
+              }
+              if (labelCol && colUpper === labelCol.toUpperCase()) {
+                labelIndex = idx;
+              }
+            });
+            startIndex = 1; // Pula cabeçalho
+          } else {
+            // Se não tem cabeçalho, usa índices padrão ou busca por nome
+            if (valueCol || labelCol) {
+              // Se especificou nomes mas não tem cabeçalho, assume ordem padrão
+              valueIndex = 0;
+              labelIndex = 1;
+            }
+          }
+        }
+        
+        // Mapeia resultados para formato {value, label}
+        const options = [];
+        for (let i = startIndex; i < resultado.data.length; i++) {
+          const row = resultado.data[i];
+          if (!Array.isArray(row) || row.length === 0) continue;
+          
+          const value = String(row[valueIndex] ?? row[0] ?? '');
+          const label = String(row[labelIndex] ?? row[1] ?? value);
+          
+          if (value) {
+            options.push({ value, label });
+          }
+        }
+        
+        return options;
+      } catch (error) {
+        console.error(`Erro ao executar query de opções para campo ${field.id}:`, error);
+        throw error;
+      }
+    }
+
+    /**
+     * Renderiza campo select
+     * @param {Object} field - Configuração do campo
+     * @param {Array} options - Array de opções no formato {value, label} (opcional, usa field.options se não fornecido)
+     */
+    function renderSelectField(field, options = null) {
+      const value = filterValues[field.id] || '';
+      
+      // Usa opções fornecidas ou fallback para field.options
+      const fieldOptions = options !== null ? options : (field.options || []);
+      
+      let optionsHtml = '<option value="">Selecione...</option>';
+      
+      if (fieldOptions && fieldOptions.length > 0) {
+        optionsHtml += fieldOptions.map(opt => 
+          `<option value="${String(opt.value)}" ${String(opt.value) === value ? 'selected' : ''}>${String(opt.label)}</option>`
         ).join('');
       }
       
@@ -1520,7 +1617,7 @@
         await setFilterVariables(variablesToClear);
         
         // Recarrega campos
-        loadFilterFields();
+        await loadFilterFields();
         updateFilterBadge();
         
         // Recarrega a tela atual
