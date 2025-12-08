@@ -7,7 +7,21 @@
   <title>Sidebar Mitra</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Tooltip styles para estado colapsado */
+    /* Variáveis CSS estilo shadcn */
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --muted: 210 40% 96.1%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 210 40% 96.1%;
+      --accent-foreground: 222.2 47.4% 11.2%;
+      --primary: 221.2 83.2% 53.3%;
+      --primary-foreground: 210 40% 98%;
+      --border: 214.3 31.8% 91.4%;
+      --ring: 221.2 83.2% 53.3%;
+    }
+
+    /* Tooltip styles para estado colapsado - estilo shadcn */
     .tooltip {
       position: relative;
     }
@@ -17,17 +31,18 @@
       left: calc(100% + 8px);
       top: 50%;
       transform: translateY(-50%);
-      background-color: #1e293b;
-      color: white;
+      background-color: hsl(222.2 84% 4.9%);
+      color: hsl(210 40% 98%);
       padding: 6px 10px;
       border-radius: 6px;
       font-size: 12px;
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
+      transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
       z-index: 50;
       pointer-events: none;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     
     .tooltip-content::before {
@@ -36,8 +51,8 @@
       right: 100%;
       top: 50%;
       transform: translateY(-50%);
-      border: 6px solid transparent;
-      border-right-color: #1e293b;
+      border: 5px solid transparent;
+      border-right-color: hsl(222.2 84% 4.9%);
     }
     
     .tooltip:hover .tooltip-content {
@@ -45,22 +60,22 @@
       visibility: visible;
     }
     
-    /* Scrollbar customizada */
+    /* Scrollbar customizada - mais discreta estilo shadcn */
     .sidebar-scroll::-webkit-scrollbar {
       width: 6px;
     }
     
     .sidebar-scroll::-webkit-scrollbar-track {
-      background: #f1f5f9;
+      background: hsl(210 40% 98%);
     }
     
     .sidebar-scroll::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
+      background: hsl(214.3 31.8% 85%);
       border-radius: 3px;
     }
     
     .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
+      background: hsl(214.3 31.8% 75%);
     }
     
     /* Scrollbar oculta mas scroll funcional (modo colapsado) */
@@ -83,7 +98,7 @@
       class="bg-white border-r border-slate-200 transition-all duration-300 ease-in-out flex flex-col w-72 shadow-sm overflow-hidden"
     >
       <!-- Header com Logo e Botão Colapsar -->
-      <div class="flex items-center justify-between p-5 border-b border-slate-200 bg-slate-50/60">
+      <div class="flex items-center justify-between p-6 border-b border-slate-200 bg-slate-50/50 shadow-sm">
         <div id="logo-container" class="flex items-center space-x-2.5">
           <div id="logo-image-container" class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
             <img id="logo-image" src="" alt="Logo" class="hidden w-full h-full object-contain" />
@@ -98,7 +113,7 @@
         <button
           id="btn-collapse"
           onclick="toggleSidebar()"
-          class="p-1.5 rounded-md hover:bg-slate-100 transition-all duration-200"
+          class="p-1.5 rounded-md hover:bg-slate-100 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           aria-label="Colapsar sidebar"
           title="Colapsar sidebar"
         >
@@ -111,7 +126,7 @@
       <!-- Campo de Busca -->
       <div id="search-container" class="px-4 py-3 border-b border-slate-200">
         <div class="relative">
-          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -119,14 +134,14 @@
             type="text"
             placeholder="Buscar..."
             oninput="handleSearch(this.value)"
-            class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
           />
         </div>
       </div>
 
       <!-- Navegação -->
-      <nav id="navigation" class="flex-1 px-3 py-2 overflow-y-auto sidebar-scroll">
-        <ul id="menu-items" class="space-y-0.5">
+      <nav id="navigation" class="flex-1 px-4 py-2 overflow-y-auto sidebar-scroll">
+        <ul id="menu-items" class="space-y-1">
           <!-- Itens do menu serão inseridos aqui via JavaScript -->
         </ul>
       </nav>
@@ -135,7 +150,7 @@
       <div class="mt-auto border-t border-slate-200 flex-shrink-0 overflow-hidden">
         <div id="profile-container" class="border-b border-slate-200 bg-slate-50/30 p-3">
           <div id="profile-expanded" class="relative">
-            <button id="profile-button" onclick="toggleUserMenu()" class="w-full flex items-center px-3 py-2 rounded-md bg-white hover:bg-slate-50 transition-colors duration-200">
+            <button id="profile-button" onclick="toggleUserMenu()" class="w-full flex items-center px-3 py-2 rounded-lg bg-white hover:bg-slate-50 transition-colors duration-150 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
               <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                 <img id="user-avatar" src="" alt="Avatar" class="hidden w-full h-full object-cover" />
                 <span id="user-initials" class="text-slate-700 font-medium text-sm">JD</span>
@@ -144,24 +159,24 @@
                 <p id="user-name" class="text-sm font-medium text-slate-800 truncate">João Silva</p>
                 <p id="user-email" class="text-xs text-slate-500 truncate">usuario@email.com</p>
               </div>
-              <div class="w-2 h-2 bg-green-500 rounded-full ml-2 flex-shrink-0" title="Online" />
+              <div class="w-2.5 h-2.5 bg-green-500 rounded-full ml-2 flex-shrink-0" title="Online" />
               <svg class="h-4 w-4 text-slate-400 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
             <!-- Dropdown do Menu do Usuário -->
-            <div id="user-menu-dropdown" class="hidden absolute bottom-full left-0 right-0 mb-2 bg-white border border-slate-200 rounded-md shadow-lg z-50 overflow-hidden">
+            <div id="user-menu-dropdown" class="hidden absolute bottom-full left-0 right-0 mb-2 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden">
               <!-- Itens do menu serão inseridos aqui via JavaScript -->
             </div>
           </div>
           
           <div id="profile-collapsed" class="hidden flex justify-center">
             <div class="relative tooltip">
-              <button id="profile-button-collapsed" onclick="toggleUserMenu()" class="w-9 h-9 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden">
+              <button id="profile-button-collapsed" onclick="toggleUserMenu()" class="w-9 h-9 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                 <img id="user-avatar-collapsed" src="" alt="Avatar" class="hidden w-full h-full object-cover" />
                 <span id="user-initials-collapsed" class="text-slate-700 font-medium text-sm">JD</span>
               </button>
-              <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+              <div class="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
               <div class="tooltip-content">
                 <span id="tooltip-user-name">João Silva</span>
                 <br>
@@ -169,7 +184,7 @@
               </div>
             </div>
             <!-- Dropdown do Menu do Usuário (colapsado) -->
-            <div id="user-menu-dropdown-collapsed" class="hidden absolute bottom-full left-0 mb-2 bg-white border border-slate-200 rounded-md shadow-lg z-50 min-w-[200px] overflow-hidden">
+            <div id="user-menu-dropdown-collapsed" class="hidden absolute bottom-full left-0 mb-2 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[200px] overflow-hidden">
               <!-- Itens do menu serão inseridos aqui via JavaScript -->
             </div>
           </div>
@@ -215,14 +230,14 @@
   <!-- Modal Drawer de Filtros -->
   <div
     id="filter-drawer"
-    class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col"
+    class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col"
   >
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
+    <div class="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50/50 shadow-sm">
       <h2 id="filter-title" class="text-lg font-semibold text-slate-800">Filtros</h2>
       <button
         onclick="closeFilterModal()"
-        class="p-2 rounded-md hover:bg-slate-200 transition-colors"
+        class="p-2 rounded-md hover:bg-slate-100 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
         aria-label="Fechar filtros"
       >
         <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,16 +257,16 @@
     </div>
 
     <!-- Footer -->
-    <div class="flex items-center justify-between gap-2 p-4 border-t border-slate-200 bg-slate-50">
+    <div class="flex items-center justify-between gap-2 p-4 border-t border-slate-200 bg-slate-50/50">
       <button
         onclick="clearFilters()"
-        class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors"
+        class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         Limpar
       </button>
       <button
         onclick="applyFilters()"
-        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         Aplicar Filtros
       </button>
@@ -610,7 +625,7 @@
         return `
           <button
             onclick="handleUserMenuAction('${item.tipoInteracao}', ${item.idInteracao})"
-            class="w-full flex items-center space-x-2 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors ${
+            class="w-full flex items-center space-x-2 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${
               item.nome === 'Sair' ? 'text-red-600 hover:bg-red-50' : ''
             }"
           >
@@ -686,11 +701,11 @@
         });
         
         // Renderiza grupos
-        Object.keys(menuGroups).forEach(groupName => {
+        Object.keys(menuGroups).forEach((groupName, index) => {
           // Só renderiza cabeçalho de grupo se não estiver colapsado
           if (groupName && groupName !== 'Outros' && !isCollapsed) {
             const groupHeader = document.createElement('li');
-            groupHeader.className = 'px-3 py-2 mt-2';
+            groupHeader.className = index > 0 ? 'px-4 py-2 mt-4 border-t border-slate-100' : 'px-4 py-2 mt-2';
             groupHeader.innerHTML = `
               <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">${groupName}</span>
             `;
@@ -725,10 +740,13 @@
           <div class="relative ${isCollapsed ? 'tooltip' : ''}">
             <button
               onclick="handleMenuItemClick('${item.id}')"
-              class="menu-item w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-md text-left transition-all duration-200 group ${
-                isActive ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              class="menu-item w-full flex items-center space-x-2.5 px-4 py-2.5 rounded-lg text-left transition-colors duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+                isActive 
+                  ? 'bg-slate-100 text-slate-900 border-l-2 border-blue-600 font-medium' 
+                  : 'text-slate-600 hover:bg-slate-100/50 hover:text-slate-900'
               } ${isCollapsed ? 'justify-center px-2' : ''}"
               data-item-id="${item.id}"
+              ${isActive ? 'aria-current="page"' : ''}
             >
               <div class="flex items-center justify-center min-w-[24px]">
                 ${getIconSVG(itemIcon, isActive)}
@@ -738,14 +756,14 @@
                 <div class="flex items-center justify-between w-full">
                   <span class="text-sm ${isActive ? 'font-medium' : 'font-normal'}">${itemLabel}</span>
                   ${itemBadge ? `
-                    <span class="px-1.5 py-0.5 text-xs font-medium rounded-full ${
+                    <span class="px-2 py-0.5 text-xs font-medium rounded-md ${
                       isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
                     }">
                       ${itemBadge}
                     </span>
                   ` : ''}
                   ${hasSubmenu ? `
-                    <svg class="h-4 w-4 text-slate-400 transition-transform ${isSubmenuOpen ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-4 w-4 text-slate-400 transition-transform duration-200 ${isSubmenuOpen ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                   ` : ''}
@@ -753,7 +771,7 @@
               ` : ''}
 
               ${isCollapsed && itemBadge ? `
-                <div class="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-full bg-blue-100 border border-white">
+                <div class="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-md bg-blue-100 border border-white">
                   <span class="text-[10px] font-medium text-blue-700">
                     ${parseInt(itemBadge) > 9 ? '9+' : itemBadge}
                   </span>
@@ -763,13 +781,13 @@
               ${isCollapsed ? `
                 <div class="tooltip-content">
                   ${itemLabel}
-                  ${itemBadge ? `<span class="ml-1.5 px-1 py-0.5 bg-slate-700 rounded-full text-[10px]">${itemBadge}</span>` : ''}
+                  ${itemBadge ? `<span class="ml-1.5 px-1 py-0.5 bg-slate-700 rounded-md text-[10px]">${itemBadge}</span>` : ''}
                 </div>
               ` : ''}
             </button>
           </div>
           ${hasSubmenu && !isCollapsed ? `
-            <div id="submenu-${item.id}" class="ml-4 mt-1 ${isSubmenuOpen ? '' : 'hidden'}">
+            <div id="submenu-${item.id}" class="ml-6 mt-1 bg-slate-50/30 rounded-lg p-1 ${isSubmenuOpen ? '' : 'hidden'}">
               ${renderSubmenu(item.submenu, item.id)}
             </div>
           ` : ''}
@@ -787,15 +805,16 @@
         return `
           <button
             onclick="handleMenuItemClick('${subItem.id}', '${parentId}')"
-            class="w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left transition-all duration-200 text-sm ${
-              isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-600 hover:bg-slate-50'
+            class="w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left transition-colors duration-200 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${
+              isActive ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-600 hover:bg-slate-100/50'
             }"
             data-item-id="${subItem.id}"
+            ${isActive ? 'aria-current="page"' : ''}
           >
-            <div class="w-1.5 h-1.5 rounded-full bg-slate-400 ${isActive ? 'bg-blue-600' : ''}"></div>
+            <div class="w-1 h-1 rounded-full bg-slate-400 ${isActive ? 'bg-blue-600' : ''}"></div>
             <span>${subItem.label}</span>
             ${subItem.badge ? `
-              <span class="ml-auto px-1.5 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-600">
+              <span class="ml-auto px-2 py-0.5 text-xs font-medium rounded-md bg-slate-100 text-slate-600">
                 ${subItem.badge}
               </span>
             ` : ''}
@@ -1269,7 +1288,7 @@
             data-variable="${field.variable}"
             placeholder="${field.placeholder || ''}"
             value="${value}"
-            class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
           />
         </div>
       `;
@@ -1375,7 +1394,7 @@
             id="filter-${field.id}"
             data-field-type="select"
             data-variable="${field.variable}"
-            class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
           >
             ${optionsHtml}
           </select>
@@ -1394,14 +1413,14 @@
         checkboxesHtml = field.options.map(opt => {
           const checked = values.includes(opt.value);
           return `
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label class="flex items-center space-x-2 cursor-pointer hover:bg-slate-50 rounded-md p-1 transition-colors duration-150">
               <input
                 type="checkbox"
                 value="${opt.value}"
                 data-field-id="${field.id}"
                 data-variable="${field.variable}"
                 ${checked ? 'checked' : ''}
-                class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
               />
               <span class="text-sm text-slate-700">${opt.label}</span>
             </label>
@@ -1438,7 +1457,7 @@
                 data-field-type="dateRange"
                 data-variable-start="${field.variableStart}"
                 value="${startValue}"
-                class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
               />
             </div>
             <div>
@@ -1449,7 +1468,7 @@
                 data-field-type="dateRange"
                 data-variable-end="${field.variableEnd}"
                 value="${endValue}"
-                class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
               />
             </div>
           </div>
