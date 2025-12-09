@@ -635,6 +635,67 @@ Após salvar na interface "Configurar JSON", o formato final do `filtersByScreen
 3. **Badge de Contador:** O FAB exibe um badge com a quantidade de filtros ativos
 4. **Persistência:** Os valores dos filtros são salvos em variáveis globais Mitra e persistem entre navegações
 5. **Aplicação:** Ao clicar em "Aplicar Filtros", as variáveis são definidas e a tela atual é recarregada automaticamente
+6. **Recuperação Automática:** Ao abrir o modal de filtros, os valores previamente salvos nas variáveis `:VAR_` são automaticamente recuperados e os campos são pré-preenchidos
+
+#### Recuperação Automática de Filtros Salvos
+
+O componente implementa recuperação automática de valores de filtros que foram previamente salvos em variáveis globais Mitra (`:VAR_`). Isso permite que os filtros persistam mesmo após recarregar a página (F5) ou navegar para outras telas.
+
+**Como Funciona:**
+
+1. **Quando o modal de filtros é aberto:**
+   - O sistema renderiza inicialmente os campos vazios
+   - Em seguida, busca automaticamente os valores salvos de cada variável `:VAR_` configurada nos campos de filtro
+   - Os valores recuperados são populados no objeto `filterValues` em memória
+   - Os campos são re-renderizados com os valores carregados
+   - O badge de contador é atualizado para refletir a quantidade de filtros ativos
+
+2. **Busca de Valores:**
+   - Para cada campo configurado em `filtersByScreen`, o sistema identifica a variável associada (`field.variable`, `field.variableStart`, `field.variableEnd`)
+   - Executa uma query SQL usando `queryMitra()` no formato: `SELECT :VAR_NOME_VARIAVEL as value FROM dual`
+   - Se a variável existir e tiver valor, o campo é pré-preenchido
+   - Se a variável não existir, estiver vazia ou retornar NULL, o campo permanece vazio
+
+3. **Tratamento de Tipos de Campos:**
+   - **Campos simples** (`text`, `select`, `year`, `month`): Busca uma única variável (`field.variable`)
+   - **Campos de período** (`dateRange`): Busca duas variáveis separadas (`field.variableStart` e `field.variableEnd`)
+   - **Campos de múltipla seleção** (`checkbox`, `multiselect`): Busca uma variável que contém valores separados por vírgula (ex: `"1,2,3"`)
+
+4. **Tratamento de Erros:**
+   - Se houver erro ao buscar uma variável específica, o sistema ignora silenciosamente e continua processando as outras variáveis
+   - Isso garante que um erro em um campo não impeça o carregamento dos demais filtros
+
+**Exemplo de Fluxo:**
+
+```javascript
+// 1. Usuário aplica filtros
+// Valores são salvos em variáveis :VAR_FILTER_NOME, :VAR_FILTER_STATUS, etc.
+
+// 2. Usuário recarrega a página (F5)
+// Variáveis permanecem salvas no Mitra
+
+// 3. Usuário abre o modal de filtros novamente
+// Sistema executa automaticamente:
+// - SELECT :VAR_FILTER_NOME as value FROM dual
+// - SELECT :VAR_FILTER_STATUS as value FROM dual
+// - SELECT :VAR_DATA_INICIO as value FROM dual
+// - SELECT :VAR_DATA_FIM as value FROM dual
+// Campos são pré-preenchidos com os valores recuperados
+```
+
+**Benefícios:**
+
+- **Persistência entre sessões:** Filtros aplicados permanecem mesmo após recarregar a página
+- **Experiência do usuário:** Não é necessário reconfigurar filtros toda vez que abrir o modal
+- **Consistência:** Os valores salvos são sempre recuperados automaticamente, garantindo que a tela exiba os mesmos dados filtrados
+- **Transparência:** O processo é automático e transparente para o usuário
+
+**Observações Importantes:**
+
+- A recuperação acontece **apenas quando o modal de filtros é aberto**, não automaticamente ao carregar a página
+- Se uma variável não existir ou estiver vazia, o campo correspondente permanece vazio (comportamento esperado)
+- Valores NULL retornados do Mitra são tratados como valores vazios
+- Para campos de múltipla seleção, o formato de valores separados por vírgula é mantido (ex: `"1,2,3"`)
 
 #### Uso em Queries SQL
 
@@ -746,7 +807,10 @@ if (componentData.userMenu) {
 - `modalMitra({ id, parent, width, height })` - Carrega telas do Mitra em iframe interno usando o parâmetro `parent` (ID do elemento container)
 - `actionMitra({ id })` - Executa Actions do Mitra (fallback para navegação via Action)
 - `setVariableMitra({ name, content })` - Define variáveis globais do Mitra antes de navegar
-- `queryMitra(query)` - Executa queries SQL para carregar dados do menu e do usuário
+- `queryMitra(query)` - Executa queries SQL para:
+  - Carregar dados do menu e do usuário
+  - Carregar opções dinâmicas de campos select/multiselect/year
+  - Recuperar valores salvos de variáveis `:VAR_` para pré-preencher filtros (usando `SELECT :VAR_NOME as value FROM dual`)
 
 ### DBActions Necessárias
 
@@ -856,6 +920,7 @@ O componente inclui um botão flutuante (FAB) no canto inferior direito que abre
 - **Filtros Dinâmicos:** Cada tela pode ter sua própria configuração de filtros
 - **Badge de Contador:** Exibe quantidade de filtros ativos
 - **Persistência:** Valores são salvos em variáveis globais Mitra
+- **Recuperação Automática:** Ao abrir o modal, valores previamente salvos são automaticamente recuperados e campos são pré-preenchidos
 - **Recarga Automática:** Tela atual é recarregada após aplicar filtros
 
 **Tipos de Campos:**
@@ -1147,3 +1212,15 @@ O componente é **totalmente compatível** com o componente Menu nativo do Mitra
 
 - Verifique se `userInfo` está no formato JSON string correto
 - Confirme que contém pelo menos `name` ou `email`
+
+### Filtros não são recuperados automaticamente
+
+Se os filtros não estão sendo pré-preenchidos ao abrir o modal:
+
+- **Verifique se as variáveis existem:** Confirme que as variáveis `:VAR_` foram previamente definidas ao aplicar filtros
+- **Confirme os nomes das variáveis:** Verifique se os nomes das variáveis em `filtersByScreen` correspondem exatamente às variáveis que foram salvas (incluindo o prefixo `:VAR_`)
+- **Teste a query manualmente:** Execute `SELECT :VAR_NOME_VARIAVEL as value FROM dual` diretamente no Mitra para confirmar que a variável tem valor
+- **Verifique o console:** Abra o console do navegador e verifique se há erros ao buscar variáveis (erros são ignorados silenciosamente, mas podem aparecer no console)
+- **Confirme o tipo do campo:** Para campos `dateRange`, verifique se ambas as variáveis (`variableStart` e `variableEnd`) estão configuradas corretamente
+- **Valores NULL ou vazios:** Se uma variável retornar NULL ou string vazia, o campo correspondente permanecerá vazio (comportamento esperado)
+- **Recarregamento da página:** A recuperação acontece apenas ao abrir o modal, não automaticamente ao carregar a página

@@ -1726,8 +1726,14 @@
         // Abre
         drawer.classList.remove('translate-x-full');
         backdrop.classList.remove('hidden');
+        // Renderiza campos inicialmente (vazios)
         await loadFilterFields();
-        loadFilterValues();
+        // Carrega valores salvos das variáveis :VAR_
+        await loadFilterValues();
+        // Re-renderiza campos com valores carregados
+        await loadFilterFields();
+        // Atualiza badge com quantidade de filtros ativos
+        updateFilterBadge();
       } else {
         // Fecha
         closeFilterModal();
@@ -2503,15 +2509,89 @@
     }
 
     /**
-     * Carrega valores salvos das variáveis Mitra
+     * Busca o valor de uma variável Mitra usando queryMitra
+     * @param {string} variableName Nome da variável (ex: ':VAR_FILTRO_EMPRESA')
+     * @returns {Promise<string|null>} Valor da variável ou null se não existir/vazio
+     */
+    async function fetchVariableValue(variableName) {
+      try {
+        const query = `SELECT ${variableName} as value FROM dual`;
+        const resultado = await queryMitra(query);
+        
+        // Verifica se há resultado e se tem dados
+        if (!resultado || !resultado.data || resultado.data.length === 0) {
+          return null;
+        }
+        
+        // Pega o primeiro valor da primeira linha
+        const value = resultado.data[0][0];
+        
+        // Retorna null se o valor for null, undefined ou string vazia
+        if (value === null || value === undefined || value === '') {
+          return null;
+        }
+        
+        // Converte para string e retorna
+        return String(value);
+      } catch (error) {
+        // Ignora silenciosamente erros ao buscar variáveis individuais
+        return null;
+      }
+    }
+
+    /**
+     * Carrega valores salvos das variáveis Mitra e popula filterValues
      */
     async function loadFilterValues() {
       const config = getFilterConfig();
       if (!config) return;
       
-      // Carrega valores das variáveis Mitra (seria necessário uma função queryMitra para variáveis)
-      // Por enquanto, mantém valores em memória
-      // TODO: Implementar carregamento de variáveis Mitra se necessário
+      // Para cada campo, busca o valor da variável correspondente
+      for (const field of config.fields) {
+        try {
+          switch (field.type) {
+            case 'text':
+            case 'select':
+            case 'year':
+            case 'month':
+              if (field.variable) {
+                const value = await fetchVariableValue(field.variable);
+                if (value !== null) {
+                  filterValues[field.id] = value;
+                }
+              }
+              break;
+              
+            case 'multiselect':
+            case 'checkbox':
+              if (field.variable) {
+                const value = await fetchVariableValue(field.variable);
+                if (value !== null) {
+                  filterValues[field.id] = value;
+                }
+              }
+              break;
+              
+            case 'dateRange':
+              if (field.variableStart) {
+                const startValue = await fetchVariableValue(field.variableStart);
+                if (startValue !== null) {
+                  filterValues[`${field.id}_start`] = startValue;
+                }
+              }
+              if (field.variableEnd) {
+                const endValue = await fetchVariableValue(field.variableEnd);
+                if (endValue !== null) {
+                  filterValues[`${field.id}_end`] = endValue;
+                }
+              }
+              break;
+          }
+        } catch (error) {
+          // Ignora silenciosamente erros ao buscar variáveis individuais
+          // Continua processando os outros campos
+        }
+      }
     }
 
     /**

@@ -1,0 +1,129 @@
+entry.yD0taC37.js:3556 [MSAL] PublicClientApplication initialized successfully.
+custom_app_validator.3sBfFe3c.js:1 domainName: mitralab
+entry.yD0taC37.js:1874 createAssistant
+FlexibleChat.M0otHXA8.js:213 🚀 First load completed - initializing firebaseMessagesRetrieved for streaming
+ Mensagem enviada para window.parent (pai direto): [object Object]
+ front end merge - PR ID -: do 1.0  pull request #3626
+ front end commit - commit ID -: do 1.0  9532ca71fda8e9e61997bb41563413af51e27542
+ reCAPTCHA couldn't find user-provided function: vueRecaptchaApiLoaded
+(anonymous) @ recaptcha__pt_br.js:139
+app.672a868b.js:1 Uncaught (in promise) TypeError: Cannot read properties of null (reading 'type')
+index.Yz7HFfK-.js:1 url mitra legacy:  https://mergerelease.mitralab.io/inlineLogin?inlineToken=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNaXRyYSIsImp0aSI6IjM0NDg2Iiwic3ViIjoibXVyaWxvQHNhZ2Vzc2V0ZWMuY29tLmJyIiwiaWF0IjoxNzY1Mjg0OTA4LCJ0bmkiOjM0NDg2LCJhY2Nlc3NUeXBlIjoiQ1JFQVRPUiIsImJhY2tVUkwiOiJodHRwczovL3Byb2QyLm1pdHJhc2hlZXQuY29tOjgwODAiLCJleHAiOjI2MjkyODQ5MDh9.mXyx9HfNCbByTDPis4IRPOTu9dZjWDvw22fiHjv2rhA&inlineUsername=murilo@sagessetec.com.br&inlineScreenId=9&showNavbar=false&screenOriginId=9&isStudioMode=true&tenantId=tenant_34486&sideMenuToggle=true&bkApiUrl=https://prod2.mitrasheet.com:8080&cacheTimestamp=1765284908861&embededByMitra=true&&forceBusinessMode=false&copilot=false&isDeveloperWorkspace=false&isMobileView=false&isFromMobileBrowser=false&isPlayground=false&copilotAIChatOpened=false
+ Canal "iframeCallBackFrontVersion" não encontrado.
+sendMessage @ app.672a868b.js:1
+ Mitra HTML/CardGroup: refreshData() [object Object]
+ Mensagem enviada para window.parent (pai direto): [object Object]
+ Mensagem enviada para window.top: [object Object]
+ Mensagem enviada para window.parent (nível 2): [object Object]
+ Mensagem recebida de window (origem: https://mergerelease.mitralab.io): [object Object]
+ ID do componente armazenado: 124
+ Dados do componente recebidos: [object Object]
+ ID do componente recebido: 124
+ Código de componente recebido
+ RENDER_COMPONENT recebido: [object Object]
+ Dados do componente recebidos: [object Object]
+ Mensagem enviada para window.parent (pai direto): [object Object]
+ Mensagem enviada para window.top: [object Object]
+ Mensagem enviada para window.parent (nível 2): [object Object]
+ Zod (z) disponível no escopo: [object Module]
+ Tipo de z: object
+ queryMitra({"query":"query","jdbcId":1})
+ Enviando interação assíncrona query para componentId: 124 (ID: query_1765284910445_g0rwie3): [object Object]
+ Mensagem enviada para window.parent (pai direto): [object Object]
+ Mensagem enviada para window.top: [object Object]
+ Mensagem enviada para window.parent (nível 2): [object Object]
+ Mensagem INTERACTIONS_MITRA recebida: [object Object]
+ Interação assíncrona detectada com requestId: query_1765284910445_g0rwie3
+ Processando interação assíncrona do tipo query com requestId: query_1765284910445_g0rwie3
+ Processando consulta assíncrona com requestId: query_1765284910445_g0rwie3
+ Consulta SQL formatada: query
+ Executando consulta SQL: query
+ Mensagem enviada para window.parent (pai direto): [object Object]
+ Mensagem enviada para window.top: [object Object]
+ Mensagem enviada para window.parent (nível 2): [object Object]
+ Mensagem recebida de window (origem: https://mergerelease.mitralab.io): [object Object]
+ ID do componente armazenado: 123
+ Dados do componente recebidos: [object Object]
+ ID do componente recebido: 123
+ Código de componente recebido
+ RENDER_COMPONENT recebido: [object Object]
+ Dados do componente recebidos: [object Object]
+ Mensagem enviada para window.parent (pai direto): [object Object]
+ Mensagem enviada para window.top: [object Object]
+ Mensagem enviada para window.parent (nível 2): [object Object]
+ Zod (z) disponível no escopo: [object Module]
+ Tipo de z: object
+ queryMitra({"query":"query","jdbcId":1})
+ Enviando interação assíncrona query para componentId: 123 (ID: query_1765284910890_0519ms9): [object Object]
+ Mensagem enviada para window.parent (pai direto): [object Object]
+ Mensagem enviada para window.top: [object Object]
+ Mensagem enviada para window.parent (nível 2): [object Object]
+ Mensagem INTERACTIONS_MITRA recebida: [object Object]
+ Interação assíncrona detectada com requestId: query_1765284910890_0519ms9
+ Processando interação assíncrona do tipo query com requestId: query_1765284910890_0519ms9
+ Processando consulta assíncrona com requestId: query_1765284910890_0519ms9
+ Consulta SQL formatada: query
+ Executando consulta SQL: query
+ Mensagem enviada para window.parent (pai direto): [object Object]
+ Mensagem enviada para window.top: [object Object]
+ Mensagem enviada para window.parent (nível 2): [object Object]
+ Mensagem READY enviada [object Object]
+ Mensagem enviada para window.parent (pai direto): [object Object]
+ Mensagem enviada para window.top: [object Object]
+ Mensagem enviada para window.parent (nível 2): [object Object]
+ Mensagem READY enviada [object Object]
+ Enviando resposta para requestId: query_1765284910445_g0rwie3 [object Object]
+ Mensagem recebida de window (origem: https://mergerelease.mitralab.io): [object Object]
+ Resposta assíncrona recebida (ID: query_1765284910445_g0rwie3): [object Object]
+ queryMitra result: [object Object]
+ Enviando resposta para requestId: query_1765284910890_0519ms9 [object Object]
+ Mensagem recebida de window (origem: https://mergerelease.mitralab.io): [object Object]
+ Resposta assíncrona recebida (ID: query_1765284910890_0519ms9): [object Object]
+ queryMitra result: [object Object]
+custom_app_validator.3sBfFe3c.js:1 domainName: mitralab
+app.672a868b.js:2 front end merge - PR ID -: do 1.0  pull request #3626
+app.672a868b.js:2 front end commit - commit ID -: do 1.0  9532ca71fda8e9e61997bb41563413af51e27542
+recaptcha__pt_br.js:139 reCAPTCHA couldn't find user-provided function: vueRecaptchaApiLoaded
+(anonymous) @ recaptcha__pt_br.js:139
+index.Yz7HFfK-.js:1 url mitra legacy:  https://mergerelease.mitralab.io/inlineLogin?inlineToken=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNaXRyYSIsImp0aSI6IjM0NDg2Iiwic3ViIjoibXVyaWxvQHNhZ2Vzc2V0ZWMuY29tLmJyIiwiaWF0IjoxNzY1Mjg0OTA4LCJ0bmkiOjM0NDg2LCJhY2Nlc3NUeXBlIjoiQ1JFQVRPUiIsImJhY2tVUkwiOiJodHRwczovL3Byb2QyLm1pdHJhc2hlZXQuY29tOjgwODAiLCJleHAiOjI2MjkyODQ5MDh9.mXyx9HfNCbByTDPis4IRPOTu9dZjWDvw22fiHjv2rhA&inlineUsername=murilo@sagessetec.com.br&inlineScreenId=65&showNavbar=false&screenOriginId=9&isStudioMode=true&tenantId=tenant_34486&sideMenuToggle=true&bkApiUrl=https://prod2.mitrasheet.com:8080&cacheTimestamp=1765288279646&embededByMitra=true&&forceBusinessMode=false&copilot=false&isDeveloperWorkspace=false&isMobileView=false&isFromMobileBrowser=false&isPlayground=false&copilotAIChatOpened=false
+app.672a868b.js:1 Uncaught (in promise) TypeError: Cannot read properties of null (reading 'type')
+    at app.672a868b.js:1:2632848
+    at f (npm.vue-tour.5f1ad8b6.js:1:21255)
+    at Generator._invoke (npm.vue-tour.5f1ad8b6.js:1:21043)
+    at Generator.next (npm.vue-tour.5f1ad8b6.js:1:21678)
+    at i (npm.babel.ec5f1d12.js:1:23355)
+    at u (npm.babel.ec5f1d12.js:1:23549)
+    at npm.babel.ec5f1d12.js:1:23608
+    at new Promise (<anonymous>)
+    at new n (npm.babel.ec5f1d12.js:1:13848)
+    at npm.babel.ec5f1d12.js:1:23494
+app.672a868b.js:1 Canal "iframeCallBackFrontVersion" não encontrado.
+sendMessage @ app.672a868b.js:1
+(index):64 cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+(anonymous) @ (index):64
+(anonymous) @ (index):64
+renderIsolatedContent @ app.672a868b.js:2
+doneLabel @ app.672a868b.js:2
+(anonymous) @ app.672a868b.js:2
+f @ npm.vue-tour.5f1ad8b6.js:1
+(anonymous) @ npm.vue-tour.5f1ad8b6.js:1
+(anonymous) @ npm.vue-tour.5f1ad8b6.js:1
+i @ npm.babel.ec5f1d12.js:1
+u @ npm.babel.ec5f1d12.js:1
+VM56088:1372 Uncaught SyntaxError: Failed to execute 'write' on 'Document': Identifier 'config' has already been declared
+    at a.renderIsolatedContent (app.672a868b.js:2:1427570)
+    at a.doneLabel (app.672a868b.js:2:1416901)
+    at a.<anonymous> (app.672a868b.js:2:1416227)
+    at f (npm.vue-tour.5f1ad8b6.js:1:21255)
+    at Generator._invoke (npm.vue-tour.5f1ad8b6.js:1:21043)
+    at Generator.next (npm.vue-tour.5f1ad8b6.js:1:21678)
+    at i (npm.babel.ec5f1d12.js:1:23355)
+    at u (npm.babel.ec5f1d12.js:1:23549)
+renderIsolatedContent @ app.672a868b.js:2
+doneLabel @ app.672a868b.js:2
+(anonymous) @ app.672a868b.js:2
+f @ npm.vue-tour.5f1ad8b6.js:1
+(anonymous) @ npm.vue-tour.5f1ad8b6.js:1
+(anonymous) @ npm.vue-tour.5f1ad8b6.js:1
+i @ npm.babel.ec5f1d12.js:1
+u @ npm.babel.ec5f1d12.js:1
