@@ -1318,6 +1318,93 @@ O componente é **totalmente compatível** com o componente Menu nativo do Mitra
 - Verifique se `userInfo` está no formato JSON string correto
 - Confirme que contém pelo menos `name` ou `email`
 
+### Menu recarrega quando ações são executadas nas telas
+
+**Sintoma:**
+O menu está recarregando completamente (mostrando loading) toda vez que uma ação é executada dentro de uma tela carregada no iframe. Isso acontece com qualquer tipo de ação: `dbactionMitra()`, `actionMitra()`, `modalMitra()`, `setVariableMitra()`, etc.
+
+**Causa Raiz:**
+
+Este problema ocorre por duas razões principais:
+
+1. **Falta da função `updateMitra()`**: A plataforma Mitra possui um mecanismo de atualização de componentes que chama a função `updateMitra()` quando o componente precisa ser atualizado. Se essa função não existir, a plataforma recarrega o componente inteiro, causando o loading no menu.
+
+2. **Event Listener Global Capturando Eventos do Iframe**: O event listener global de `click` estava capturando eventos que vêm de dentro do iframe onde as telas são carregadas. Quando ações são executadas dentro do iframe, esses eventos podem "vazar" para o documento pai e disparar ações indesejadas no menu.
+
+**Solução:**
+
+#### 1. Adicionar Função `updateMitra()` (Obrigatória)
+
+A função `updateMitra()` deve estar presente no código do componente. Ela é chamada pela plataforma Mitra quando o componente precisa ser atualizado, evitando recarregamento completo:
+
+```javascript
+/**
+ * Função chamada pela plataforma Mitra quando o componente precisa ser atualizado
+ * Evita recarregamento completo do componente quando apenas componentData muda
+ * Baseado no padrão do sidebar_example.html
+ */
+function updateMitra() {
+  // Quando o componenteMitra atualizar, ao invés de atualizar o componente todo,
+  // ele vai chamar esse método apenas.
+  // Por enquanto, não fazemos nada aqui para evitar recarregamento desnecessário.
+  // Se necessário atualizar dados específicos (ex: menu, usuário), pode ser feito aqui.
+  logger.info('UpdateMitra', 'Componente atualizado sem recarregamento completo');
+}
+```
+
+**Importante:** Mesmo que a função esteja vazia, ela deve existir. Sem ela, a plataforma Mitra recarrega o componente inteiro.
+
+#### 2. Melhorar Event Listener de Click
+
+O event listener global de `click` deve ignorar eventos que vêm de dentro do iframe. Use múltiplas verificações para garantir que eventos do iframe sejam detectados:
+
+```javascript
+// Fecha menu do usuário ao clicar fora
+document.addEventListener('click', (e) => {
+  // Ignora eventos que vêm de dentro do iframe (telas carregadas)
+  // Verifica múltiplas formas de detectar eventos do iframe para garantir que não sejam processados
+  const mitraContent = document.getElementById('mitra-main-content');
+  if (mitraContent && (
+    e.target.closest('#mitra-main-content') ||
+    mitraContent.contains(e.target) ||
+    e.target === mitraContent ||
+    (e.target.tagName === 'IFRAME' && mitraContent.querySelector('iframe') === e.target)
+  )) {
+    return;
+  }
+  
+  // Resto do código do listener...
+});
+```
+
+**Por que múltiplas verificações?**
+- `closest()` pode não funcionar em todos os casos de propagação de eventos
+- `contains()` verifica se o elemento está dentro do container
+- Verificação direta do elemento
+- Verificação específica para tags `iframe`
+
+**Regras Críticas para Desenvolvedores:**
+
+1. **SEMPRE inclua `updateMitra()`**: Esta função é essencial e deve estar presente em todos os componentes customizados
+2. **SEMPRE filtre eventos do iframe**: Qualquer event listener global deve verificar se o evento vem do iframe antes de processar
+3. **Use múltiplas verificações**: Não confie apenas em uma forma de detectar eventos do iframe
+4. **Teste ações nas telas**: Sempre teste se ações executadas dentro das telas não causam recarregamento do menu
+
+**Como Verificar se Está Funcionando:**
+
+1. Execute uma ação dentro de uma tela (ex: clique em um botão que executa `dbactionMitra()`)
+2. Observe o menu - ele NÃO deve mostrar loading ou recarregar
+3. O menu deve permanecer estável e funcional
+4. Ações dentro do menu (fechar dropdowns, etc.) devem continuar funcionando normalmente
+
+**Prevenção em Novos Componentes:**
+
+Ao criar novos componentes customizados que serão usados dentro do Menu:
+
+- Sempre inclua a função `updateMitra()` mesmo que vazia
+- Se criar event listeners globais, sempre filtre eventos do iframe
+- Teste interações entre o componente e o menu para garantir que não há conflitos
+
 ### Filtros não são recuperados automaticamente
 
 Se os filtros não estão sendo pré-preenchidos ao abrir o modal:
