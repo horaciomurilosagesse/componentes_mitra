@@ -1813,6 +1813,24 @@
           case 'dateRange':
             html += renderDateRangeField(field);
             break;
+          case 'year':
+            // Se tiver optionsQuery, carrega opções dinamicamente
+            if (field.optionsQuery) {
+              try {
+                const options = await loadSelectOptions(field);
+                html += renderYearField(field, options);
+              } catch (error) {
+                console.error(`Erro ao carregar opções do campo ${field.id}:`, error);
+                html += renderYearField(field, []);
+              }
+            } else {
+              // Usa opções estáticas se fornecidas
+              html += renderYearField(field, field.options || []);
+            }
+            break;
+          case 'month':
+            html += renderMonthField(field);
+            break;
         }
       }
       
@@ -2301,6 +2319,82 @@
     }
 
     /**
+     * Renderiza campo de ano (dropdown)
+     * @param {Object} field - Configuração do campo
+     * @param {Array} options - Array de opções no formato {value, label}
+     */
+    function renderYearField(field, options = null) {
+      const value = filterValues[field.id] || '';
+      
+      const fieldOptions = options !== null ? options : (field.options || []);
+      
+      let optionsHtml = '<option value="">Selecione o ano...</option>';
+      
+      if (fieldOptions && fieldOptions.length > 0) {
+        optionsHtml += fieldOptions.map(opt => 
+          `<option value="${String(opt.value)}" ${String(opt.value) === value ? 'selected' : ''}>${String(opt.label)}</option>`
+        ).join('');
+      }
+      
+      return `
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-slate-700">${field.label}</label>
+          <select
+            id="filter-${field.id}"
+            data-field-type="year"
+            data-variable="${field.variable}"
+            class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
+          >
+            ${optionsHtml}
+          </select>
+        </div>
+      `;
+    }
+
+    /**
+     * Renderiza campo de mês (dropdown com opções estáticas 01-12)
+     * @param {Object} field - Configuração do campo
+     */
+    function renderMonthField(field) {
+      const value = filterValues[field.id] || '';
+      
+      // Opções fixas de meses (01 a 12)
+      const months = [
+        { value: '01', label: '01' },
+        { value: '02', label: '02' },
+        { value: '03', label: '03' },
+        { value: '04', label: '04' },
+        { value: '05', label: '05' },
+        { value: '06', label: '06' },
+        { value: '07', label: '07' },
+        { value: '08', label: '08' },
+        { value: '09', label: '09' },
+        { value: '10', label: '10' },
+        { value: '11', label: '11' },
+        { value: '12', label: '12' }
+      ];
+      
+      let optionsHtml = '<option value="">Selecione o mês...</option>';
+      optionsHtml += months.map(opt => 
+        `<option value="${opt.value}" ${opt.value === value ? 'selected' : ''}>${opt.label}</option>`
+      ).join('');
+      
+      return `
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-slate-700">${field.label}</label>
+          <select
+            id="filter-${field.id}"
+            data-field-type="month"
+            data-variable="${field.variable}"
+            class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
+          >
+            ${optionsHtml}
+          </select>
+        </div>
+      `;
+    }
+
+    /**
      * Coleta valores dos campos de filtro do DOM
      * @returns {Array} Array de objetos {name, content} para setVariableMitra
      */
@@ -2369,6 +2463,26 @@
               }
               if (endValue) {
                 variablesToSet.push({ name: field.variableEnd, content: endValue });
+              }
+            }
+            break;
+          case 'year':
+            const yearInput = document.getElementById(`filter-${field.id}`);
+            if (yearInput) {
+              const value = yearInput.value;
+              filterValues[field.id] = value;
+              if (value) {
+                variablesToSet.push({ name: field.variable, content: value });
+              }
+            }
+            break;
+          case 'month':
+            const monthInput = document.getElementById(`filter-${field.id}`);
+            if (monthInput) {
+              const value = monthInput.value;
+              filterValues[field.id] = value;
+              if (value) {
+                variablesToSet.push({ name: field.variable, content: value });
               }
             }
             break;
@@ -2462,6 +2576,14 @@
             filterValues[`${field.id}_start`] = '';
             filterValues[`${field.id}_end`] = '';
             break;
+          case 'year':
+            variablesToClear.push({ name: field.variable, content: '' });
+            filterValues[field.id] = '';
+            break;
+          case 'month':
+            variablesToClear.push({ name: field.variable, content: '' });
+            filterValues[field.id] = '';
+            break;
         }
       });
       
@@ -2518,6 +2640,12 @@
               break;
             case 'dateRange':
               if (filterValues[`${field.id}_start`] || filterValues[`${field.id}_end`]) activeCount++;
+              break;
+            case 'year':
+              if (filterValues[field.id]) activeCount++;
+              break;
+            case 'month':
+              if (filterValues[field.id]) activeCount++;
               break;
           }
         });

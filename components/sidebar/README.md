@@ -328,13 +328,20 @@ O campo `filtersByScreen` é um JSON que pode ser configurado em dois formatos:
 |------|-----------|--------------|---------------------|
 | `text` | Campo de texto livre | `id`, `label`, `placeholder`, `variable` | String digitada |
 | `select` | Dropdown seleção única | `id`, `label`, `options` (array de `{value, label}`) **ou** `optionsQuery`, `optionsValueColumn`, `optionsLabelColumn`, `variable` | Valor selecionado |
+| `multiselect` | Dropdown múltipla seleção com busca | `id`, `label`, `placeholder` (opcional), `options` (array de `{value, label}`) **ou** `optionsQuery`, `optionsValueColumn`, `optionsLabelColumn`, `variable` | Valores separados por vírgula |
 | `checkbox` | Múltipla seleção | `id`, `label`, `options` (array de `{value, label}`), `variable` | Valores separados por vírgula |
 | `dateRange` | Período (início/fim) | `id`, `label`, `variableStart`, `variableEnd` | Duas variáveis: início e fim (formato YYYY-MM-DD) |
+| `year` | Dropdown de ano | `id`, `label`, `options` (array de `{value, label}`) **ou** `optionsQuery`, `optionsValueColumn`, `optionsLabelColumn`, `variable` | Valor do ano selecionado (ex: "2024") |
+| `month` | Dropdown de mês | `id`, `label`, `variable` | Valor numérico do mês (01 a 12) |
 
-**Nota sobre campos `select`:** Os campos do tipo `select` suportam duas formas de definir opções:
+**Nota sobre campos `select` e `multiselect`:** Ambos os tipos suportam duas formas de definir opções:
 
 1. **Opções Estáticas:** Use a propriedade `options` com um array de objetos `{value, label}`
 2. **Opções Dinâmicas via Query:** Use `optionsQuery` para carregar opções do banco de dados dinamicamente
+
+**Diferença entre `multiselect` e `checkbox`:**
+- **`multiselect`**: Ideal para listas longas de opções. Oferece campo de busca integrado, tags visuais para itens selecionados e interface mais compacta. O placeholder do campo de busca mostra informações sobre as seleções (nome da opção se apenas uma selecionada, ou "X selecionadas" se múltiplas).
+- **`checkbox`**: Ideal para listas curtas onde todas as opções devem estar visíveis simultaneamente.
 
 Veja exemplos detalhados abaixo.
 
@@ -344,7 +351,7 @@ Veja exemplos detalhados abaixo.
 
 ```json
 {
-  "filtersByScreen": "[{\"id\":\"10\",\"title\":\"Filtros de Clientes\",\"fields\":[{\"type\":\"text\",\"id\":\"nome\",\"label\":\"Nome\",\"placeholder\":\"Buscar por nome...\",\"variable\":\":VAR_FILTER_NOME\"},{\"type\":\"select\",\"id\":\"status\",\"label\":\"Status\",\"options\":[{\"value\":\"\",\"label\":\"Todos\"},{\"value\":\"ativo\",\"label\":\"Ativo\"},{\"value\":\"inativo\",\"label\":\"Inativo\"}],\"variable\":\":VAR_FILTER_STATUS\"},{\"type\":\"dateRange\",\"id\":\"periodo\",\"label\":\"Período\",\"variableStart\":\":VAR_DATA_INICIO\",\"variableEnd\":\":VAR_DATA_FIM\"},{\"type\":\"checkbox\",\"id\":\"categorias\",\"label\":\"Categorias\",\"options\":[{\"value\":\"1\",\"label\":\"Categoria A\"},{\"value\":\"2\",\"label\":\"Categoria B\"}],\"variable\":\":VAR_FILTER_CATEGORIAS\"}]},{\"id\":\"15\",\"title\":\"Filtros de Pedidos\",\"fields\":[{\"type\":\"text\",\"id\":\"codigo\",\"label\":\"Código\",\"placeholder\":\"Buscar código...\",\"variable\":\":VAR_FILTER_CODIGO\"}]}]"
+  "filtersByScreen": "[{\"id\":\"10\",\"title\":\"Filtros de Clientes\",\"fields\":[{\"type\":\"text\",\"id\":\"nome\",\"label\":\"Nome\",\"placeholder\":\"Buscar por nome...\",\"variable\":\":VAR_FILTER_NOME\"},{\"type\":\"select\",\"id\":\"status\",\"label\":\"Status\",\"options\":[{\"value\":\"\",\"label\":\"Todos\"},{\"value\":\"ativo\",\"label\":\"Ativo\"},{\"value\":\"inativo\",\"label\":\"Inativo\"}],\"variable\":\":VAR_FILTER_STATUS\"},{\"type\":\"multiselect\",\"id\":\"categorias\",\"label\":\"Categorias\",\"placeholder\":\"Buscar categorias...\",\"variable\":\":VAR_CATEGORIAS\",\"optionsQuery\":\"SELECT ID, NOME FROM CATEGORIAS ORDER BY NOME\",\"optionsValueColumn\":\"ID\",\"optionsLabelColumn\":\"NOME\"},{\"type\":\"dateRange\",\"id\":\"periodo\",\"label\":\"Período\",\"variableStart\":\":VAR_DATA_INICIO\",\"variableEnd\":\":VAR_DATA_FIM\"},{\"type\":\"checkbox\",\"id\":\"tags\",\"label\":\"Tags\",\"options\":[{\"value\":\"vip\",\"label\":\"VIP\"},{\"value\":\"premium\",\"label\":\"Premium\"}],\"variable\":\":VAR_FILTER_TAGS\"}]},{\"id\":\"15\",\"title\":\"Filtros de Pedidos\",\"fields\":[{\"type\":\"text\",\"id\":\"codigo\",\"label\":\"Código\",\"placeholder\":\"Buscar código...\",\"variable\":\":VAR_FILTER_CODIGO\"}]}]"
 }
 ```
 
@@ -401,6 +408,137 @@ Para campos `select`, você pode carregar opções dinamicamente do banco de dad
 - A primeira linha do resultado pode ser tratada como cabeçalho se contiver strings em maiúsculas
 - Se não especificar `optionsValueColumn` ou `optionsLabelColumn`, o sistema usa a primeira e segunda colunas respectivamente
 
+#### Filtros de Ano e Mês
+
+**Exemplo com Ano via Query e Mês Estático:**
+
+```json
+{
+  "filtersByScreen": "[{\"id\":\"10\",\"title\":\"Filtros por Período\",\"fields\":[{\"type\":\"year\",\"id\":\"ano\",\"label\":\"Ano\",\"variable\":\":VAR_FILTRO_ANO\",\"optionsQuery\":\"SELECT DISTINCT YEAR(DATA_CADASTRO) AS ANO FROM PEDIDOS ORDER BY ANO DESC\",\"optionsValueColumn\":\"ANO\",\"optionsLabelColumn\":\"ANO\"},{\"type\":\"month\",\"id\":\"mes\",\"label\":\"Mês\",\"variable\":\":VAR_FILTRO_MES\"}]}]"
+}
+```
+
+**Propriedades do Filtro Year:**
+
+- `type`: "year" (obrigatório)
+- `id`: Identificador único do campo (obrigatório)
+- `label`: Texto do label (obrigatório)
+- `variable`: Nome da variável Mitra (obrigatório, deve começar com `:VAR_`)
+- `optionsQuery`: Query SQL para carregar anos disponíveis (opcional)
+- `optionsValueColumn`: Nome da coluna que será usada como valor (opcional)
+- `optionsLabelColumn`: Nome da coluna que será usada como label (opcional)
+- `options`: Array de opções estáticas `{value, label}` (opcional, alternativa ao optionsQuery)
+
+**Propriedades do Filtro Month:**
+
+- `type`: "month" (obrigatório)
+- `id`: Identificador único do campo (obrigatório)
+- `label`: Texto do label (obrigatório)
+- `variable`: Nome da variável Mitra (obrigatório, deve começar com `:VAR_`)
+
+**Observações:**
+
+- O filtro de mês sempre retorna valores de "01" a "12" (com zero à esquerda)
+- O filtro de ano pode ter opções estáticas ou carregadas via query
+- Ambos os filtros funcionam de forma independente
+- Os valores são salvos em variáveis Mitra separadas
+
+**Exemplo Completo de Configuração com Ano e Mês:**
+
+```json
+{
+  "filtersByScreen": "[{\"id\":\"47\",\"title\":\"Filtros de Análise\",\"fields\":[{\"type\":\"year\",\"id\":\"ano_analise\",\"label\":\"Ano de Análise\",\"variable\":\":VAR_FILTRO_ANO\",\"optionsQuery\":\"SELECT DISTINCT YEAR(DATA_CADASTRO) AS ANO FROM PEDIDOS WHERE YEAR(DATA_CADASTRO) >= 2020 ORDER BY ANO DESC\",\"optionsValueColumn\":\"ANO\",\"optionsLabelColumn\":\"ANO\"},{\"type\":\"month\",\"id\":\"mes_analise\",\"label\":\"Mês de Análise\",\"variable\":\":VAR_FILTRO_MES\"},{\"type\":\"select\",\"id\":\"status\",\"label\":\"Status\",\"options\":[{\"value\":\"ativo\",\"label\":\"Ativo\"},{\"value\":\"inativo\",\"label\":\"Inativo\"}],\"variable\":\":VAR_FILTER_STATUS\"}]}]"
+}
+```
+
+#### Multiselect - Múltipla Seleção com Busca
+
+O campo `multiselect` é um dropdown customizado que permite múltiplas seleções com funcionalidade de busca integrada. É ideal para listas longas de opções onde o usuário precisa filtrar e selecionar múltiplos itens.
+
+**Características Especiais:**
+
+- **Campo de busca integrado**: Filtra opções em tempo real conforme o usuário digita
+- **Tags visuais**: Mostra itens selecionados como badges abaixo do campo, com botão para remover individualmente
+- **Placeholder inteligente**: 
+  - Quando nenhum item está selecionado: mostra o `placeholder` configurado (ou "Buscar e selecionar..." por padrão)
+  - Quando 1 item está selecionado: mostra o nome da opção selecionada
+  - Quando múltiplos itens estão selecionados: mostra "X selecionadas" (onde X é a quantidade)
+- **Dropdown customizado**: Não usa `<select>` nativo, oferecendo melhor controle visual e funcionalidades avançadas
+- **Performance otimizada**: Filtragem eficiente mesmo com centenas de opções
+
+**Exemplo com Opções Estáticas:**
+
+```json
+{
+  "type": "multiselect",
+  "id": "categorias",
+  "label": "Categorias",
+  "placeholder": "Buscar categorias...",
+  "variable": ":VAR_CATEGORIAS",
+  "options": [
+    {"value": "1", "label": "Categoria A"},
+    {"value": "2", "label": "Categoria B"},
+    {"value": "3", "label": "Categoria C"}
+  ]
+}
+```
+
+**Exemplo com Query Dinâmica:**
+
+```json
+{
+  "type": "multiselect",
+  "id": "status",
+  "label": "Status",
+  "placeholder": "Buscar status...",
+  "variable": ":VAR_STATUS",
+  "optionsQuery": "SELECT ID, NOME FROM STATUS ORDER BY NOME",
+  "optionsValueColumn": "ID",
+  "optionsLabelColumn": "NOME"
+}
+```
+
+**Formato da Variável:**
+
+- Valores são salvos separados por vírgula: `"1,2,3"`
+- Variável vazia quando nenhum item selecionado: `""`
+- Mesmo formato do campo `checkbox` para compatibilidade com queries SQL existentes
+
+**Uso em Queries SQL:**
+
+O formato de valores separados por vírgula permite usar a mesma lógica de conversão do campo `checkbox`:
+
+```sql
+-- Converter valores separados por vírgula em lista para IN
+SELECT * FROM PRODUTOS 
+WHERE CATEGORIA_ID IN (
+    SELECT TO_NUMBER(REGEXP_SUBSTR(:VAR_CATEGORIAS, '[^,]+', 1, LEVEL))
+    FROM DUAL
+    CONNECT BY REGEXP_SUBSTR(:VAR_CATEGORIAS, '[^,]+', 1, LEVEL) IS NOT NULL
+)
+```
+
+**Exemplo Completo com Multiselect:**
+
+```json
+{
+  "filtersByScreen": "[{\"id\":\"10\",\"title\":\"Filtros de Produtos\",\"fields\":[{\"type\":\"text\",\"id\":\"nome\",\"label\":\"Nome\",\"placeholder\":\"Buscar por nome...\",\"variable\":\":VAR_FILTER_NOME\"},{\"type\":\"multiselect\",\"id\":\"categorias\",\"label\":\"Categorias\",\"placeholder\":\"Buscar categorias...\",\"variable\":\":VAR_CATEGORIAS\",\"optionsQuery\":\"SELECT ID, NOME FROM CATEGORIAS ORDER BY NOME\",\"optionsValueColumn\":\"ID\",\"optionsLabelColumn\":\"NOME\"},{\"type\":\"multiselect\",\"id\":\"status\",\"label\":\"Status\",\"variable\":\":VAR_STATUS\",\"options\":[{\"value\":\"ativo\",\"label\":\"Ativo\"},{\"value\":\"inativo\",\"label\":\"Inativo\"},{\"value\":\"pendente\",\"label\":\"Pendente\"}]}]}]"
+}
+```
+
+**Quando Usar Multiselect vs Checkbox:**
+
+- **Use `multiselect` quando:**
+  - Há muitas opções (mais de 5-7 itens)
+  - As opções podem mudar dinamicamente (via query)
+  - Você quer economizar espaço vertical na interface
+  - A busca é importante para o usuário encontrar opções rapidamente
+
+- **Use `checkbox` quando:**
+  - Há poucas opções (até 5-7 itens)
+  - Todas as opções devem estar sempre visíveis
+  - Você quer que o usuário veja todas as opções de uma vez
+
 #### Como Configurar filtersByScreen Usando o Gerador de Filtros
 
 O componente inclui um gerador visual de filtros (`filter-generator.html`) que facilita a criação dos campos de filtro. Siga os passos abaixo:
@@ -411,7 +549,7 @@ O componente inclui um gerador visual de filtros (`filter-generator.html`) que f
 2. Configure os campos de filtro desejados:
    - Selecione ou digite o ID da tela
    - Defina o título do modal (opcional)
-   - Adicione os campos de filtro (text, select, checkbox, dateRange)
+   - Adicione os campos de filtro (text, select, multiselect, checkbox, dateRange)
    - Preencha as propriedades de cada campo (id, label, variáveis, opções, etc.)
 3. O JSON gerado aparecerá automaticamente no painel lateral
 4. Clique em "Copiar para Clipboard" para copiar o array de fields
@@ -515,7 +653,16 @@ WHERE (:VAR_FILTER_NOME IS NULL OR NOME LIKE '%' || :VAR_FILTER_NOME || '%')
   ))
 ```
 
-**Nota:** Para checkboxes (múltipla seleção), os valores são salvos separados por vírgula. Use a query acima como exemplo para converter em lista para uso com `IN`.
+**Nota:** Para campos de múltipla seleção (`multiselect` e `checkbox`), os valores são salvos separados por vírgula. Use a query acima como exemplo para converter em lista para uso com `IN`.
+
+**Exemplo com filtros de ano e mês:**
+
+```sql
+-- Exemplo com filtros de ano e mês
+SELECT * FROM PEDIDOS 
+WHERE (:VAR_FILTRO_ANO IS NULL OR YEAR(DATA_PEDIDO) = :VAR_FILTRO_ANO)
+  AND (:VAR_FILTRO_MES IS NULL OR LPAD(MONTH(DATA_PEDIDO), 2, '0') = :VAR_FILTRO_MES)
+```
 
 ### Exemplo de Configuração no Editor Mitra
 
@@ -628,7 +775,7 @@ Nenhuma DBAction é necessária diretamente. O componente usa Actions e telas do
   - **Formato:**
 
     - Text/Select: valor único
-    - Checkbox: valores separados por vírgula (ex: "1,2,3")
+    - Multiselect/Checkbox: valores separados por vírgula (ex: "1,2,3")
     - DateRange: duas variáveis (início e fim) no formato YYYY-MM-DD
 
 ### Telas Utilizadas
@@ -715,7 +862,8 @@ O componente inclui um botão flutuante (FAB) no canto inferior direito que abre
 
 - Campos de texto para busca livre
 - Dropdowns para seleção única
-- Checkboxes para múltipla seleção
+- Multiselect para múltipla seleção com busca (ideal para listas longas)
+- Checkboxes para múltipla seleção (ideal para listas curtas)
 - Seletores de período (data início/fim)
 
 **Uso:** Configure `filtersByScreen` no `componentData` mapeando `screenId` para configuração de filtros. As variáveis definidas podem ser usadas em queries SQL de componentes dentro do iframe.

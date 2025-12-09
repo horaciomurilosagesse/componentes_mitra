@@ -263,6 +263,12 @@
         fields: ['id', 'label', 'variable'],
         hasOptions: true
       },
+      multiselect: {
+        name: 'Multiselect (Múltipla Seleção com Busca)',
+        icon: '🔍',
+        fields: ['id', 'label', 'placeholder', 'variable'],
+        hasOptions: true
+      },
       checkbox: {
         name: 'Checkbox (Múltipla Seleção)',
         icon: '☑️',
@@ -273,6 +279,17 @@
         name: 'Período (Data Início/Fim)',
         icon: '📅',
         fields: ['id', 'label', 'variableStart', 'variableEnd']
+      },
+      year: {
+        name: 'Ano (Dropdown)',
+        icon: '📆',
+        fields: ['id', 'label', 'variable'],
+        hasOptions: true
+      },
+      month: {
+        name: 'Mês (Dropdown)',
+        icon: '🗓️',
+        fields: ['id', 'label', 'variable']
       }
     };
 
@@ -382,6 +399,21 @@
         `;
       }
 
+      if (type === 'multiselect' && fieldType.fields.includes('placeholder')) {
+        html += `
+          <div>
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Placeholder</label>
+            <input 
+              type="text" 
+              data-field="placeholder"
+              placeholder="Ex: Buscar e selecionar..."
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <p class="text-xs text-muted-foreground mt-1">Placeholder exibido quando nenhum item está selecionado</p>
+          </div>
+        `;
+      }
+
       if (fieldType.fields.includes('variable')) {
         html += `
           <div>
@@ -420,7 +452,29 @@
         `;
       }
 
-      // Opções para select e checkbox
+      // Informação especial para campo month
+      if (type === 'month') {
+        html += `
+          <div class="rounded-md border border-blue-200 bg-blue-50 p-3">
+            <p class="text-xs text-blue-800">
+              <strong>ℹ️ Informação:</strong> O campo de mês usa opções fixas de 01 a 12. Não é necessário configurar opções. O valor será salvo no formato "01" a "12" (com zero à esquerda).
+            </p>
+          </div>
+        `;
+      }
+
+      // Informação especial para campo year
+      if (type === 'year') {
+        html += `
+          <div class="rounded-md border border-green-200 bg-green-50 p-3 mb-3">
+            <p class="text-xs text-green-800">
+              <strong>💡 Dica:</strong> O campo de ano pode usar opções estáticas (ex: 2020, 2021, 2022) ou carregar dinamicamente via query SQL (ex: SELECT DISTINCT YEAR(DATA_CADASTRO) AS ANO FROM PEDIDOS ORDER BY ANO DESC).
+            </p>
+          </div>
+        `;
+      }
+
+      // Opções para select, multiselect, checkbox e year
       if (fieldType.hasOptions) {
         html += `
           <div>
@@ -525,7 +579,7 @@
     }
 
     /**
-     * Adiciona uma opção para select/checkbox
+     * Adiciona uma opção para select/multiselect/checkbox/year
      */
     function addOption(fieldId) {
       const optionsContainer = document.getElementById(`${fieldId}-options`);
@@ -682,6 +736,13 @@
               hasError = true;
               return;
             }
+          } else if (field.type === 'month') {
+            // Campo month sempre tem variável, validação básica
+            if (!field.variable) {
+              alert(`Campo "${field.label}": variável é obrigatória.`);
+              hasError = true;
+              return;
+            }
           } else if (!field.variable) {
             alert(`Campo "${field.label}": variável é obrigatória.`);
             hasError = true;
@@ -787,6 +848,11 @@
           // Validação básica
           if (field.type === 'dateRange') {
             if (field.variableStart && field.variableEnd) {
+              fields.push(field);
+            }
+          } else if (field.type === 'month') {
+            // Campo month sempre é válido se tem variável
+            if (field.variable) {
               fields.push(field);
             }
           } else if (field.variable) {
