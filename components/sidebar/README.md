@@ -1111,7 +1111,7 @@ O componente usa Tailwind CSS e segue o tema claro padrão:
 
 ### Dimensões
 
-- **Expandida:** 288px (`w-72`)
+- **Expandida:** 260px (`w-64`) - reduzida em ~10%
 - **Colapsada:** 80px (`w-20`)
 - **Transição:** 300ms com easing suave
 

@@ -289,18 +289,18 @@
     <!-- Sidebar -->
     <aside 
       id="sidebar" 
-      class="bg-white border-r border-slate-200 transition-all duration-300 ease-in-out flex flex-col w-72 shadow-sm overflow-hidden"
+      class="bg-white border-r border-slate-200 transition-all duration-300 ease-in-out flex flex-col w-64 shadow-sm overflow-hidden"
     >
       <!-- Header com Logo e Botão Colapsar -->
       <div class="flex items-center justify-between p-6 border-b border-slate-200 bg-slate-50/50 shadow-sm">
         <div id="logo-container" class="flex items-center space-x-2.5">
           <div id="logo-image-container" class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
             <img id="logo-image" src="" alt="Logo" class="hidden w-full h-full object-contain" />
-            <span id="logo-icon" class="text-white font-bold text-base">A</span>
+            <span id="logo-icon" class="text-white font-bold text-sm">A</span>
           </div>
           <div id="logo-text" class="flex flex-col">
-            <span id="logo-name" class="font-semibold text-slate-800 text-base">App</span>
-            <span id="logo-subtitle" class="text-xs text-slate-500">Dashboard</span>
+            <span id="logo-name" class="font-semibold text-slate-800 text-sm">App</span>
+            <span id="logo-subtitle" class="text-[10px] text-slate-500">Dashboard</span>
           </div>
         </div>
         
@@ -328,7 +328,7 @@
             type="text"
             placeholder="Buscar..."
             oninput="handleSearch(this.value)"
-            class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
+            class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
           />
         </div>
       </div>
@@ -347,11 +347,11 @@
             <button id="profile-button" onclick="toggleUserMenu()" class="w-full flex items-center px-3 py-2 rounded-lg bg-white hover:bg-slate-50 transition-colors duration-150 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
               <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                 <img id="user-avatar" src="" alt="Avatar" class="hidden w-full h-full object-cover" />
-                <span id="user-initials" class="text-slate-700 font-medium text-sm">JD</span>
+                <span id="user-initials" class="text-slate-700 font-medium text-xs">JD</span>
               </div>
               <div class="flex-1 min-w-0 ml-2.5 text-left">
-                <p id="user-name" class="text-sm font-medium text-slate-800 truncate">João Silva</p>
-                <p id="user-email" class="text-xs text-slate-500 truncate">usuario@email.com</p>
+                <p id="user-name" class="text-xs font-medium text-slate-800 truncate">João Silva</p>
+                <p id="user-email" class="text-[10px] text-slate-500 truncate">usuario@email.com</p>
               </div>
               <div class="w-2.5 h-2.5 bg-green-500 rounded-full ml-2 flex-shrink-0" title="Online" />
               <svg class="h-4 w-4 text-slate-400 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,13 +368,13 @@
             <div class="relative tooltip">
               <button id="profile-button-collapsed" onclick="toggleUserMenu()" class="w-9 h-9 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                 <img id="user-avatar-collapsed" src="" alt="Avatar" class="hidden w-full h-full object-cover" />
-                <span id="user-initials-collapsed" class="text-slate-700 font-medium text-sm">JD</span>
+                <span id="user-initials-collapsed" class="text-slate-700 font-medium text-xs">JD</span>
               </button>
               <div class="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
               <div class="tooltip-content">
                 <span id="tooltip-user-name">João Silva</span>
                 <br>
-                <span id="tooltip-user-email" class="text-xs opacity-75">usuario@email.com</span>
+                <span id="tooltip-user-email" class="text-[10px] opacity-75">usuario@email.com</span>
               </div>
             </div>
             <!-- Dropdown do Menu do Usuário (colapsado) -->
@@ -411,7 +411,7 @@
     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
     </svg>
-    <span id="filter-badge" class="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full hidden">0</span>
+    <span id="filter-badge" class="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full hidden">0</span>
   </button>
 
   <!-- Backdrop do Modal -->
@@ -428,7 +428,7 @@
   >
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50/50 shadow-sm">
-      <h2 id="filter-title" class="text-lg font-semibold text-slate-800">Filtros</h2>
+      <h2 id="filter-title" class="text-base font-semibold text-slate-800">Filtros</h2>
       <button
         onclick="closeFilterModal()"
         class="p-2 rounded-md hover:bg-slate-100 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -454,13 +454,13 @@
     <div class="flex items-center justify-between gap-2 p-4 border-t border-slate-200 bg-slate-50/50">
       <button
         onclick="clearFilters()"
-        class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        class="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         Limpar
       </button>
       <button
         onclick="applyFilters()"
-        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        class="px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         Aplicar Filtros
       </button>
@@ -473,7 +473,7 @@
     // ============================================
     const CONFIG = {
       SIDEBAR: {
-        WIDTH_EXPANDED: 288,        // w-72 em pixels
+        WIDTH_EXPANDED: 260,        // w-64 em pixels (reduzido em ~10%)
         WIDTH_COLLAPSED: 80,        // w-20 em pixels
         TRANSITION_DURATION: 300,   // ms
       },
@@ -1315,7 +1315,7 @@
         return `
           <button
             onclick="handleUserMenuAction('${item.tipoInteracao}', ${item.idInteracao})"
-            class="w-full flex items-center space-x-2 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${
+            class="w-full flex items-center space-x-2 px-4 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${
               item.nome === 'Sair' ? 'text-red-600 hover:bg-red-50' : ''
             }"
           >
@@ -1407,7 +1407,7 @@
             const groupHeader = document.createElement('li');
             groupHeader.className = index > 0 ? 'px-4 py-2 mt-4 border-t border-slate-100' : 'px-4 py-2 mt-2';
             groupHeader.innerHTML = `
-              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">${groupName}</span>
+              <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">${groupName}</span>
             `;
             menuContainer.appendChild(groupHeader);
           }
@@ -1470,9 +1470,9 @@
               
               ${!isCollapsed ? `
                 <div class="flex items-center justify-between w-full">
-                  <span class="text-sm ${isActive ? 'font-medium' : 'font-normal'}">${itemLabel}</span>
+                  <span class="text-xs ${isActive ? 'font-medium' : 'font-normal'}">${itemLabel}</span>
                   ${itemBadge ? `
-                    <span class="px-2 py-0.5 text-xs font-medium rounded-md ${
+                    <span class="px-2 py-0.5 text-[10px] font-medium rounded-md ${
                       isActive ? 'bg-slate-100 text-slate-700' : 'bg-slate-100 text-slate-600'
                     }">
                       ${itemBadge}
@@ -1521,7 +1521,7 @@
         return `
           <button
             onclick="handleMenuItemClick('${subItem.id}', '${parentId}')"
-            class="w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left transition-colors duration-200 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${
+            class="w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left transition-colors duration-200 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${
               isActive ? 'border-l-2 border-blue-600 text-slate-900 font-medium' : 'text-slate-600 hover:bg-slate-100/50'
             }"
             data-item-id="${subItem.id}"
@@ -1654,7 +1654,7 @@
       mainContent.classList.add('transitioning');
       
       if (isCollapsed) {
-        sidebar.classList.remove('w-72');
+        sidebar.classList.remove('w-64');
         sidebar.classList.add('w-20');
         logoText.classList.add('hidden');
         searchContainer.classList.add('hidden');
@@ -1672,7 +1672,7 @@
         });
       } else {
         sidebar.classList.remove('w-20');
-        sidebar.classList.add('w-72');
+        sidebar.classList.add('w-64');
         logoText.classList.remove('hidden');
         searchContainer.classList.remove('hidden');
         profileExpanded.classList.remove('hidden');
@@ -1997,7 +1997,7 @@
       title.textContent = config.title || 'Filtros';
       
       // Mostra loading enquanto carrega campos com queries
-      content.innerHTML = '<div class="flex items-center justify-center py-8"><div class="text-sm text-slate-500">Carregando filtros...</div></div>';
+      content.innerHTML = '<div class="flex items-center justify-center py-8"><div class="text-xs text-slate-500">Carregando filtros...</div></div>';
       
       let html = '';
       
@@ -2076,7 +2076,7 @@
       const value = filterValues[field.id] || '';
       return `
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-slate-700">${field.label}</label>
+          <label class="block text-xs font-medium text-slate-700">${field.label}</label>
           <input
             type="text"
             id="filter-${field.id}"
@@ -2084,7 +2084,7 @@
             data-variable="${field.variable}"
             placeholder="${field.placeholder || ''}"
             value="${value}"
-            class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
+            class="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
           />
         </div>
       `;
@@ -2185,12 +2185,12 @@
       
       return `
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-slate-700">${field.label}</label>
+          <label class="block text-xs font-medium text-slate-700">${field.label}</label>
           <select
             id="filter-${field.id}"
             data-field-type="select"
             data-variable="${field.variable}"
-            class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
+            class="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
           >
             ${optionsHtml}
           </select>
@@ -2261,7 +2261,7 @@
       
       return `
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-slate-700">${field.label}</label>
+          <label class="block text-xs font-medium text-slate-700">${field.label}</label>
           <div class="multiselect-container">
             <div class="multiselect-trigger" onclick="toggleMultiSelect('${field.id}')">
               <input
@@ -2496,7 +2496,7 @@
                 ${checked ? 'checked' : ''}
                 class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
               />
-              <span class="text-sm text-slate-700">${opt.label}</span>
+              <span class="text-xs text-slate-700">${opt.label}</span>
             </label>
           `;
         }).join('');
@@ -2504,7 +2504,7 @@
       
       return `
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-slate-700">${field.label}</label>
+          <label class="block text-xs font-medium text-slate-700">${field.label}</label>
           <div class="space-y-2" data-field-type="checkbox" data-field-id="${field.id}" data-variable="${field.variable}">
             ${checkboxesHtml}
           </div>
@@ -2521,7 +2521,7 @@
       
       return `
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-slate-700">${field.label}</label>
+          <label class="block text-xs font-medium text-slate-700">${field.label}</label>
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block text-xs text-slate-500 mb-1">Início</label>
@@ -2531,7 +2531,7 @@
                 data-field-type="dateRange"
                 data-variable-start="${field.variableStart}"
                 value="${startValue}"
-                class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
               />
             </div>
             <div>
@@ -2542,7 +2542,7 @@
                 data-field-type="dateRange"
                 data-variable-end="${field.variableEnd}"
                 value="${endValue}"
-                class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
               />
             </div>
           </div>
@@ -2570,12 +2570,12 @@
       
       return `
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-slate-700">${field.label}</label>
+          <label class="block text-xs font-medium text-slate-700">${field.label}</label>
           <select
             id="filter-${field.id}"
             data-field-type="year"
             data-variable="${field.variable}"
-            class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
+            class="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
           >
             ${optionsHtml}
           </select>
@@ -2613,12 +2613,12 @@
       
       return `
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-slate-700">${field.label}</label>
+          <label class="block text-xs font-medium text-slate-700">${field.label}</label>
           <select
             id="filter-${field.id}"
             data-field-type="month"
             data-variable="${field.variable}"
-            class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
+            class="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:border-transparent transition-all duration-200"
           >
             ${optionsHtml}
           </select>
