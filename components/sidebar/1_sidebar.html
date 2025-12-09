@@ -88,6 +88,200 @@
     .sidebar-scroll-hidden::-webkit-scrollbar {
       display: none; /* Chrome, Safari, Opera */
     }
+    
+    /* Otimizações para evitar recarregamento do iframe durante transição */
+    #main-content {
+      contain: layout style;
+      /* Usa GPU acceleration para transições mais suaves */
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+    
+    #mitra-main-content {
+      contain: layout;
+      isolation: isolate;
+      /* Garante que o iframe não seja afetado por mudanças de layout */
+      position: relative;
+    }
+    
+    #mitra-main-content iframe {
+      pointer-events: auto;
+      /* Previne recarregamento durante resize */
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    /* Durante a transição, previne interações que podem causar recarregamento */
+    #main-content.transitioning {
+      pointer-events: none;
+    }
+    
+    #main-content.transitioning #mitra-main-content {
+      pointer-events: none;
+    }
+    
+    /* Otimização adicional: usa transform para evitar reflow */
+    #main-content.transitioning #mitra-main-content iframe {
+      will-change: auto;
+    }
+    
+    /* Estilos para Multiselect */
+    .multiselect-container {
+      position: relative;
+    }
+    
+    .multiselect-trigger {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 12px;
+      background-color: white;
+      border: 1px solid hsl(214.3 31.8% 91.4%);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .multiselect-trigger:hover {
+      border-color: hsl(214.3 31.8% 85%);
+    }
+    
+    .multiselect-trigger:focus-within {
+      outline: none;
+      box-shadow: 0 0 0 2px hsl(221.2 83.2% 53.3%), 0 0 0 4px rgba(59, 130, 246, 0.1);
+      border-color: transparent;
+    }
+    
+    .multiselect-search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 14px;
+      padding: 0;
+      min-width: 0;
+    }
+    
+    .multiselect-search-input::placeholder {
+      color: hsl(215.4 16.3% 46.9%);
+    }
+    
+    .multiselect-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid hsl(214.3 31.8% 91.4%);
+      border-radius: 6px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      z-index: 50;
+      max-height: 300px;
+      overflow-y: auto;
+      animation: slideDown 0.15s ease-out;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .multiselect-options {
+      padding: 4px;
+    }
+    
+    .multiselect-option {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.15s ease-in-out;
+    }
+    
+    .multiselect-option:hover {
+      background-color: hsl(210 40% 96.1%);
+    }
+    
+    .multiselect-option input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      cursor: pointer;
+      accent-color: hsl(221.2 83.2% 53.3%);
+    }
+    
+    .multiselect-option label {
+      flex: 1;
+      cursor: pointer;
+      font-size: 14px;
+      color: hsl(222.2 47.4% 11.2%);
+      user-select: none;
+    }
+    
+    .multiselect-option.hidden {
+      display: none;
+    }
+    
+    .multiselect-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    
+    .multiselect-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      background-color: hsl(210 40% 96.1%);
+      border: 1px solid hsl(214.3 31.8% 91.4%);
+      border-radius: 4px;
+      font-size: 12px;
+      color: hsl(222.2 47.4% 11.2%);
+    }
+    
+    .multiselect-tag-remove {
+      margin-left: 6px;
+      cursor: pointer;
+      color: hsl(215.4 16.3% 46.9%);
+      font-weight: bold;
+      line-height: 1;
+      transition: color 0.15s ease-in-out;
+    }
+    
+    .multiselect-tag-remove:hover {
+      color: hsl(222.2 84% 4.9%);
+    }
+    
+    .multiselect-chevron {
+      width: 16px;
+      height: 16px;
+      color: hsl(215.4 16.3% 46.9%);
+      transition: transform 0.2s ease-in-out;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    
+    .multiselect-trigger.open .multiselect-chevron {
+      transform: rotate(180deg);
+    }
+    
+    .multiselect-empty {
+      padding: 12px;
+      text-align: center;
+      color: hsl(215.4 16.3% 46.9%);
+      font-size: 14px;
+    }
   </style>
 </head>
 <body class="bg-slate-50">
@@ -194,7 +388,7 @@
     </aside>
 
     <!-- Conteúdo Principal -->
-    <main id="main-content" class="flex-1 transition-all duration-300 ease-in-out ml-0 overflow-hidden">
+    <main id="main-content" class="flex-1 transition-all duration-300 ease-in-out overflow-hidden">
       <div id="mitra-main-content" class="w-full h-full">
         <div id="mitra-initial-placeholder" class="flex flex-col items-center justify-center h-full text-slate-400">
           <svg class="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,6 +485,9 @@
     // Debounce para busca
     let searchTimeout = null;
     
+    // Cor primária personalizada
+    let primaryColorValue = null;
+    
     // Cache de elementos DOM frequentemente acessados
     const domCache = {
       get(id) {
@@ -325,6 +522,249 @@
       if (match && match[1]) return parseInt(match[1]);
       return null;
     };
+
+    /**
+     * Converte cor hex para RGBA
+     * @param {string} hex - Cor em formato hex (ex: "#3B82F6" ou "3B82F6")
+     * @param {number} alpha - Opacidade de 0 a 1 (ex: 0.3 para 30% de opacidade)
+     * @returns {string} Cor em formato RGBA (ex: "rgba(59, 130, 246, 0.3)")
+     */
+    function hexToRgba(hex, alpha = 1) {
+      // Remove # se presente
+      hex = hex.replace('#', '');
+      
+      // Converte para RGB
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    /**
+     * Converte cor hex para HSL
+     * @param {string} hex - Cor em formato hex (ex: "#3B82F6" ou "3B82F6")
+     * @returns {string} Cor em formato HSL (ex: "221.2 83.2% 53.3%")
+     */
+    function hexToHsl(hex) {
+      // Remove # se presente
+      hex = hex.replace('#', '');
+      
+      // Converte para RGB
+      const r = parseInt(hex.substring(0, 2), 16) / 255;
+      const g = parseInt(hex.substring(2, 4), 16) / 255;
+      const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+
+      if (max === min) {
+        h = s = 0; // achromatic
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+          case g: h = ((b - r) / d + 2) / 6; break;
+          case b: h = ((r - g) / d + 4) / 6; break;
+        }
+      }
+
+      h = Math.round(h * 360);
+      s = Math.round(s * 100);
+      l = Math.round(l * 100);
+
+      return `${h} ${s}% ${l}%`;
+    }
+
+    /**
+     * Aplica cor primária personalizada aos elementos do sidebar
+     * @param {string} color - Cor em formato hex (ex: "#3B82F6")
+     */
+    function applyPrimaryColor(color) {
+      if (!color) return;
+      
+      // Remove espaços e converte para formato consistente
+      color = String(color).trim();
+      
+      // Se não começar com #, adiciona
+      if (!color.startsWith('#')) {
+        color = '#' + color;
+      }
+      
+      // Valida formato hex
+      if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
+        console.warn('Formato de cor inválido. Use formato hex (ex: #3B82F6)');
+        return;
+      }
+      
+      // Armazena a cor globalmente
+      primaryColorValue = color;
+      
+      // Converte para HSL
+      const hsl = hexToHsl(color);
+      
+      // Atualiza variáveis CSS
+      document.documentElement.style.setProperty('--primary', hsl);
+      document.documentElement.style.setProperty('--ring', hsl);
+      
+      // Calcula variações da cor
+      const lighter = lightenColor(color, 35); // Para bg ativo
+      const light = lightenColor(color, 20); // Para bg-blue-100 equivalente
+      const darker = darkenColor(color, 10); // Para hover states
+      
+      // Calcula cor com transparência para item ativo no modo colapsado (70% de transparência = 30% de opacidade)
+      const primaryColorWithOpacity = hexToRgba(color, 0.1);
+      
+      // Adiciona estilo CSS dinâmico para classes que usam blue-*
+      const styleId = 'dynamic-primary-color';
+      let styleElement = document.getElementById(styleId);
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = styleId;
+        document.head.appendChild(styleElement);
+      }
+      
+      styleElement.textContent = `
+        /* Logo container */
+        #logo-image-container {
+          background-color: ${color} !important;
+        }
+        
+        /* FAB de filtros */
+        #filter-fab {
+          background-color: ${color} !important;
+        }
+        #filter-fab:hover {
+          background-color: ${darker} !important;
+        }
+        
+        /* Botão aplicar filtros */
+        button[onclick="applyFilters()"] {
+          background-color: ${color} !important;
+        }
+        button[onclick="applyFilters()"]:hover {
+          background-color: ${darker} !important;
+        }
+        
+        /* Item ativo no modo expandido - borda + background transparente (70% de transparência) */
+        .menu-item.border-l-2:not(.collapsed-active) {
+          border-left-color: ${color} !important;
+          border-left-width: 2px !important;
+          background-color: ${primaryColorWithOpacity} !important;
+        }
+        
+        /* Item ativo no modo colapsado - sem borda, com background transparente (70% de transparência) */
+        .menu-item.collapsed-active {
+          border-left-width: 0 !important;
+          background-color: ${primaryColorWithOpacity} !important;
+        }
+        
+        /* Ícone ativo */
+        .menu-item .text-blue-600,
+        .menu-item.active .text-slate-500 {
+          color: ${color} !important;
+        }
+        
+        /* Submenu indicator ativo */
+        .active-indicator {
+          background-color: ${color} !important;
+        }
+        
+        /* Submenu ativo - apenas borda */
+        button[data-item-id].border-l-2 {
+          border-left-color: ${color} !important;
+          border-left-width: 2px !important;
+        }
+        
+        /* Focus rings */
+        .focus-visible\\:ring-blue-500:focus-visible,
+        .focus\\:ring-blue-500:focus {
+          --tw-ring-color: ${color} !important;
+        }
+        
+        /* Input focus */
+        input:focus,
+        select:focus {
+          --tw-ring-color: ${color} !important;
+        }
+      `;
+      
+      // Aplica cor diretamente nos elementos existentes
+      updatePrimaryColorElements(color, darker);
+    }
+
+    /**
+     * Atualiza elementos existentes com a cor primária
+     * @param {string} color - Cor em formato hex
+     * @param {string} darker - Cor escurecida para hover
+     */
+    function updatePrimaryColorElements(color, darker) {
+      // Logo container
+      const logoContainer = domCache.get('logo-image-container');
+      if (logoContainer) {
+        logoContainer.style.backgroundColor = color;
+      }
+      
+      // FAB de filtros
+      const filterFab = domCache.get('filter-fab');
+      if (filterFab) {
+        filterFab.style.backgroundColor = color;
+      }
+      
+      // Botão aplicar filtros (será aplicado via CSS, mas garantimos aqui também)
+      setTimeout(() => {
+        const applyButton = document.querySelector('button[onclick="applyFilters()"]');
+        if (applyButton) {
+          applyButton.style.backgroundColor = color;
+        }
+      }, 100);
+    }
+
+    /**
+     * Escurece uma cor hex
+     * @param {string} hex - Cor em formato hex
+     * @param {number} percent - Percentual para escurecer (0-100)
+     * @returns {string} Cor escurecida em formato hex
+     */
+    function darkenColor(hex, percent) {
+      hex = hex.replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      
+      const newR = Math.max(0, Math.floor(r * (1 - percent / 100)));
+      const newG = Math.max(0, Math.floor(g * (1 - percent / 100)));
+      const newB = Math.max(0, Math.floor(b * (1 - percent / 100)));
+      
+      return '#' + [newR, newG, newB].map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      }).join('');
+    }
+
+    /**
+     * Clareia uma cor hex
+     * @param {string} hex - Cor em formato hex
+     * @param {number} percent - Percentual para clarear (0-100)
+     * @returns {string} Cor clareada em formato hex
+     */
+    function lightenColor(hex, percent) {
+      hex = hex.replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      
+      const newR = Math.min(255, Math.floor(r + (255 - r) * (percent / 100)));
+      const newG = Math.min(255, Math.floor(g + (255 - g) * (percent / 100)));
+      const newB = Math.min(255, Math.floor(b + (255 - b) * (percent / 100)));
+      
+      return '#' + [newR, newG, newB].map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      }).join('');
+    }
 
     /**
      * Inicializa a sidebar com dados do componentData
@@ -364,7 +804,7 @@
 
         // Cor primária personalizada (se fornecida)
         if (componentData.primaryColor) {
-          document.documentElement.style.setProperty('--primary-color', componentData.primaryColor);
+          applyPrimaryColor(componentData.primaryColor);
         }
 
         // Estado inicial do item ativo (se fornecido)
@@ -528,15 +968,31 @@
       let columnOrder = {};
       let startIndex = 0;
       
-      // Se a primeira linha parece ser cabeçalho (strings), usa-a
+      // Lista de nomes de colunas esperados (em maiúsculas para comparação)
+      const expectedColumns = [
+        idCol.toUpperCase(),
+        nameCol.toUpperCase(),
+        iconCol.toUpperCase(),
+        groupCol.toUpperCase(),
+        parentIdCol.toUpperCase(),
+        urlCol.toUpperCase()
+      ];
+      
+      // Verifica se a primeira linha corresponde aos nomes das colunas esperados
       if (data.length > 0 && Array.isArray(data[0])) {
         const firstRow = data[0];
-        const isHeader = firstRow.some(cell => typeof cell === 'string' && cell.toUpperCase() === cell);
+        // Converte primeira linha para strings e maiúsculas para comparação
+        const firstRowUpper = firstRow.map(cell => String(cell).toUpperCase().trim());
+        
+        // Verifica se pelo menos 3 colunas da primeira linha correspondem aos nomes esperados
+        // Isso evita falsos positivos quando dados reais estão em maiúsculas
+        const matchingColumns = firstRowUpper.filter(col => expectedColumns.includes(col)).length;
+        const isHeader = matchingColumns >= 3;
         
         if (isHeader) {
           // Primeira linha é cabeçalho, mapeia índices
           firstRow.forEach((colName, idx) => {
-            const colUpper = String(colName).toUpperCase();
+            const colUpper = String(colName).toUpperCase().trim();
             if (colUpper === idCol.toUpperCase()) columnOrder.id = idx;
             if (colUpper === nameCol.toUpperCase()) columnOrder.name = idx;
             if (colUpper === iconCol.toUpperCase()) columnOrder.icon = idx;
@@ -565,9 +1021,14 @@
           url: String(row[columnOrder.url] ?? row[5] ?? '')
         };
         
-        // Converte ícone PascalCase para lowercase (ex: LayoutDashboard -> layoutdashboard)
-        // Remove espaços e converte para lowercase
-        item.icon = item.icon.replace(/([A-Z])/g, (match) => match.toLowerCase()).toLowerCase();
+        // Valida se o item tem pelo menos ID e label antes de adicionar
+        if (!item.id || (!item.label || !item.label.trim())) {
+          console.warn(`Item na linha ${i} ignorado por falta de ID ou label:`, item);
+          continue;
+        }
+        
+        // A normalização do ícone é feita na função getIconSVG()
+        // Mantém o valor original da query para permitir flexibilidade
         
         // Processa URL se for do formato Mitra (embedded)
         if (item.url && item.url.includes('/embedded')) {
@@ -577,6 +1038,9 @@
         itemsMap[item.id] = item;
         items.push(item);
       }
+      
+      // Debug: log do número de itens processados
+      console.log(`parseMenuQueryResult: processados ${items.length} itens (startIndex: ${startIndex}, total linhas: ${data.length})`);
       
       // Constrói hierarquia de submenus
       const rootItems = [];
@@ -681,6 +1145,16 @@
         domCache.get('user-menu-dropdown').classList.add('hidden');
         domCache.get('user-menu-dropdown-collapsed').classList.add('hidden');
       }
+      
+      // Fecha multiselects ao clicar fora
+      if (!e.target.closest('.multiselect-container')) {
+        document.querySelectorAll('.multiselect-dropdown').forEach(dropdown => {
+          dropdown.classList.add('hidden');
+        });
+        document.querySelectorAll('.multiselect-trigger').forEach(trigger => {
+          trigger.classList.remove('open');
+        });
+      }
     });
 
     /**
@@ -736,15 +1210,31 @@
       const itemIcon = item.icon || 'home';
       const itemBadge = item.badge || '';
 
+      // Determina classes do botão baseado no estado (ativo e colapsado)
+      let buttonClasses = 'menu-item w-full flex items-center space-x-2.5 px-4 py-2.5 rounded-lg text-left transition-colors duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
+      
+      if (isCollapsed) {
+        buttonClasses += ' justify-center px-2';
+        if (isActive) {
+          // Modo colapsado e ativo: sem borda, com background transparente
+          buttonClasses += ' collapsed-active font-medium text-slate-900';
+        } else {
+          buttonClasses += ' text-slate-600 hover:bg-slate-100/50 hover:text-slate-900';
+        }
+      } else {
+        // Modo expandido
+        if (isActive) {
+          buttonClasses += ' border-l-2 border-blue-600 font-medium text-slate-900';
+        } else {
+          buttonClasses += ' text-slate-600 hover:bg-slate-100/50 hover:text-slate-900';
+        }
+      }
+
       li.innerHTML = `
           <div class="relative ${isCollapsed ? 'tooltip' : ''}">
             <button
               onclick="handleMenuItemClick('${item.id}')"
-              class="menu-item w-full flex items-center space-x-2.5 px-4 py-2.5 rounded-lg text-left transition-colors duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
-                isActive 
-                  ? 'bg-slate-100 text-slate-900 border-l-2 border-blue-600 font-medium' 
-                  : 'text-slate-600 hover:bg-slate-100/50 hover:text-slate-900'
-              } ${isCollapsed ? 'justify-center px-2' : ''}"
+              class="${buttonClasses}"
               data-item-id="${item.id}"
               ${isActive ? 'aria-current="page"' : ''}
             >
@@ -757,7 +1247,7 @@
                   <span class="text-sm ${isActive ? 'font-medium' : 'font-normal'}">${itemLabel}</span>
                   ${itemBadge ? `
                     <span class="px-2 py-0.5 text-xs font-medium rounded-md ${
-                      isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                      isActive ? 'bg-slate-100 text-slate-700' : 'bg-slate-100 text-slate-600'
                     }">
                       ${itemBadge}
                     </span>
@@ -771,8 +1261,8 @@
               ` : ''}
 
               ${isCollapsed && itemBadge ? `
-                <div class="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-md bg-blue-100 border border-white">
-                  <span class="text-[10px] font-medium text-blue-700">
+                <div class="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-md bg-slate-100 border border-white">
+                  <span class="text-[10px] font-medium text-slate-700">
                     ${parseInt(itemBadge) > 9 ? '9+' : itemBadge}
                   </span>
                 </div>
@@ -806,12 +1296,12 @@
           <button
             onclick="handleMenuItemClick('${subItem.id}', '${parentId}')"
             class="w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left transition-colors duration-200 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${
-              isActive ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-600 hover:bg-slate-100/50'
+              isActive ? 'border-l-2 border-blue-600 text-slate-900 font-medium' : 'text-slate-600 hover:bg-slate-100/50'
             }"
             data-item-id="${subItem.id}"
             ${isActive ? 'aria-current="page"' : ''}
           >
-            <div class="w-1 h-1 rounded-full bg-slate-400 ${isActive ? 'bg-blue-600' : ''}"></div>
+            <div class="w-1 h-1 rounded-full bg-slate-400 ${isActive ? (primaryColorValue ? 'active-indicator' : 'bg-blue-600') : ''}"></div>
             <span>${subItem.label}</span>
             ${subItem.badge ? `
               <span class="ml-auto px-2 py-0.5 text-xs font-medium rounded-md bg-slate-100 text-slate-600">
@@ -862,6 +1352,28 @@
       piechart: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+      </svg>`,
+      history: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>`,
+      calendardays: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>`,
+      calendar: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>`,
+      trendingup: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+      </svg>`,
+      filechart: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>`,
+      shieldcheck: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>`,
+      edit: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
       </svg>`
     };
 
@@ -870,7 +1382,13 @@
      * Suporta ícones em PascalCase (Lucide) convertendo para lowercase
      */
     function getIconSVG(iconName, isActive = false) {
-      const iconClass = `h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-500 group-hover:text-slate-700'}`;
+      let iconClass;
+      if (isActive && primaryColorValue) {
+        // Se tem cor primária personalizada e está ativo, usa estilo inline
+        iconClass = 'h-4.5 w-4.5 flex-shrink-0';
+      } else {
+        iconClass = `h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-500 group-hover:text-slate-700'}`;
+      }
       
       // Converte PascalCase para lowercase (ex: LayoutDashboard -> layoutdashboard)
       // Remove espaços e converte tudo para lowercase
@@ -880,11 +1398,19 @@
         .replace(/\s+/g, '');
       
       const iconFn = iconDefinitions[normalizedName];
-      return iconFn ? iconFn(iconClass) : iconDefinitions.home(iconClass);
+      let svg = iconFn ? iconFn(iconClass) : iconDefinitions.home(iconClass);
+      
+      // Se tem cor primária e está ativo, aplica cor inline
+      if (isActive && primaryColorValue) {
+        svg = svg.replace('currentColor', primaryColorValue);
+      }
+      
+      return svg;
     }
 
     /**
      * Alterna estado colapsado/expandido da sidebar
+     * Otimizado para evitar recarregamento do iframe durante a transição
      */
     function toggleSidebar() {
       isCollapsed = !isCollapsed;
@@ -898,6 +1424,9 @@
 
       const navigation = domCache.get('navigation');
       
+      // Adiciona classe de transição para otimizar performance
+      mainContent.classList.add('transitioning');
+      
       if (isCollapsed) {
         sidebar.classList.remove('w-72');
         sidebar.classList.add('w-20');
@@ -906,8 +1435,6 @@
         profileExpanded.classList.add('hidden');
         profileCollapsed.classList.remove('hidden');
         iconCollapse.classList.add('rotate-180');
-        mainContent.classList.remove('ml-0');
-        mainContent.classList.add('ml-20');
         
         // Esconde scrollbar mas mantém scroll funcional
         navigation.classList.remove('sidebar-scroll');
@@ -925,8 +1452,6 @@
         profileExpanded.classList.remove('hidden');
         profileCollapsed.classList.add('hidden');
         iconCollapse.classList.remove('rotate-180');
-        mainContent.classList.remove('ml-20');
-        mainContent.classList.add('ml-0');
         
         // Mostra scrollbar quando expandido
         navigation.classList.remove('sidebar-scroll-hidden');
@@ -939,6 +1464,11 @@
       }
 
       renderMenuItems();
+      
+      // Remove classe de transição após a animação (300ms + margem de segurança)
+      setTimeout(() => {
+        mainContent.classList.remove('transitioning');
+      }, 350);
     }
 
     /**
@@ -1261,6 +1791,22 @@
               html += renderSelectField(field, field.options || []);
             }
             break;
+          case 'multiselect':
+            // Se tiver optionsQuery, carrega opções dinamicamente
+            if (field.optionsQuery) {
+              try {
+                const options = await loadSelectOptions(field);
+                html += renderMultiSelectField(field, options);
+              } catch (error) {
+                console.error(`Erro ao carregar opções do campo ${field.id}:`, error);
+                // Renderiza multiselect vazio em caso de erro
+                html += renderMultiSelectField(field, []);
+              }
+            } else {
+              // Usa opções estáticas
+              html += renderMultiSelectField(field, field.options || []);
+            }
+            break;
           case 'checkbox':
             html += renderCheckboxField(field);
             break;
@@ -1403,6 +1949,284 @@
     }
 
     /**
+     * Renderiza campo multiselect (múltipla seleção com busca)
+     * @param {Object} field - Configuração do campo
+     * @param {Array} options - Array de opções no formato {value, label}
+     */
+    function renderMultiSelectField(field, options = []) {
+      const savedValues = (filterValues[field.id] || '').split(',').filter(v => v);
+      const placeholder = field.placeholder || 'Buscar e selecionar...';
+      
+      // Gera HTML das opções
+      let optionsHtml = '';
+      if (options && options.length > 0) {
+        optionsHtml = options.map(opt => {
+          const value = String(opt.value);
+          const label = String(opt.label);
+          const checked = savedValues.includes(value);
+          const searchText = label.toLowerCase();
+          
+          return `
+            <div class="multiselect-option" data-search-text="${searchText}" data-value="${value}">
+              <input
+                type="checkbox"
+                id="multiselect-${field.id}-${value}"
+                value="${value}"
+                ${checked ? 'checked' : ''}
+                onchange="handleMultiSelectChange('${field.id}', this)"
+              />
+              <label for="multiselect-${field.id}-${value}">${label}</label>
+            </div>
+          `;
+        }).join('');
+      } else {
+        optionsHtml = '<div class="multiselect-empty">Nenhuma opção disponível</div>';
+      }
+      
+      // Gera HTML das tags (itens selecionados)
+      let tagsHtml = '';
+      let displayPlaceholder = placeholder;
+      if (savedValues.length > 0) {
+        const selectedOptions = options.filter(opt => savedValues.includes(String(opt.value)));
+        tagsHtml = selectedOptions.map(opt => {
+          const value = String(opt.value);
+          const label = String(opt.label);
+          return `
+            <span class="multiselect-tag">
+              ${label}
+              <span class="multiselect-tag-remove" onclick="removeMultiSelectTag('${field.id}', '${value}')" title="Remover">×</span>
+            </span>
+          `;
+        }).join('');
+        
+        // Define placeholder baseado na quantidade de seleções
+        if (selectedOptions.length === 1) {
+          // Se há apenas uma seleção, mostra o nome da opção
+          displayPlaceholder = selectedOptions[0].label;
+        } else if (selectedOptions.length > 1) {
+          // Se há múltiplas seleções, mostra "várias"
+          displayPlaceholder = `${selectedOptions.length} selecionadas`;
+        }
+      }
+      
+      return `
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-slate-700">${field.label}</label>
+          <div class="multiselect-container">
+            <div class="multiselect-trigger" onclick="toggleMultiSelect('${field.id}')">
+              <input
+                type="text"
+                id="multiselect-search-${field.id}"
+                class="multiselect-search-input"
+                placeholder="${displayPlaceholder}"
+                oninput="filterMultiSelectOptions('${field.id}', this.value)"
+                onclick="event.stopPropagation(); toggleMultiSelect('${field.id}')"
+                onfocus="toggleMultiSelect('${field.id}')"
+              />
+              <svg class="multiselect-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <div id="multiselect-dropdown-${field.id}" class="multiselect-dropdown hidden">
+              <div id="multiselect-options-${field.id}" class="multiselect-options">
+                ${optionsHtml}
+              </div>
+            </div>
+          </div>
+          <div id="multiselect-tags-${field.id}" class="multiselect-tags">
+            ${tagsHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Sistema de Multiselect - Funções de Interação
+     */
+
+    // Debounce para busca
+    let multiselectSearchTimeouts = {};
+
+    /**
+     * Alterna estado aberto/fechado do dropdown multiselect
+     * @param {string} fieldId - ID do campo multiselect
+     */
+    function toggleMultiSelect(fieldId) {
+      const dropdown = document.getElementById(`multiselect-dropdown-${fieldId}`);
+      const trigger = document.querySelector(`#multiselect-search-${fieldId}`).closest('.multiselect-trigger');
+      
+      if (!dropdown || !trigger) return;
+      
+      const isOpen = !dropdown.classList.contains('hidden');
+      
+      // Fecha todos os outros multiselects abertos
+      document.querySelectorAll('.multiselect-dropdown').forEach(dd => {
+        if (dd.id !== `multiselect-dropdown-${fieldId}`) {
+          dd.classList.add('hidden');
+          const otherTrigger = dd.previousElementSibling;
+          if (otherTrigger && otherTrigger.classList.contains('multiselect-trigger')) {
+            otherTrigger.classList.remove('open');
+          }
+        }
+      });
+      
+      // Toggle do dropdown atual
+      if (isOpen) {
+        dropdown.classList.add('hidden');
+        trigger.classList.remove('open');
+      } else {
+        dropdown.classList.remove('hidden');
+        trigger.classList.add('open');
+        // Foca no input de busca
+        const searchInput = document.getElementById(`multiselect-search-${fieldId}`);
+        if (searchInput) {
+          setTimeout(() => searchInput.focus(), 50);
+        }
+      }
+    }
+
+    /**
+     * Filtra opções do multiselect baseado no termo de busca
+     * @param {string} fieldId - ID do campo multiselect
+     * @param {string} searchTerm - Termo de busca
+     */
+    function filterMultiSelectOptions(fieldId, searchTerm) {
+      // Limpa timeout anterior para este campo
+      if (multiselectSearchTimeouts[fieldId]) {
+        clearTimeout(multiselectSearchTimeouts[fieldId]);
+      }
+      
+      // Debounce de 100ms para melhorar performance
+      multiselectSearchTimeouts[fieldId] = setTimeout(() => {
+        const optionsContainer = document.getElementById(`multiselect-options-${fieldId}`);
+        if (!optionsContainer) return;
+        
+        const searchLower = searchTerm.toLowerCase().trim();
+        const options = optionsContainer.querySelectorAll('.multiselect-option');
+        
+        let visibleCount = 0;
+        options.forEach(option => {
+          const searchText = option.getAttribute('data-search-text') || '';
+          const matches = !searchLower || searchText.includes(searchLower);
+          
+          if (matches) {
+            option.classList.remove('hidden');
+            visibleCount++;
+          } else {
+            option.classList.add('hidden');
+          }
+        });
+        
+        // Mostra mensagem se não houver resultados
+        let emptyMsg = optionsContainer.querySelector('.multiselect-empty-search');
+        if (visibleCount === 0 && searchLower) {
+          if (!emptyMsg) {
+            emptyMsg = document.createElement('div');
+            emptyMsg.className = 'multiselect-empty-search multiselect-empty';
+            emptyMsg.textContent = 'Nenhuma opção encontrada';
+            optionsContainer.appendChild(emptyMsg);
+          }
+        } else if (emptyMsg) {
+          emptyMsg.remove();
+        }
+      }, 100);
+    }
+
+    /**
+     * Manipula mudança de checkbox no multiselect
+     * @param {string} fieldId - ID do campo multiselect
+     * @param {HTMLInputElement} checkbox - Checkbox que foi alterado
+     */
+    function handleMultiSelectChange(fieldId, checkbox) {
+      updateMultiSelectTags(fieldId);
+      // Mantém dropdown aberto após seleção
+      const dropdown = document.getElementById(`multiselect-dropdown-${fieldId}`);
+      if (dropdown) {
+        dropdown.classList.remove('hidden');
+      }
+    }
+
+    /**
+     * Remove uma tag específica do multiselect
+     * @param {string} fieldId - ID do campo multiselect
+     * @param {string} value - Valor da opção a ser removida
+     */
+    function removeMultiSelectTag(fieldId, value) {
+      const checkbox = document.getElementById(`multiselect-${fieldId}-${value}`);
+      if (checkbox) {
+        checkbox.checked = false;
+        updateMultiSelectTags(fieldId);
+      }
+    }
+
+    /**
+     * Atualiza display das tags (itens selecionados) do multiselect
+     * @param {string} fieldId - ID do campo multiselect
+     */
+    function updateMultiSelectTags(fieldId) {
+      const optionsContainer = document.getElementById(`multiselect-options-${fieldId}`);
+      const tagsContainer = document.getElementById(`multiselect-tags-${fieldId}`);
+      const searchInput = document.getElementById(`multiselect-search-${fieldId}`);
+      
+      if (!optionsContainer || !tagsContainer) return;
+      
+      // Coleta checkboxes marcados
+      const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+      const selectedValues = Array.from(checkboxes).map(cb => cb.value);
+      
+      // Atualiza filterValues
+      filterValues[fieldId] = selectedValues.join(',');
+      
+      // Coleta labels das opções selecionadas
+      const selectedOptions = [];
+      checkboxes.forEach(checkbox => {
+        const optionDiv = checkbox.closest('.multiselect-option');
+        if (optionDiv) {
+          const label = optionDiv.querySelector('label');
+          if (label) {
+            selectedOptions.push({
+              value: checkbox.value,
+              label: label.textContent.trim()
+            });
+          }
+        }
+      });
+      
+      // Renderiza tags
+      if (selectedOptions.length > 0) {
+        tagsContainer.innerHTML = selectedOptions.map(opt => `
+          <span class="multiselect-tag">
+            ${opt.label}
+            <span class="multiselect-tag-remove" onclick="removeMultiSelectTag('${fieldId}', '${opt.value}')" title="Remover">×</span>
+          </span>
+        `).join('');
+        
+        // Atualiza placeholder do input baseado na quantidade de seleções
+        if (searchInput) {
+          if (selectedOptions.length === 1) {
+            // Se há apenas uma seleção, mostra o nome da opção
+            searchInput.placeholder = selectedOptions[0].label;
+          } else {
+            // Se há múltiplas seleções, mostra "várias"
+            searchInput.placeholder = `${selectedOptions.length} selecionadas`;
+          }
+        }
+      } else {
+        tagsContainer.innerHTML = '';
+        // Restaura placeholder padrão
+        if (searchInput) {
+          const config = getFilterConfig();
+          if (config) {
+            const field = config.fields.find(f => f.id === fieldId);
+            if (field) {
+              searchInput.placeholder = field.placeholder || 'Buscar e selecionar...';
+            }
+          }
+        }
+      }
+    }
+
+    /**
      * Renderiza campo checkbox (múltipla seleção)
      */
     function renderCheckboxField(field) {
@@ -1510,6 +2334,18 @@
             }
             break;
             
+          case 'multiselect':
+            const multiselectCheckboxes = document.querySelectorAll(
+              `#multiselect-options-${field.id} input[type="checkbox"]:checked`
+            );
+            const multiselectValues = Array.from(multiselectCheckboxes).map(cb => cb.value).filter(v => v);
+            const multiselectValue = multiselectValues.join(',');
+            filterValues[field.id] = multiselectValue;
+            if (multiselectValue) {
+              variablesToSet.push({ name: field.variable, content: multiselectValue });
+            }
+            break;
+            
           case 'checkbox':
             const checkboxes = document.querySelectorAll(`input[type="checkbox"][data-field-id="${field.id}"]:checked`);
             const checkedValues = Array.from(checkboxes).map(cb => cb.value).filter(v => v);
@@ -1605,6 +2441,17 @@
             variablesToClear.push({ name: field.variable, content: '' });
             filterValues[field.id] = '';
             break;
+          case 'multiselect':
+            variablesToClear.push({ name: field.variable, content: '' });
+            filterValues[field.id] = '';
+            // Desmarca todos os checkboxes
+            const multiselectCheckboxes = document.querySelectorAll(
+              `#multiselect-options-${field.id} input[type="checkbox"]`
+            );
+            multiselectCheckboxes.forEach(cb => cb.checked = false);
+            // Atualiza tags
+            updateMultiSelectTags(field.id);
+            break;
           case 'checkbox':
             variablesToClear.push({ name: field.variable, content: '' });
             filterValues[field.id] = '';
@@ -1661,6 +2508,9 @@
           switch (field.type) {
             case 'text':
             case 'select':
+              if (filterValues[field.id]) activeCount++;
+              break;
+            case 'multiselect':
               if (filterValues[field.id]) activeCount++;
               break;
             case 'checkbox':
