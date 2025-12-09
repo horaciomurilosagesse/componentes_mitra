@@ -1115,6 +1115,111 @@ O componente usa Tailwind CSS e segue o tema claro padrão:
 - **Colapsada:** 80px (`w-20`)
 - **Transição:** 300ms com easing suave
 
+## Constantes e Configurações Internas
+
+O componente utiliza um objeto `CONFIG` centralizado que contém todas as constantes de configuração. Essas constantes podem ser úteis para desenvolvedores que desejam entender ou modificar o comportamento interno do componente.
+
+### Estrutura do Objeto CONFIG
+
+```javascript
+const CONFIG = {
+  SIDEBAR: {
+    WIDTH_EXPANDED: 288,        // Largura da sidebar expandida (w-72 em pixels)
+    WIDTH_COLLAPSED: 80,        // Largura da sidebar colapsada (w-20 em pixels)
+    TRANSITION_DURATION: 300,   // Duração da transição de colapso/expansão (ms)
+  },
+  DROPDOWN: {
+    MAX_HEIGHT: 300,            // Altura máxima do dropdown de multiselect (px)
+    ANIMATION_DURATION: 150,    // Duração da animação de abertura/fechamento (ms)
+  },
+  DEBOUNCE: {
+    SEARCH: 300,                // Delay para busca de itens do menu (ms)
+    MULTISELECT_SEARCH: 300,    // Delay para busca dentro de multiselect (ms)
+  },
+  FILTER: {
+    FAB_SIZE: 56,              // Tamanho do botão flutuante de filtros (w-14 h-14 em px)
+    DRAWER_MAX_WIDTH: 448,     // Largura máxima do drawer de filtros (max-w-md em pixels)
+    FOCUS_DELAY: 50,            // Delay para focar em inputs após abertura (ms)
+  },
+  TIMING: {
+    ICON_UPDATE_DELAY: 100,    // Delay para atualização de ícones (ms)
+    FILTER_RECOVERY_DELAY: 200, // Delay para recuperação de filtros salvos (ms)
+    TRANSITION_CLEANUP: 350,   // Delay para limpeza de classes de transição (300ms animação + margem)
+  }
+};
+```
+
+### Descrição das Constantes
+
+#### SIDEBAR
+
+| Constante | Valor | Descrição |
+|-----------|-------|-----------|
+| `WIDTH_EXPANDED` | 288px | Largura da sidebar quando expandida. Corresponde à classe Tailwind `w-72` |
+| `WIDTH_COLLAPSED` | 80px | Largura da sidebar quando colapsada. Corresponde à classe Tailwind `w-20` |
+| `TRANSITION_DURATION` | 300ms | Duração da animação de transição entre estados expandido/colapsado |
+
+#### DROPDOWN
+
+| Constante | Valor | Descrição |
+|-----------|-------|-----------|
+| `MAX_HEIGHT` | 300px | Altura máxima do container de opções do multiselect antes de ativar scroll |
+| `ANIMATION_DURATION` | 150ms | Duração da animação de abertura/fechamento de dropdowns |
+
+#### DEBOUNCE
+
+| Constante | Valor | Descrição |
+|-----------|-------|-----------|
+| `SEARCH` | 300ms | Tempo de espera após o usuário parar de digitar antes de executar a busca no menu |
+| `MULTISELECT_SEARCH` | 300ms | Tempo de espera após o usuário parar de digitar antes de filtrar opções no multiselect |
+
+**Nota:** O debounce melhora a performance evitando execuções excessivas durante a digitação.
+
+#### FILTER
+
+| Constante | Valor | Descrição |
+|-----------|-------|-----------|
+| `FAB_SIZE` | 56px | Tamanho do botão flutuante (FAB) de filtros. Corresponde às classes Tailwind `w-14 h-14` |
+| `DRAWER_MAX_WIDTH` | 448px | Largura máxima do drawer lateral que contém os filtros. Corresponde à classe Tailwind `max-w-md` |
+| `FOCUS_DELAY` | 50ms | Delay aplicado antes de focar automaticamente em inputs quando o drawer de filtros é aberto |
+
+#### TIMING
+
+| Constante | Valor | Descrição |
+|-----------|-------|-----------|
+| `ICON_UPDATE_DELAY` | 100ms | Delay para atualização de ícones após mudanças de estado |
+| `FILTER_RECOVERY_DELAY` | 200ms | Delay para recuperação automática de valores de filtros salvos após carregar uma tela |
+| `TRANSITION_CLEANUP` | 350ms | Delay para remoção de classes CSS de transição após animações (300ms de animação + 50ms de margem de segurança) |
+
+### Uso das Constantes no Código
+
+Todas as constantes são acessadas através do objeto `CONFIG`:
+
+```javascript
+// Exemplo: Usando constante de debounce
+searchTimeout = setTimeout(() => {
+  // Lógica de busca
+}, CONFIG.DEBOUNCE.SEARCH);
+
+// Exemplo: Usando constante de delay de foco
+setTimeout(() => {
+  searchInput.focus();
+}, CONFIG.FILTER.FOCUS_DELAY);
+```
+
+### Benefícios da Centralização
+
+- **Manutenibilidade:** Todas as configurações em um único local facilitam ajustes
+- **Consistência:** Garante que valores relacionados sejam usados de forma uniforme
+- **Documentação:** Valores ficam claramente documentados e com propósito explícito
+- **Facilita Customização:** Desenvolvedores podem facilmente identificar e modificar comportamentos específicos
+
+### Modificando Constantes
+
+Se você precisar modificar essas constantes (por exemplo, para ajustar tempos de debounce ou dimensões), edite o objeto `CONFIG` no início do arquivo `1_sidebar.html`, dentro da tag `<script>`.
+
+**Atenção:** Modifique apenas se tiver certeza do impacto. Alterações podem afetar a experiência do usuário e a performance do componente.
+
 ## Notas Importantes
 
 - O componente é carregado dentro de um iframe na plataforma Mitra

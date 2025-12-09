@@ -468,25 +468,204 @@
   </div>
 
   <script>
-    // Estado da sidebar
+    // ============================================
+    // CONFIGURAÇÕES E CONSTANTES
+    // ============================================
+    const CONFIG = {
+      SIDEBAR: {
+        WIDTH_EXPANDED: 288,        // w-72 em pixels
+        WIDTH_COLLAPSED: 80,        // w-20 em pixels
+        TRANSITION_DURATION: 300,   // ms
+      },
+      DROPDOWN: {
+        MAX_HEIGHT: 300,            // px
+        ANIMATION_DURATION: 150,    // ms
+      },
+      DEBOUNCE: {
+        SEARCH: 300,                // ms
+        MULTISELECT_SEARCH: 300,    // ms
+      },
+      FILTER: {
+        FAB_SIZE: 56,              // px (w-14 h-14)
+        DRAWER_MAX_WIDTH: 448,     // max-w-md em pixels
+        FOCUS_DELAY: 50,            // ms para focus em inputs
+      },
+      TIMING: {
+        ICON_UPDATE_DELAY: 100,    // ms
+        FILTER_RECOVERY_DELAY: 200, // ms
+        TRANSITION_CLEANUP: 350,   // ms (300ms animação + margem de segurança)
+      }
+    };
+
+    // ============================================
+    // SISTEMA DE LOGGING ESTRUTURADO
+    // ============================================
+    const logger = {
+      error: (context, error, data = {}) => {
+        console.error(`[Sidebar][${context}]`, error, Object.keys(data).length > 0 ? data : '');
+      },
+      warn: (context, message, data = {}) => {
+        console.warn(`[Sidebar][${context}]`, message, Object.keys(data).length > 0 ? data : '');
+      },
+      info: (context, message, data = {}) => {
+        console.log(`[Sidebar][${context}]`, message, Object.keys(data).length > 0 ? data : '');
+      }
+    };
+
+    // ============================================
+    // VALIDAÇÃO DE CONFIGURAÇÃO
+    // ============================================
+    function validateComponentData(data) {
+      const errors = [];
+      const warnings = [];
+      
+      // Validações críticas
+      if (!data.menuQuery && !data.menuItems) {
+        errors.push('menuQuery ou menuItems é obrigatório');
+      }
+      
+      // Validações de menuQuery
+      if (data.menuQuery) {
+        if (!data.menuIdColumn) {
+          warnings.push('menuIdColumn não configurado, usando padrão: "ID"');
+        }
+        if (!data.menuNameColumn) {
+          warnings.push('menuNameColumn não configurado, usando padrão: "NAME"');
+        }
+        if (!data.menuUrlColumn) {
+          warnings.push('menuUrlColumn não configurado, usando padrão: "MENUURL"');
+        }
+      }
+      
+      // Validação de filtros
+      if (data.filtersByScreen) {
+        try {
+          const filters = JSON.parse(data.filtersByScreen);
+          if (Array.isArray(filters)) {
+            filters.forEach((filter, idx) => {
+              if (!filter.id) {
+                errors.push(`filtersByScreen[${idx}]: campo "id" é obrigatório`);
+              }
+              if (!filter.fields || !Array.isArray(filter.fields)) {
+                errors.push(`filtersByScreen[${idx}]: campo "fields" deve ser um array`);
+              }
+            });
+          } else if (typeof filters === 'object') {
+            // Formato alternativo: objeto com IDs como chaves
+            Object.keys(filters).forEach(screenId => {
+              const filter = filters[screenId];
+              if (!filter.fields || !Array.isArray(filter.fields)) {
+                errors.push(`filtersByScreen[${screenId}]: campo "fields" deve ser um array`);
+              }
+            });
+          }
+        } catch (e) {
+          errors.push(`filtersByScreen inválido: ${e.message}`);
+        }
+      }
+      
+      // Validação de userMenu
+      if (data.userMenu) {
+        try {
+          const menu = JSON.parse(data.userMenu);
+          if (!Array.isArray(menu)) {
+            errors.push('userMenu deve ser um array');
+          } else {
+            menu.forEach((item, idx) => {
+              if (!item.nome && !item.name) {
+                warnings.push(`userMenu[${idx}]: campo "nome" ou "name" recomendado`);
+              }
+              if (!item.tipoInteracao && !item.type) {
+                warnings.push(`userMenu[${idx}]: campo "tipoInteracao" ou "type" recomendado`);
+              }
+            });
+          }
+        } catch (e) {
+          errors.push(`userMenu inválido: ${e.message}`);
+        }
+      }
+      
+      return { isValid: errors.length === 0, errors, warnings };
+    }
+
+    // ============================================
+    // GERENCIAMENTO DE ESTADO CENTRALIZADO
+    // ============================================
+    const AppState = {
+      sidebar: {
+        isCollapsed: false,
+        activeItemId: null
+      },
+      menu: {
+        items: [],
+        filteredItems: [],
+        groups: {}
+      },
+      user: {
+        menuItems: [],
+        menuOpen: false
+      },
+      filters: {
+        currentScreenId: null,
+        byScreen: {},
+        values: {}
+      },
+      search: {
+        timeout: null
+      },
+      theme: {
+        primaryColor: null
+      }
+    };
+
+    // Helpers para sincronização entre AppState e variáveis globais (compatibilidade)
+    // Mantém variáveis globais para não quebrar código existente, mas sincroniza com AppState
+    function syncStateToGlobals() {
+      isCollapsed = AppState.sidebar.isCollapsed;
+      activeItemId = AppState.sidebar.activeItemId;
+      menuItems = AppState.menu.items;
+      filteredItems = AppState.menu.filteredItems;
+      menuGroups = AppState.menu.groups;
+      userMenuItems = AppState.user.menuItems;
+      userMenuOpen = AppState.user.menuOpen;
+      currentScreenId = AppState.filters.currentScreenId;
+      filtersByScreen = AppState.filters.byScreen;
+      filterValues = AppState.filters.values;
+      searchTimeout = AppState.search.timeout;
+      primaryColorValue = AppState.theme.primaryColor;
+    }
+
+    function syncGlobalsToState() {
+      AppState.sidebar.isCollapsed = isCollapsed;
+      AppState.sidebar.activeItemId = activeItemId;
+      AppState.menu.items = menuItems;
+      AppState.menu.filteredItems = filteredItems;
+      AppState.menu.groups = menuGroups;
+      AppState.user.menuItems = userMenuItems;
+      AppState.user.menuOpen = userMenuOpen;
+      AppState.filters.currentScreenId = currentScreenId;
+      AppState.filters.byScreen = filtersByScreen;
+      AppState.filters.values = filterValues;
+      AppState.search.timeout = searchTimeout;
+      AppState.theme.primaryColor = primaryColorValue;
+    }
+
+    // Inicializa variáveis globais (mantém compatibilidade)
     let isCollapsed = false;
     let activeItemId = null;
     let menuItems = [];
     let filteredItems = [];
     let userMenuItems = [];
     let userMenuOpen = false;
-    let menuGroups = {}; // Agrupa itens por grupo
-    
-    // Estado de filtros
+    let menuGroups = {};
     let currentScreenId = null;
     let filtersByScreen = {};
-    let filterValues = {}; // Armazena valores dos filtros por campo
-    
-    // Debounce para busca
+    let filterValues = {};
     let searchTimeout = null;
-    
-    // Cor primária personalizada
     let primaryColorValue = null;
+    
+    // Sincroniza estado inicial
+    syncGlobalsToState();
     
     // Cache de elementos DOM frequentemente acessados
     const domCache = {
@@ -595,7 +774,7 @@
       
       // Valida formato hex
       if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
-        console.warn('Formato de cor inválido. Use formato hex (ex: #3B82F6)');
+        logger.warn('Theme', 'Formato de cor inválido. Use formato hex (ex: #3B82F6)', { color });
         return;
       }
       
@@ -719,7 +898,7 @@
         if (applyButton) {
           applyButton.style.backgroundColor = color;
         }
-      }, 100);
+      }, CONFIG.DEBOUNCE.MULTISELECT_SEARCH);
     }
 
     /**
@@ -772,6 +951,31 @@
      */
     async function initializeSidebar() {
       try {
+        // Valida configuração antes de inicializar
+        const validation = validateComponentData(componentData);
+        if (!validation.isValid) {
+          logger.error('Init', new Error('Configuração inválida'), { errors: validation.errors });
+          // Renderiza mensagem de erro amigável
+          const mainContent = domCache.get('mitra-main-content');
+          if (mainContent) {
+            mainContent.innerHTML = `
+              <div class="flex flex-col items-center justify-center h-full p-8">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+                  <h3 class="text-lg font-semibold text-red-800 mb-2">Erro de Configuração</h3>
+                  <p class="text-sm text-red-700 mb-4">O componente sidebar não pode ser inicializado devido aos seguintes erros:</p>
+                  <ul class="list-disc list-inside text-sm text-red-700 space-y-1">
+                    ${validation.errors.map(err => `<li>${err}</li>`).join('')}
+                  </ul>
+                </div>
+              </div>
+            `;
+          }
+          return;
+        }
+        
+        // Exibe warnings se houver
+        validation.warnings.forEach(warning => logger.warn('Init', warning));
+        
         // Logo e nome da aplicação (suporta headerLogo, headerTitle, headerSubtitle)
         const logoUrl = componentData.headerLogo || componentData.logoImage;
         const logoTitle = componentData.headerTitle || componentData.logo;
@@ -813,7 +1017,7 @@
           updateActiveItem();
         }
       } catch (error) {
-        console.error('Erro ao inicializar sidebar:', error);
+        logger.error('Init', error);
       }
     }
 
@@ -877,7 +1081,7 @@
           );
         }
       } catch (error) {
-        console.error('Erro ao carregar dados do usuário:', error);
+        logger.error('UserData', error);
       }
     }
 
@@ -937,38 +1141,18 @@
           renderMenuItems();
         }
       } catch (error) {
-        console.error('Erro ao carregar itens do menu:', error);
+        logger.error('MenuItems', error);
       }
     }
 
     /**
-     * Parse do resultado da query SQL do menu
-     * Mapeia colunas conforme configuração do componentData
-     * queryMitra retorna { data: [[valor1, valor2, ...], ...] } - array de arrays
+     * Detecta a ordem das colunas na primeira linha (cabeçalho) ou retorna ordem padrão
+     * @param {Array} firstRow - Primeira linha dos dados
+     * @param {Object} columnNames - Objeto com nomes esperados das colunas
+     * @returns {Object} Objeto com {columnOrder, startIndex}
      */
-    function parseMenuQueryResult(data) {
-      if (!data || data.length === 0) return [];
-      
-      // Obtém nomes das colunas do mapeamento (nomes das colunas na query SQL)
-      const idCol = componentData.menuIdColumn || 'ID';
-      const nameCol = componentData.menuNameColumn || 'NAME';
-      const iconCol = componentData.menuIconColumn || 'ICON';
-      const groupCol = componentData.menuGroupColumn || 'GRUPO';
-      const parentIdCol = componentData.menuParentIdColumn || 'PARENTID';
-      const urlCol = componentData.menuUrlColumn || 'MENUURL';
-      
-      // queryMitra retorna array de arrays, então precisamos mapear pelos índices
-      // Assumindo ordem padrão: ID, NAME, ICON, GRUPO, PARENTID, MENUURL
-      // Mas pode variar conforme a query, então tentamos mapear pelo nome da coluna
-      const items = [];
-      const itemsMap = {}; // Para construir hierarquia
-      
-      // Tenta detectar ordem das colunas pela primeira linha
-      // Se a primeira linha contém cabeçalhos, usa-os; senão assume ordem padrão
-      let columnOrder = {};
-      let startIndex = 0;
-      
-      // Lista de nomes de colunas esperados (em maiúsculas para comparação)
+    function detectColumnOrder(firstRow, columnNames) {
+      const { idCol, nameCol, iconCol, groupCol, parentIdCol, urlCol } = columnNames;
       const expectedColumns = [
         idCol.toUpperCase(),
         nameCol.toUpperCase(),
@@ -978,71 +1162,76 @@
         urlCol.toUpperCase()
       ];
       
-      // Verifica se a primeira linha corresponde aos nomes das colunas esperados
-      if (data.length > 0 && Array.isArray(data[0])) {
-        const firstRow = data[0];
-        // Converte primeira linha para strings e maiúsculas para comparação
-        const firstRowUpper = firstRow.map(cell => String(cell).toUpperCase().trim());
-        
-        // Verifica se pelo menos 3 colunas da primeira linha correspondem aos nomes esperados
-        // Isso evita falsos positivos quando dados reais estão em maiúsculas
-        const matchingColumns = firstRowUpper.filter(col => expectedColumns.includes(col)).length;
-        const isHeader = matchingColumns >= 3;
-        
-        if (isHeader) {
-          // Primeira linha é cabeçalho, mapeia índices
-          firstRow.forEach((colName, idx) => {
-            const colUpper = String(colName).toUpperCase().trim();
-            if (colUpper === idCol.toUpperCase()) columnOrder.id = idx;
-            if (colUpper === nameCol.toUpperCase()) columnOrder.name = idx;
-            if (colUpper === iconCol.toUpperCase()) columnOrder.icon = idx;
-            if (colUpper === groupCol.toUpperCase()) columnOrder.group = idx;
-            if (colUpper === parentIdCol.toUpperCase()) columnOrder.parentId = idx;
-            if (colUpper === urlCol.toUpperCase()) columnOrder.url = idx;
-          });
-          startIndex = 1; // Pula cabeçalho
-        } else {
-          // Assume ordem padrão: ID, NAME, ICON, GRUPO, PARENTID, MENUURL
-          columnOrder = { id: 0, name: 1, icon: 2, group: 3, parentId: 4, url: 5 };
-        }
+      if (!firstRow || !Array.isArray(firstRow)) {
+        return { columnOrder: { id: 0, name: 1, icon: 2, group: 3, parentId: 4, url: 5 }, startIndex: 0 };
       }
       
-      // Processa cada linha de dados
-      for (let i = startIndex; i < data.length; i++) {
-        const row = data[i];
-        if (!Array.isArray(row) || row.length === 0) continue;
-        
-        const item = {
-          id: String(row[columnOrder.id] ?? row[0] ?? i),
-          label: String(row[columnOrder.name] ?? row[1] ?? ''),
-          icon: String(row[columnOrder.icon] ?? row[2] ?? 'home'),
-          group: String(row[columnOrder.group] ?? row[3] ?? ''),
-          parentId: String(row[columnOrder.parentId] ?? row[4] ?? ''),
-          url: String(row[columnOrder.url] ?? row[5] ?? '')
-        };
-        
-        // Valida se o item tem pelo menos ID e label antes de adicionar
-        if (!item.id || (!item.label || !item.label.trim())) {
-          console.warn(`Item na linha ${i} ignorado por falta de ID ou label:`, item);
-          continue;
-        }
-        
-        // A normalização do ícone é feita na função getIconSVG()
-        // Mantém o valor original da query para permitir flexibilidade
-        
-        // Processa URL se for do formato Mitra (embedded)
-        if (item.url && item.url.includes('/embedded')) {
-          item.navigationType = 'iframe';
-        }
-        
+      const firstRowUpper = firstRow.map(cell => String(cell).toUpperCase().trim());
+      const matchingColumns = firstRowUpper.filter(col => expectedColumns.includes(col)).length;
+      const isHeader = matchingColumns >= 3;
+      
+      if (isHeader) {
+        const columnOrder = {};
+        firstRow.forEach((colName, idx) => {
+          const colUpper = String(colName).toUpperCase().trim();
+          if (colUpper === idCol.toUpperCase()) columnOrder.id = idx;
+          if (colUpper === nameCol.toUpperCase()) columnOrder.name = idx;
+          if (colUpper === iconCol.toUpperCase()) columnOrder.icon = idx;
+          if (colUpper === groupCol.toUpperCase()) columnOrder.group = idx;
+          if (colUpper === parentIdCol.toUpperCase()) columnOrder.parentId = idx;
+          if (colUpper === urlCol.toUpperCase()) columnOrder.url = idx;
+        });
+        return { columnOrder, startIndex: 1 };
+      }
+      
+      // Ordem padrão: ID, NAME, ICON, GRUPO, PARENTID, MENUURL
+      return { columnOrder: { id: 0, name: 1, icon: 2, group: 3, parentId: 4, url: 5 }, startIndex: 0 };
+    }
+
+    /**
+     * Mapeia uma linha de dados para um objeto de item de menu
+     * @param {Array} row - Linha de dados do array
+     * @param {Object} columnOrder - Ordem das colunas
+     * @param {number} rowIndex - Índice da linha (para fallback de ID)
+     * @returns {Object|null} Item de menu ou null se inválido
+     */
+    function mapRowToMenuItem(row, columnOrder, rowIndex) {
+      if (!Array.isArray(row) || row.length === 0) return null;
+      
+      const item = {
+        id: String(row[columnOrder.id] ?? row[0] ?? rowIndex),
+        label: String(row[columnOrder.name] ?? row[1] ?? ''),
+        icon: String(row[columnOrder.icon] ?? row[2] ?? 'home'),
+        group: String(row[columnOrder.group] ?? row[3] ?? ''),
+        parentId: String(row[columnOrder.parentId] ?? row[4] ?? ''),
+        url: String(row[columnOrder.url] ?? row[5] ?? '')
+      };
+      
+      // Valida se o item tem pelo menos ID e label
+      if (!item.id || (!item.label || !item.label.trim())) {
+        logger.warn('MenuParse', `Item na linha ${rowIndex} ignorado por falta de ID ou label`, { rowIndex, item });
+        return null;
+      }
+      
+      // Processa URL se for do formato Mitra (embedded)
+      if (item.url && item.url.includes('/embedded')) {
+        item.navigationType = 'iframe';
+      }
+      
+      return item;
+    }
+
+    /**
+     * Constrói hierarquia de submenus a partir de uma lista de itens
+     * @param {Array} items - Lista de itens de menu
+     * @returns {Array} Lista de itens raiz com submenus aninhados
+     */
+    function buildMenuHierarchy(items) {
+      const itemsMap = {};
+      items.forEach(item => {
         itemsMap[item.id] = item;
-        items.push(item);
-      }
+      });
       
-      // Debug: log do número de itens processados
-      console.log(`parseMenuQueryResult: processados ${items.length} itens (startIndex: ${startIndex}, total linhas: ${data.length})`);
-      
-      // Constrói hierarquia de submenus
       const rootItems = [];
       items.forEach(item => {
         if (!item.parentId || item.parentId === '' || item.parentId === null || item.parentId === 'NULL') {
@@ -1053,12 +1242,49 @@
             if (!parent.submenu) parent.submenu = [];
             parent.submenu.push(item);
           } else {
-            rootItems.push(item); // Se parent não encontrado, adiciona como root
+            // Se parent não encontrado, adiciona como root
+            rootItems.push(item);
           }
         }
       });
       
       return rootItems;
+    }
+
+    /**
+     * Parse do resultado da query SQL do menu
+     * Mapeia colunas conforme configuração do componentData
+     * queryMitra retorna { data: [[valor1, valor2, ...], ...] } - array de arrays
+     */
+    function parseMenuQueryResult(data) {
+      if (!data || data.length === 0) return [];
+      
+      // Obtém nomes das colunas do mapeamento
+      const columnNames = {
+        idCol: componentData.menuIdColumn || 'ID',
+        nameCol: componentData.menuNameColumn || 'NAME',
+        iconCol: componentData.menuIconColumn || 'ICON',
+        groupCol: componentData.menuGroupColumn || 'GRUPO',
+        parentIdCol: componentData.menuParentIdColumn || 'PARENTID',
+        urlCol: componentData.menuUrlColumn || 'MENUURL'
+      };
+      
+      // Detecta ordem das colunas
+      const { columnOrder, startIndex } = detectColumnOrder(data[0], columnNames);
+      
+      // Processa cada linha de dados
+      const items = [];
+      for (let i = startIndex; i < data.length; i++) {
+        const item = mapRowToMenuItem(data[i], columnOrder, i);
+        if (item) {
+          items.push(item);
+        }
+      }
+      
+      logger.info('MenuParse', `Processados ${items.length} itens`, { startIndex, totalLinhas: data.length });
+      
+      // Constrói hierarquia de submenus
+      return buildMenuHierarchy(items);
     }
 
     /**
@@ -1071,7 +1297,7 @@
           renderUserMenu();
         }
       } catch (error) {
-        console.error('Erro ao carregar menu do usuário:', error);
+        logger.error('UserMenu', error);
       }
     }
 
@@ -1114,12 +1340,12 @@
           actionMitra({ id: parseInt(idInteracao) });
         } else if (tipoInteracao === 'form') {
           // Abre formulário (pode precisar de implementação específica)
-          console.log('Abrir formulário:', idInteracao);
+          logger.info('UserAction', 'Abrir formulário', { idInteracao });
         } else if (tipoInteracao === 'modal') {
           modalMitra({ id: parseInt(idInteracao), width: 80, height: 90 });
         }
       } catch (error) {
-        console.error('Erro ao executar ação do menu do usuário:', error);
+        logger.error('UserAction', error, { idInteracao, tipoInteracao });
       }
     }
 
@@ -1465,10 +1691,10 @@
 
       renderMenuItems();
       
-      // Remove classe de transição após a animação (300ms + margem de segurança)
+      // Remove classe de transição após a animação
       setTimeout(() => {
         mainContent.classList.remove('transitioning');
-      }, 350);
+      }, CONFIG.TIMING.TRANSITION_CLEANUP);
     }
 
     /**
@@ -1478,7 +1704,7 @@
       const item = findMenuItem(itemId, menuItems);
       
       if (!item) {
-        console.error(`Item de menu não encontrado: ${itemId}`);
+        logger.error('Navigation', new Error(`Item de menu não encontrado: ${itemId}`), { itemId, parentId });
         return;
       }
 
@@ -1557,7 +1783,7 @@
         }
         
         renderMenuItems();
-      }, 300);
+      }, CONFIG.DEBOUNCE.SEARCH);
     }
 
     /**
@@ -1603,7 +1829,7 @@
           }
         }
       } catch (error) {
-        console.error(`Erro ao navegar para ${item.label || item.name}:`, error);
+        logger.error('Navigation', error, { itemId: item.id, label: item.label || item.name });
       }
     }
 
@@ -1626,7 +1852,7 @@
       try {
         await modalMitra({ id: currentScreenId, parent: 'mitra-main-content', width: 100, height: 100 });
       } catch (e) {
-        console.error("Erro ao recarregar tela Mitra:", e);
+        logger.error('ScreenReload', e, { screenId: currentScreenId });
         newContainer.innerHTML = `<div class="flex h-full items-center justify-center text-red-500">Erro ao carregar</div>`;
       }
     }
@@ -1651,7 +1877,7 @@
         const actionId = parseInt(componentData.actionLogoutId);
         actionMitra({ id: actionId });
       } else {
-        console.error('Ação de logout não configurada. Configure userMenu com ação "Sair" ou actionLogoutId.');
+        logger.warn('Logout', 'Ação de logout não configurada. Configure userMenu com ação "Sair" ou actionLogoutId.');
       }
     }
 
@@ -1687,7 +1913,7 @@
           }
         }
       } catch (error) {
-        console.error('Erro ao carregar configuração de filtros:', error);
+        logger.error('Filters', error, { screenId: currentScreenId });
         filtersByScreen = {};
       }
     }
@@ -1788,7 +2014,7 @@
                 const options = await loadSelectOptions(field);
                 html += renderSelectField(field, options);
               } catch (error) {
-                console.error(`Erro ao carregar opções do campo ${field.id}:`, error);
+                logger.error('FilterOptions', error, { fieldId: field.id, fieldType: 'select' });
                 // Renderiza select vazio em caso de erro
                 html += renderSelectField(field, []);
               }
@@ -1804,7 +2030,7 @@
                 const options = await loadSelectOptions(field);
                 html += renderMultiSelectField(field, options);
               } catch (error) {
-                console.error(`Erro ao carregar opções do campo ${field.id}:`, error);
+                logger.error('FilterOptions', error, { fieldId: field.id, fieldType: 'multiselect' });
                 // Renderiza multiselect vazio em caso de erro
                 html += renderMultiSelectField(field, []);
               }
@@ -1826,7 +2052,7 @@
                 const options = await loadSelectOptions(field);
                 html += renderYearField(field, options);
               } catch (error) {
-                console.error(`Erro ao carregar opções do campo ${field.id}:`, error);
+                logger.error('FilterOptions', error, { fieldId: field.id, fieldType: 'year' });
                 html += renderYearField(field, []);
               }
             } else {
@@ -1933,7 +2159,7 @@
         
         return options;
       } catch (error) {
-        console.error(`Erro ao executar query de opções para campo ${field.id}:`, error);
+        logger.error('FilterOptionsQuery', error, { fieldId: field.id, query: field.optionsQuery });
         throw error;
       }
     }
@@ -2104,7 +2330,7 @@
         // Foca no input de busca
         const searchInput = document.getElementById(`multiselect-search-${fieldId}`);
         if (searchInput) {
-          setTimeout(() => searchInput.focus(), 50);
+          setTimeout(() => searchInput.focus(), CONFIG.FILTER.FOCUS_DELAY);
         }
       }
     }
@@ -2153,7 +2379,7 @@
         } else if (emptyMsg) {
           emptyMsg.remove();
         }
-      }, 100);
+      }, CONFIG.DEBOUNCE.MULTISELECT_SEARCH);
     }
 
     /**
@@ -2614,7 +2840,7 @@
         updateFilterBadge();
         closeFilterModal();
       } catch (error) {
-        console.error('Erro ao aplicar filtros:', error);
+        logger.error('FilterApply', error);
       }
     }
 
@@ -2691,7 +2917,7 @@
         // Recarrega a tela atual
         await reloadCurrentScreen();
       } catch (error) {
-        console.error('Erro ao limpar filtros:', error);
+        logger.error('FilterClear', error);
       }
     }
 
