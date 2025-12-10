@@ -159,9 +159,12 @@ Configure as variáveis de mapeamento conforme os nomes das colunas na sua query
 #### Regras para Ícones
 
 - **Formato obrigatório:** PascalCase (ex: `Users`, `PieChart`, `LayoutDashboard`)
-- **Biblioteca:** Ícones Lucide React
-- **Exemplos válidos:** `Home`, `User`, `Settings`, `Bell`, `FileText`, `BarChart3`, `LayoutDashboard`, `Users`, `PieChart`
-- O componente converte automaticamente para lowercase para renderização
+- **Biblioteca:** Ícones Lucide (suportados via API Iconify)
+- **Carregamento dinâmico:** O componente carrega ícones automaticamente via API Iconify, **não é necessário adicionar manualmente** cada ícone no código
+- **Exemplos válidos:** `Home`, `User`, `Settings`, `Bell`, `FileText`, `BarChart3`, `LayoutDashboard`, `Users`, `PieChart`, `ShoppingCart`, `CreditCard`, `Package`, `Truck`, `DollarSign`, etc.
+- **Onde buscar ícones:** Acesse [lucide.dev/icons](https://lucide.dev/icons) e use o nome exibido em PascalCase
+- O componente converte automaticamente para o formato correto e carrega dinamicamente
+- **Fallback:** Se um ícone não for encontrado via API, o componente usa ícones estáticos pré-definidos como fallback
 
 #### Submenus via menuQuery
 

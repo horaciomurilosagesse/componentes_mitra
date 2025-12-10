@@ -1017,7 +1017,7 @@
         await loadMenuItems();
 
         // Carrega menu do usuário (userMenu)
-        loadUserMenu();
+        await loadUserMenu();
 
         // Cor primária personalizada (se fornecida)
         if (componentData.primaryColor) {
@@ -1142,7 +1142,20 @@
           if (resultado && resultado.data) {
             menuItems = parseMenuQueryResult(resultado.data);
             filteredItems = [...menuItems];
+            
+            // Pré-carrega ícones ANTES de renderizar para garantir que estejam disponíveis
+            const iconNames = extractIconNames(menuItems);
+            const iconsLoaded = await preloadIcons(iconNames);
+            
+            // Renderiza o menu
             renderMenuItems();
+            
+            // Atualiza ícones no DOM após renderização para garantir que ícones carregados sejam exibidos
+            // Usa múltiplos delays para capturar ícones que podem carregar em momentos diferentes
+            setTimeout(() => updateIconsInDOM(), 50);
+            setTimeout(() => updateIconsInDOM(), 200);
+            setTimeout(() => updateIconsInDOM(), 500);
+            
             return;
           }
         }
@@ -1151,11 +1164,44 @@
         if (componentData.menuItems) {
           menuItems = JSON.parse(componentData.menuItems);
           filteredItems = [...menuItems];
+          
+          // Pré-carrega ícones ANTES de renderizar para garantir que estejam disponíveis
+          const iconNames = extractIconNames(menuItems);
+          const iconsLoaded = await preloadIcons(iconNames);
+          
+          // Renderiza o menu
           renderMenuItems();
+          
+          // Atualiza ícones no DOM após renderização para garantir que ícones carregados sejam exibidos
+          setTimeout(() => updateIconsInDOM(), 50);
+          setTimeout(() => updateIconsInDOM(), 200);
+          setTimeout(() => updateIconsInDOM(), 500);
         }
       } catch (error) {
         logger.error('MenuItems', error);
       }
+    }
+    
+    /**
+     * Extrai todos os nomes de ícones dos itens do menu (incluindo submenus)
+     */
+    function extractIconNames(items) {
+      const iconNames = [];
+      
+      function extractFromItem(item) {
+        if (item.icon) {
+          iconNames.push(item.icon);
+        }
+        if (item.submenu && Array.isArray(item.submenu)) {
+          item.submenu.forEach(subItem => extractFromItem(subItem));
+        }
+      }
+      
+      if (Array.isArray(items)) {
+        items.forEach(item => extractFromItem(item));
+      }
+      
+      return iconNames;
     }
 
     /**
@@ -1303,10 +1349,15 @@
     /**
      * Carrega menu do usuário (userMenu)
      */
-    function loadUserMenu() {
+    async function loadUserMenu() {
       try {
         if (componentData.userMenu) {
           userMenuItems = JSON.parse(componentData.userMenu);
+          
+          // Pré-carrega ícones ANTES de renderizar
+          const iconNames = userMenuItems.map(item => item.icone || item.icon || 'User');
+          await preloadIcons(iconNames);
+          
           renderUserMenu();
         }
       } catch (error) {
@@ -1489,7 +1540,7 @@
               data-item-id="${item.id}"
               ${isActive ? 'aria-current="page"' : ''}
             >
-              <div class="flex items-center justify-center min-w-[24px]">
+              <div class="flex items-center justify-center min-w-[24px]" data-icon-name="${itemIcon}">
                 ${getIconSVG(itemIcon, isActive)}
               </div>
               
@@ -1565,8 +1616,21 @@
     }
 
     /**
-     * Definição de ícones SVG (Lucide)
-     * Organizado em objeto separado para facilitar manutenção
+     * Cache de ícones SVG gerados dinamicamente
+     * Evita fazer requisições repetidas para o mesmo ícone
+     */
+    const iconCache = new Map();
+    
+    /**
+     * Cache de promises de carregamento de ícones
+     * Evita múltiplas requisições simultâneas para o mesmo ícone
+     */
+    const iconLoadingPromises = new Map();
+
+    /**
+     * Definição de ícones SVG estáticos (fallback para compatibilidade e offline)
+     * Mantidos para garantir compatibilidade e funcionar quando offline
+     * Novos ícones serão carregados dinamicamente via API Iconify
      */
     const iconDefinitions = {
       home: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1625,12 +1689,162 @@
       </svg>`,
       edit: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>`,
+      trash: (iconClass) => `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
       </svg>`
     };
 
     /**
-     * Retorna SVG do ícone baseado no nome
-     * Suporta ícones em PascalCase (Lucide) convertendo para lowercase
+     * Converte nome do ícone PascalCase para formato usado pela API Iconify
+     * Ex: "LayoutDashboard" -> "layout-dashboard", "BarChart3" -> "bar-chart-3", "Trash" -> "trash"
+     */
+    function normalizeIconName(iconName) {
+      if (!iconName) return 'home';
+      
+      const nameStr = String(iconName).trim();
+      
+      // Se já está em lowercase e sem hífens, retorna direto (caso comum como "trash", "home")
+      if (nameStr === nameStr.toLowerCase() && !nameStr.includes('-')) {
+        return nameStr.toLowerCase();
+      }
+      
+      // Converte PascalCase para kebab-case
+      // Ex: LayoutDashboard -> layout-dashboard
+      // Ex: BarChart3 -> bar-chart-3
+      // Ex: Trash -> trash (não tem hífen porque é uma palavra única)
+      return nameStr
+        .replace(/([a-z])([A-Z])/g, '$1-$2') // Insere hífen entre minúscula e maiúscula
+        .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2') // Insere hífen entre maiúsculas consecutivas
+        .replace(/(\d+)/g, '-$1-') // Adiciona hífens ao redor de números
+        .replace(/-+/g, '-') // Remove hífens duplicados
+        .replace(/^-|-$/g, '') // Remove hífens no início/fim
+        .toLowerCase();
+    }
+
+    /**
+     * Carrega SVG do ícone dinamicamente via API Iconify
+     * A API Iconify suporta ícones Lucide e retorna SVGs prontos
+     */
+    async function loadIconFromAPI(iconName) {
+      const normalizedName = normalizeIconName(iconName);
+      const iconId = `lucide:${normalizedName}`;
+      
+      // Verifica se já está carregando
+      if (iconLoadingPromises.has(iconId)) {
+        return iconLoadingPromises.get(iconId);
+      }
+      
+      // Cria promise de carregamento
+      const loadPromise = fetch(`https://api.iconify.design/${iconId}.svg`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Ícone ${iconName} não encontrado`);
+          }
+          return response.text();
+        })
+        .then(svgText => {
+          // Remove a promise de carregamento após concluir
+          iconLoadingPromises.delete(iconId);
+          return svgText;
+        })
+        .catch(error => {
+          // Remove a promise de carregamento em caso de erro
+          iconLoadingPromises.delete(iconId);
+          throw error;
+        });
+      
+      iconLoadingPromises.set(iconId, loadPromise);
+      return loadPromise;
+    }
+
+    /**
+     * Gera SVG do ícone dinamicamente
+     * Tenta carregar via API Iconify primeiro, depois usa fallback estático
+     */
+    async function generateIconSVG(iconName, iconClass) {
+      const normalizedName = normalizeIconName(iconName);
+      const cacheKey = `${normalizedName}-${iconClass}`;
+      
+      // Verifica cache primeiro
+      if (iconCache.has(cacheKey)) {
+        return iconCache.get(cacheKey);
+      }
+      
+      let svg = null;
+      
+      // Tenta carregar dinamicamente via API Iconify
+      try {
+        const svgText = await loadIconFromAPI(iconName);
+        
+        // Cria um elemento temporário para manipular o SVG
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = svgText;
+        const svgElement = tempDiv.querySelector('svg');
+        
+        if (svgElement) {
+          // Aplica classes e atributos necessários
+          svgElement.setAttribute('class', iconClass);
+          svgElement.setAttribute('fill', 'none');
+          svgElement.setAttribute('stroke', 'currentColor');
+          if (!svgElement.hasAttribute('viewBox')) {
+            svgElement.setAttribute('viewBox', '0 0 24 24');
+          }
+          svg = svgElement.outerHTML;
+        }
+      } catch (error) {
+        // Log para debug - ajuda a identificar problemas com ícones
+        const normalizedName = normalizeIconName(iconName);
+        const iconId = `lucide:${normalizedName}`;
+        
+        // Verifica se é um erro de rede ou se o ícone realmente não existe
+        if (error.message && error.message.includes('não encontrado')) {
+          // Ícone não existe na API - pode ser nome incorreto
+          if (console && console.warn) {
+            console.warn(`Ícone "${iconName}" (${iconId}) não encontrado na API Iconify. Verifique o nome em https://lucide.dev/icons`);
+          }
+        } else {
+          // Erro de rede ou outro problema
+          if (console && console.debug) {
+            console.debug(`Erro ao carregar ícone ${iconName} via API:`, error.message);
+          }
+        }
+      }
+      
+      // Se não conseguiu carregar dinamicamente, usa fallback estático
+      if (!svg) {
+        const fallbackName = String(iconName || 'home')
+          .replace(/([A-Z])/g, (match) => match.toLowerCase())
+          .toLowerCase()
+          .replace(/\s+/g, '');
+        
+        const iconFn = iconDefinitions[fallbackName];
+        if (iconFn) {
+          svg = iconFn(iconClass);
+        } else {
+          // Último fallback: usa ícone home
+          svg = iconDefinitions.home(iconClass);
+        }
+      }
+      
+      // Armazena no cache
+      iconCache.set(cacheKey, svg);
+      
+      // Se o ícone foi carregado da API (não é fallback), atualiza o DOM
+      // Isso garante que ícones carregados após a renderização inicial sejam exibidos
+      if (svg && !iconDefinitions[String(iconName || 'home').toLowerCase().replace(/\s+/g, '')]) {
+        // Usa requestAnimationFrame para atualizar o DOM de forma eficiente
+        requestAnimationFrame(() => {
+          updateIconsInDOM();
+        });
+      }
+      
+      return svg;
+    }
+
+    /**
+     * Retorna SVG do ícone baseado no nome (versão síncrona para compatibilidade)
+     * Usa cache quando disponível, senão retorna fallback imediato
      */
     function getIconSVG(iconName, isActive = false) {
       let iconClass;
@@ -1641,22 +1855,171 @@
         iconClass = `h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-500 group-hover:text-slate-700'}`;
       }
       
-      // Converte PascalCase para lowercase (ex: LayoutDashboard -> layoutdashboard)
-      // Remove espaços e converte tudo para lowercase
-      const normalizedName = String(iconName || 'home')
+      const normalizedName = normalizeIconName(iconName);
+      const cacheKey = `${normalizedName}-${iconClass}`;
+      
+      // Verifica cache primeiro (ícones já carregados)
+      if (iconCache.has(cacheKey)) {
+        let svg = iconCache.get(cacheKey);
+        // Aplica cor primária se necessário
+        if (isActive && primaryColorValue) {
+          svg = svg.replace(/stroke="currentColor"/g, `stroke="${primaryColorValue}"`);
+          svg = svg.replace(/fill="currentColor"/g, `fill="${primaryColorValue}"`);
+        }
+        return svg;
+      }
+      
+      // Se não está em cache, usa fallback estático imediatamente
+      // O ícone será carregado dinamicamente em background para próxima vez
+      const fallbackName = String(iconName || 'home')
         .replace(/([A-Z])/g, (match) => match.toLowerCase())
         .toLowerCase()
         .replace(/\s+/g, '');
       
-      const iconFn = iconDefinitions[normalizedName];
+      const iconFn = iconDefinitions[fallbackName];
       let svg = iconFn ? iconFn(iconClass) : iconDefinitions.home(iconClass);
       
-      // Se tem cor primária e está ativo, aplica cor inline
+      // Carrega dinamicamente em background e atualiza o DOM quando carregar
+      generateIconSVG(iconName, iconClass)
+        .then(() => {
+          // Quando o ícone carregar, atualiza o DOM para mostrar o ícone correto
+          updateIconsInDOM();
+        })
+        .catch(() => {
+          // Ignora erros silenciosamente, já temos fallback
+        });
+      
+      // Aplica cor primária se necessário
       if (isActive && primaryColorValue) {
-        svg = svg.replace('currentColor', primaryColorValue);
+        svg = svg.replace(/stroke="currentColor"/g, `stroke="${primaryColorValue}"`);
+        svg = svg.replace(/fill="currentColor"/g, `fill="${primaryColorValue}"`);
       }
       
       return svg;
+    }
+    
+    /**
+     * Pré-carrega ícones dinamicamente para melhorar performance
+     * Carrega todos os ícones antes de renderizar o menu
+     * Retorna true se todos os ícones foram carregados com sucesso
+     */
+    async function preloadIcons(iconNames) {
+      if (!iconNames || !Array.isArray(iconNames) || iconNames.length === 0) return true;
+      
+      const uniqueIcons = [...new Set(iconNames.filter(name => name))]; // Remove valores vazios
+      
+      if (uniqueIcons.length === 0) return true;
+      
+      // Carrega todos os ícones com diferentes variações de classe que podem ser usadas
+      // IMPORTANTE: Precisamos carregar com as mesmas classes que serão usadas na renderização
+      const iconClasses = [
+        'h-4.5 w-4.5 flex-shrink-0 text-slate-500 group-hover:text-slate-700',
+        'h-4.5 w-4.5 flex-shrink-0 text-blue-600',
+        'h-4.5 w-4.5 flex-shrink-0 text-slate-500',
+        'h-4.5 w-4.5 flex-shrink-0'
+      ];
+      
+      const loadPromises = [];
+      
+      uniqueIcons.forEach(iconName => {
+        iconClasses.forEach(iconClass => {
+          loadPromises.push(
+            generateIconSVG(iconName, iconClass).catch(error => {
+              // Log apenas se não for um ícone conhecido no fallback
+              const fallbackName = String(iconName || 'home')
+                .replace(/([A-Z])/g, (match) => match.toLowerCase())
+                .toLowerCase()
+                .replace(/\s+/g, '');
+              
+              // Se não existe no fallback estático, pode ser um problema real
+              if (!iconDefinitions[fallbackName] && console && console.warn) {
+                console.warn(`Ícone "${iconName}" não encontrado. Verifique se o nome está correto em PascalCase (ex: "Trash", "ShoppingCart")`);
+              }
+            })
+          );
+        });
+      });
+      
+      // Aguarda TODOS os ícones serem carregados antes de continuar
+      const results = await Promise.allSettled(loadPromises);
+      
+      // Verifica se pelo menos alguns ícones foram carregados com sucesso
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const totalCount = results.length;
+      
+      // Log para debug (apenas em desenvolvimento)
+      if (console && console.debug && successCount < totalCount) {
+        console.debug(`Ícones carregados: ${successCount}/${totalCount}`);
+      }
+      
+      return successCount > 0;
+    }
+    
+    /**
+     * Atualiza ícones no DOM após carregamento assíncrono
+     * Útil quando ícones são carregados após a renderização inicial
+     */
+    function updateIconsInDOM() {
+      const menuContainer = domCache.get('menu-items');
+      if (!menuContainer) return;
+      
+      // Encontra todos os elementos de ícone no menu que têm data-icon-name
+      const iconContainers = menuContainer.querySelectorAll('[data-icon-name]');
+      
+      iconContainers.forEach(container => {
+        const iconName = container.getAttribute('data-icon-name');
+        if (!iconName) return;
+        
+        // Determina se o item está ativo
+        const menuItem = container.closest('.menu-item') || container.closest('button');
+        const isActive = menuItem?.classList.contains('active') || 
+                        menuItem?.getAttribute('aria-current') === 'page' ||
+                        menuItem?.classList.contains('collapsed-active');
+        
+        // Usa a mesma lógica de classe que getIconSVG
+        let iconClass;
+        if (isActive && primaryColorValue) {
+          iconClass = 'h-4.5 w-4.5 flex-shrink-0';
+        } else {
+          iconClass = `h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-500 group-hover:text-slate-700'}`;
+        }
+        
+        const normalizedName = normalizeIconName(iconName);
+        const cacheKey = `${normalizedName}-${iconClass}`;
+        
+        // Tenta encontrar o ícone no cache com a classe exata ou similar
+        let svg = null;
+        if (iconCache.has(cacheKey)) {
+          svg = iconCache.get(cacheKey);
+        } else {
+          // Tenta outras variações de classe que podem estar no cache
+          const alternativeClasses = [
+            'h-4.5 w-4.5 flex-shrink-0 text-slate-500 group-hover:text-slate-700',
+            'h-4.5 w-4.5 flex-shrink-0 text-blue-600',
+            'h-4.5 w-4.5 flex-shrink-0 text-slate-500',
+            'h-4.5 w-4.5 flex-shrink-0'
+          ];
+          
+          for (const altClass of alternativeClasses) {
+            const altCacheKey = `${normalizedName}-${altClass}`;
+            if (iconCache.has(altCacheKey)) {
+              svg = iconCache.get(altCacheKey);
+              break;
+            }
+          }
+        }
+        
+        // Se encontrou o ícone no cache, atualiza o DOM
+        if (svg) {
+          // Aplica cor primária se necessário
+          if (isActive && primaryColorValue) {
+            svg = svg.replace(/stroke="currentColor"/g, `stroke="${primaryColorValue}"`);
+            svg = svg.replace(/fill="currentColor"/g, `fill="${primaryColorValue}"`);
+          }
+          
+          container.innerHTML = svg;
+        }
+      });
     }
 
     /**
