@@ -232,6 +232,38 @@
       display: none;
     }
     
+    .multiselect-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
+      background-color: hsl(210 40% 98%);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    
+    .multiselect-actions-link {
+      font-size: 13px;
+      color: hsl(221.2 83.2% 53.3%);
+      cursor: pointer;
+      transition: color 0.15s ease-in-out;
+      text-decoration: none;
+    }
+    
+    .multiselect-actions-link:hover {
+      color: hsl(221.2 83.2% 45%);
+      text-decoration: underline;
+    }
+    
+    .multiselect-actions-separator {
+      height: 14px;
+      width: 1px;
+      background-color: hsl(214.3 31.8% 85%);
+    }
+    
     .multiselect-tags {
       display: flex;
       flex-wrap: wrap;
@@ -2666,6 +2698,11 @@
               </svg>
             </div>
             <div id="multiselect-dropdown-${field.id}" class="multiselect-dropdown hidden">
+              <div class="multiselect-actions">
+                <span class="multiselect-actions-link" onclick="selectAllMultiSelect('${field.id}')">Selecionar Todos</span>
+                <span class="multiselect-actions-separator" aria-hidden="true"></span>
+                <span class="multiselect-actions-link" onclick="clearAllMultiSelect('${field.id}')">Limpar Todos</span>
+              </div>
               <div id="multiselect-options-${field.id}" class="multiselect-options">
                 ${optionsHtml}
               </div>
@@ -2862,6 +2899,34 @@
           }
         }
       }
+    }
+
+    /**
+     * Seleciona todas as opções visíveis do multiselect
+     * @param {string} fieldId - ID do campo multiselect
+     */
+    function selectAllMultiSelect(fieldId) {
+      const optionsContainer = document.getElementById(`multiselect-options-${fieldId}`);
+      if (!optionsContainer) return;
+
+      const visibleCheckboxes = optionsContainer.querySelectorAll('.multiselect-option:not(.hidden) input[type="checkbox"]');
+      visibleCheckboxes.forEach(cb => cb.checked = true);
+
+      updateMultiSelectTags(fieldId);
+    }
+
+    /**
+     * Limpa todas as opções visíveis do multiselect
+     * @param {string} fieldId - ID do campo multiselect
+     */
+    function clearAllMultiSelect(fieldId) {
+      const optionsContainer = document.getElementById(`multiselect-options-${fieldId}`);
+      if (!optionsContainer) return;
+
+      const visibleCheckboxes = optionsContainer.querySelectorAll('.multiselect-option:not(.hidden) input[type="checkbox"]');
+      visibleCheckboxes.forEach(cb => cb.checked = false);
+
+      updateMultiSelectTags(fieldId);
     }
 
     /**
