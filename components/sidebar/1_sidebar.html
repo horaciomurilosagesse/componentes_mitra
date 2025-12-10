@@ -2653,22 +2653,9 @@
         optionsHtml = '<div class="multiselect-empty">Nenhuma opção disponível</div>';
       }
       
-      // Gera HTML das tags (itens selecionados)
-      let tagsHtml = '';
       let displayPlaceholder = placeholder;
       if (savedValues.length > 0) {
         const selectedOptions = options.filter(opt => savedValues.includes(String(opt.value)));
-        tagsHtml = selectedOptions.map(opt => {
-          const value = String(opt.value);
-          const label = String(opt.label);
-          return `
-            <span class="multiselect-tag">
-              ${label}
-              <span class="multiselect-tag-remove" onclick="removeMultiSelectTag('${field.id}', '${value}')" title="Remover">×</span>
-            </span>
-          `;
-        }).join('');
-        
         // Define placeholder baseado na quantidade de seleções
         if (selectedOptions.length === 1) {
           // Se há apenas uma seleção, mostra o nome da opção
@@ -2707,9 +2694,6 @@
                 ${optionsHtml}
               </div>
             </div>
-          </div>
-          <div id="multiselect-tags-${field.id}" class="multiselect-tags">
-            ${tagsHtml}
           </div>
         </div>
       `;
@@ -2840,10 +2824,9 @@
      */
     function updateMultiSelectTags(fieldId) {
       const optionsContainer = document.getElementById(`multiselect-options-${fieldId}`);
-      const tagsContainer = document.getElementById(`multiselect-tags-${fieldId}`);
       const searchInput = document.getElementById(`multiselect-search-${fieldId}`);
       
-      if (!optionsContainer || !tagsContainer) return;
+      if (!optionsContainer) return;
       
       // Coleta checkboxes marcados
       const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
@@ -2852,7 +2835,7 @@
       // Atualiza filterValues
       filterValues[fieldId] = selectedValues.join(',');
       
-      // Coleta labels das opções selecionadas
+      // Coleta labels das opções selecionadas para placeholder
       const selectedOptions = [];
       checkboxes.forEach(checkbox => {
         const optionDiv = checkbox.closest('.multiselect-option');
@@ -2867,29 +2850,9 @@
         }
       });
       
-      // Renderiza tags
-      if (selectedOptions.length > 0) {
-        tagsContainer.innerHTML = selectedOptions.map(opt => `
-          <span class="multiselect-tag">
-            ${opt.label}
-            <span class="multiselect-tag-remove" onclick="removeMultiSelectTag('${fieldId}', '${opt.value}')" title="Remover">×</span>
-          </span>
-        `).join('');
-        
-        // Atualiza placeholder do input baseado na quantidade de seleções
-        if (searchInput) {
-          if (selectedOptions.length === 1) {
-            // Se há apenas uma seleção, mostra o nome da opção
-            searchInput.placeholder = selectedOptions[0].label;
-          } else {
-            // Se há múltiplas seleções, mostra "várias"
-            searchInput.placeholder = `${selectedOptions.length} selecionadas`;
-          }
-        }
-      } else {
-        tagsContainer.innerHTML = '';
-        // Restaura placeholder padrão
-        if (searchInput) {
+      // Atualiza placeholder do input baseado na quantidade de seleções
+      if (searchInput) {
+        if (selectedOptions.length === 0) {
           const config = getFilterConfig();
           if (config) {
             const field = config.fields.find(f => f.id === fieldId);
@@ -2897,6 +2860,10 @@
               searchInput.placeholder = field.placeholder || 'Buscar e selecionar...';
             }
           }
+        } else if (selectedOptions.length === 1) {
+          searchInput.placeholder = selectedOptions[0].label;
+        } else {
+          searchInput.placeholder = `${selectedOptions.length} selecionadas`;
         }
       }
     }
