@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabela de Atendimentos</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96.1%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+        
+        body {
+            background-color: hsl(var(--background));
+        }
+
+        /* For Webkit-based browsers (Chrome, Safari) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: hsl(var(--secondary));
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: hsl(var(--border));
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: hsl(var(--muted-foreground));
+        }
+    </style>
+</head>
+<body class="h-screen w-screen p-0 m-0">
+
+    <div id="component-container" class="flex flex-col h-full w-full bg-background text-foreground">
+        <!-- Cabeçalho do Componente -->
+        <header class="p-4 sm:p-6 border-b border-border flex-shrink-0">
+            <div>
+                <h1 id="component-title" class="text-xl font-semibold text-foreground">Carregando...</h1>
+                <p id="component-subtitle" class="text-sm text-muted-foreground mt-1">Aguarde enquanto os dados são carregados.</p>
+            </div>
+            <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="relative flex-grow">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input id="search-input" type="text" placeholder="Buscar em todos os campos..." class="flex h-10 w-full rounded-md border border-input bg-transparent pl-10 pr-4 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                </div>
+                <div class="text-sm text-muted-foreground flex-shrink-0">
+                    <span id="record-count" class="font-medium text-foreground">0</span> registros encontrados
+                </div>
+            </div>
+        </header>
+
+        <!-- Container da Tabela com Rolagem -->
+        <main class="flex-grow overflow-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+                    <tr id="table-headers" class="border-b border-border">
+                        <!-- Cabeçalhos serão inseridos via JS -->
+                    </tr>
+                </thead>
+                <tbody id="table-body" class="divide-y divide-border">
+                    <!-- Linhas da tabela serão inseridas via JS -->
+                    <tr>
+                        <td colspan="99" class="p-8 text-center text-muted-foreground">Carregando dados...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+
+    <script>
+        const MITRA_UPDATE_EVENT_NAME = 'mitra-update-attendancetable';
+        
+        function updateMitra() {
+            console.log("Sinal de update para [Attendance Table] recebido. Disparando evento.");
+            document.body.dispatchEvent(new CustomEvent(MITRA_UPDATE_EVENT_NAME));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('search-input');
+            const tableBody = document.getElementById('table-body');
+            const tableHeadersContainer = document.getElementById('table-headers');
+            const recordCountEl = document.getElementById('record-count');
+            const titleEl = document.getElementById('component-title');
+            const subtitleEl = document.getElementById('component-subtitle');
+
+            let fullData = [];
+            let filteredData = [];
+            let displayedData = []; // Dados atualmente exibidos
+            let currentPage = 0;
+            const PAGE_SIZE = 50; // Quantidade de linhas por "página"
+            let columnMap = {};
+            let sortState = {
+                columnIndex: -1,
+                direction: 'none' // 'asc', 'desc', 'none'
+            };
+
+            const formatCurrency = (value) => {
+                const num = parseFloat(value);
+                if (isNaN(num)) {
+                    return "R$ -";
+                }
+                return num.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                });
+            };
+            
+            const loadMoreRows = () => {
+                const start = currentPage * PAGE_SIZE;
+                const end = start + PAGE_SIZE;
+                const newRows = filteredData.slice(start, end);
+                
+                if (newRows.length === 0) return false;
+                
+                displayedData.push(...newRows);
+                currentPage++;
+                return true;
+            };
+
+            const renderTableBody = (append = false) => {
+                if (!append) {
+                    tableBody.innerHTML = '';
+                    displayedData = [];
+                    currentPage = 0;
+                }
+
+                if (filteredData.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="${Object.keys(columnMap).length || 1}" class="p-8 text-center text-muted-foreground">Nenhum registro encontrado.</td></tr>`;
+                    return;
+                }
+
+                if (!append) {
+                    loadMoreRows();
+                } else {
+                    if (!loadMoreRows()) return; // Não há mais dados
+                }
+
+                if (!append) {
+                    tableBody.innerHTML = '';
+                }
+
+                const fragment = document.createDocumentFragment();
+                const startIndex = append ? displayedData.length - PAGE_SIZE : 0;
+                const rowsToRender = append ? displayedData.slice(startIndex) : displayedData;
+
+                for (const row of rowsToRender) {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-muted/50 transition-colors';
+
+                    Object.keys(columnMap).forEach(key => {
+                        const td = document.createElement('td');
+                        td.className = 'px-4 py-3 align-middle';
+                        const cellValue = row[columnMap[key]] || '';
+
+                        switch (key) {
+                            case 'NUMERO_OS':
+                                td.classList.add('font-medium', 'text-foreground');
+                                td.textContent = cellValue;
+                                break;
+                            case 'VALOR':
+                                td.textContent = formatCurrency(cellValue);
+                                break;
+                            default:
+                                td.textContent = cellValue;
+                                break;
+                        }
+                        tr.appendChild(td);
+                    });
+                    fragment.appendChild(tr);
+                }
+                tableBody.appendChild(fragment);
+            };
+
+            const updateSortIcons = () => {
+                const headers = tableHeadersContainer.querySelectorAll('th');
+                headers.forEach((th, index) => {
+                    const iconContainer = th.querySelector('.sort-icon-container');
+                    if (iconContainer) {
+                        const ascIcon = iconContainer.querySelector('.asc-icon');
+                        const descIcon = iconContainer.querySelector('.desc-icon');
+                        
+                        if (index === sortState.columnIndex) {
+                            ascIcon.style.display = sortState.direction === 'asc' ? 'block' : 'none';
+                            descIcon.style.display = sortState.direction === 'desc' ? 'block' : 'none';
+                            ascIcon.classList.toggle('text-primary', sortState.direction === 'asc');
+                            descIcon.classList.toggle('text-primary', sortState.direction === 'desc');
+                        } else {
+                            ascIcon.style.display = 'block';
+                            descIcon.style.display = 'none';
+                            ascIcon.classList.remove('text-primary');
+                            descIcon.classList.remove('text-primary');
+                        }
+                    }
+                });
+            };
+
+            const handleSort = (columnIndex) => {
+                if (sortState.columnIndex === columnIndex) {
+                    sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortState.columnIndex = columnIndex;
+                    sortState.direction = 'asc';
+                }
+
+                filteredData.sort((a, b) => {
+                    let valA = a[columnIndex];
+                    let valB = b[columnIndex];
+                    
+                    const numA = parseFloat(valA);
+                    const numB = parseFloat(valB);
+
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        valA = numA;
+                        valB = numB;
+                    }
+
+                    if (valA < valB) return sortState.direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return sortState.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                
+                displayedData = [];
+                currentPage = 0;
+                updateSortIcons();
+                renderTableBody(false);
+            };
+
+            const renderTableHeaders = (headers) => {
+                tableHeadersContainer.innerHTML = '';
+                headers.forEach((header, index) => {
+                    const th = document.createElement('th');
+                    th.className = 'px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors';
+                    th.dataset.columnIndex = index;
+
+                    const contentWrapper = document.createElement('div');
+                    contentWrapper.className = 'flex items-center gap-2';
+                    contentWrapper.textContent = header.name;
+                    
+                    const iconContainer = document.createElement('div');
+                    iconContainer.className = 'sort-icon-container text-muted-foreground';
+                    iconContainer.innerHTML = `
+                        <svg class="asc-icon h-4 w-4" style="display: block;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                        <svg class="desc-icon h-4 w-4" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    `;
+
+                    contentWrapper.appendChild(iconContainer);
+                    th.appendChild(contentWrapper);
+
+                    th.addEventListener('click', () => handleSort(index));
+                    tableHeadersContainer.appendChild(th);
+                });
+            };
+
+            const handleSearch = () => {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                if (!searchTerm) {
+                    filteredData = [...fullData];
+                } else {
+                    filteredData = fullData.filter(row => {
+                        return row.some(cell => {
+                            return String(cell).toLowerCase().includes(searchTerm);
+                        });
+                    });
+                }
+                recordCountEl.textContent = filteredData.length;
+                sortState.columnIndex = -1; // Reset sort on new search
+                sortState.direction = 'none';
+                displayedData = [];
+                currentPage = 0;
+                updateSortIcons();
+                renderTableBody(false);
+            };
+
+            const fetchAndRenderData = async () => {
+                titleEl.textContent = componentData.title || "Tabela de Dados";
+                subtitleEl.textContent = componentData.subtitle || "Visualize e filtre os registros abaixo.";
+                tableBody.innerHTML = `<tr><td colspan="99" class="p-8 text-center text-muted-foreground">Carregando dados...</td></tr>`;
+
+                try {
+                    const jdbcId = parseInt(componentData.jdbcId, 10);
+                    if (isNaN(jdbcId) || !componentData.queryData) {
+                        throw new Error("Configuração 'jdbcId' ou 'queryData' ausente ou inválida.");
+                    }
+
+                    const result = await queryMitra({
+                        query: componentData.queryData,
+                        jdbcId: jdbcId,
+                        onlineTables: true
+                    });
+                    
+                    if (!result || !result.headers || !result.data) {
+                        throw new Error("A resposta da queryMitra é inválida.");
+                    }
+
+                    result.headers.forEach((h, i) => {
+                        columnMap[h.name.toUpperCase()] = i;
+                    });
+
+                    fullData = result.data;
+                    filteredData = [...fullData];
+                    
+                    recordCountEl.textContent = fullData.length;
+                    renderTableHeaders(result.headers);
+                    updateSortIcons();
+                    renderTableBody(false);
+
+                } catch (error) {
+                    console.error("Erro ao buscar ou renderizar os dados:", error);
+                    const numCols = tableHeadersContainer.children.length || 1;
+                    tableBody.innerHTML = `<tr><td colspan="${numCols}" class="p-8 text-center text-destructive-foreground bg-destructive/80">Ocorreu um erro ao carregar os dados. Verifique a configuração do componente.</td></tr>`;
+                }
+            };
+            
+            const initializeComponent = () => {
+                searchInput.addEventListener('keyup', handleSearch);
+                document.body.addEventListener(MITRA_UPDATE_EVENT_NAME, fetchAndRenderData);
+                
+                // Listener para scroll infinito
+                const mainContainer = document.querySelector('main');
+                mainContainer.addEventListener('scroll', () => {
+                    const { scrollTop, scrollHeight, clientHeight } = mainContainer;
+                    // Carrega mais quando chegar a 80% do scroll
+                    if (scrollTop + clientHeight >= scrollHeight * 0.8) {
+                        if (displayedData.length < filteredData.length) {
+                            renderTableBody(true);
+                        }
+                    }
+                });
+                
+                fetchAndRenderData();
+            };
+
+            const waitForMitraAndInit = () => {
+                const maxWaitTime = 5000;
+                const intervalTime = 100;
+                const startTime = Date.now();
+                const checkInterval = setInterval(() => {
+                    if (window.componentData && window.componentData.queryData && window.componentData.jdbcId) {
+                        clearInterval(checkInterval);
+                        initializeComponent();
+                    } else if (Date.now() - startTime > maxWaitTime) {
+                        clearInterval(checkInterval);
+                        console.error("Erro: As configurações do componente (componentData) não foram carregadas a tempo.");
+                        document.getElementById('component-container').innerHTML = `<div class="p-8 text-center text-red-700 bg-red-50 h-full flex items-center justify-center">Erro Crítico: As configurações do componente não foram carregadas da plataforma.</div>`;
+                    }
+                }, intervalTime);
+            };
+
+            waitForMitraAndInit();
+        });
+    </script>
+</body>
+</html>
