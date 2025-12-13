@@ -1,0 +1,1106 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tabela Avançada</title>
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* 
+       Mantendo CSS original para garantir integridade da lógica de layout complexa 
+       (Sticky headers, resize handles e scroll virtualization).
+       Tailwind adicionado para mensagens de sistema e utilitários gerais.
+    */
+    :root {
+      --bg: #ffffff;
+      --bg-muted: #f7f7fb;
+      --fg: #1b2139;
+      --fg-muted: #5d6585;
+      --border: #e5e7eb;
+      --border-strong: #d0d5dd;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #ef4444;
+      --radius: 12px;
+      --shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+      --header-height: 58px;
+      --footer-height: 64px;
+      --row-height: 44px;
+      --transition: 160ms ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+    }
+
+    .component {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 18px 12px;
+    }
+
+    .header-top {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--fg);
+      margin: 0;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--fg-muted);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search {
+      position: relative;
+      flex: 1 1 280px;
+      max-width: 520px;
+    }
+
+    .search input {
+      width: 100%;
+      height: 38px;
+      padding: 0 12px 0 34px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--fg);
+      background: #fff;
+      transition: border var(--transition), box-shadow var(--transition);
+    }
+
+    .search input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+    }
+
+    .search svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--fg-muted);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--fg);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), border var(--transition), box-shadow var(--transition);
+    }
+
+    .btn:hover {
+      background: var(--bg-muted);
+    }
+
+    .btn-primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .table-wrapper {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 160px;
+      overflow: hidden;
+    }
+
+    .table-scroll {
+      position: absolute;
+      inset: 0;
+      overflow: auto;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      min-width: max-content;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #fbfcff;
+      box-shadow: inset 0 -1px 0 var(--border);
+    }
+
+    th, td {
+      height: var(--row-height);
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--fg);
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    th {
+      font-weight: 600;
+      color: #374151;
+      position: relative;
+      background: #fbfcff;
+      user-select: none;
+    }
+
+    th .header-content {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    th .sort-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--fg-muted);
+    }
+
+    th .resize-handle {
+      position: absolute;
+      top: 6px;
+      right: 0;
+      width: 6px;
+      height: calc(100% - 12px);
+      cursor: col-resize;
+      user-select: none;
+    }
+
+    tr:hover td {
+      background: #fafafa;
+    }
+
+    .cell-center { text-align: center; }
+    .cell-right { text-align: right; }
+
+    .checkbox-cell input {
+      pointer-events: auto;
+    }
+
+    .action-buttons {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-muted);
+      color: var(--fg-muted);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      overflow: hidden;
+    }
+
+    .icon-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 3;
+      background: #f8f9fa;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px;
+      min-height: var(--footer-height);
+    }
+
+    .totals {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--fg);
+      flex-wrap: wrap;
+    }
+
+    .totals strong {
+      font-weight: 700;
+    }
+
+    .pagination {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info {
+      font-size: 12px;
+      color: var(--fg-muted);
+    }
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 4;
+      font-size: 13px;
+      color: var(--fg-muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .text-danger {
+      color: var(--danger);
+    }
+
+    .truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="component" id="table-component">
+    <div class="header">
+      <div class="header-top">
+        <h1 class="title" id="title">Tabela</h1>
+        <p class="subtitle" id="subtitle">Carregando...</p>
+      </div>
+      <div class="header-actions">
+        <div class="search">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input id="search-input" type="text" placeholder="Buscar..." autocomplete="off" />
+        </div>
+        <div class="buttons" id="header-buttons"></div>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <div class="loading-overlay hidden" id="loading-overlay">Carregando...</div>
+      <div class="table-scroll" id="table-scroll">
+        <table>
+          <thead>
+            <tr id="table-headers"></tr>
+          </thead>
+          <tbody id="table-body">
+            <tr><td id="placeholder-cell">Carregando dados...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="totals" id="totals"></div>
+      <div class="pagination">
+        <button class="btn" id="prev-page">Anterior</button>
+        <button class="btn" id="next-page">Próxima</button>
+        <span class="info" id="record-info">0 de 0</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Funções nativas Mitra (declarações) — evitamos colisão de nomes globais
+    const noop = () => {};
+    const mitra = {
+      query: (window.queryMitra || noop).bind(window),
+      setVar: (window.setVariableMitra || noop).bind(window),
+      dbaction: (window.dbactionMitra || noop).bind(window),
+      form: (window.formMitra || noop).bind(window),
+      modal: (window.modalMitra || noop).bind(window),
+      action: (window.actionMitra || noop).bind(window),
+    };
+
+    const state = {
+      config: {},
+      columns: [],
+      data: [],
+      filtered: [],
+      displayed: [],
+      sort: { index: -1, dir: 'none' },
+      searchTerm: '',
+      loading: false,
+      batchSize: 50,
+      page: 0,
+      totalRecords: 0,
+      totals: {},
+      resizing: null
+    };
+
+    const els = {
+      title: document.getElementById('title'),
+      subtitle: document.getElementById('subtitle'),
+      search: document.getElementById('search-input'),
+      headerButtons: document.getElementById('header-buttons'),
+      tableHeaders: document.getElementById('table-headers'),
+      tableBody: document.getElementById('table-body'),
+      tableScroll: document.getElementById('table-scroll'),
+      loading: document.getElementById('loading-overlay'),
+      totals: document.getElementById('totals'),
+      prev: document.getElementById('prev-page'),
+      next: document.getElementById('next-page'),
+      info: document.getElementById('record-info')
+    };
+
+    const defaultConfig = {
+      title: 'Tabela',
+      subtitle: 'Use as ações para interagir com os registros.',
+      query: '',
+      jdbcId: 1,
+      columns: [],
+      headerButtons: [],
+      enableSearch: true,
+      enablePagination: true,
+      pageSize: 50,
+      renderBatchSize: 200,
+      enableTotals: true,
+      totalsConfig: [],
+      searchVariable: '',
+      rowIdVariable: ':VAR_ROW_ID'
+    };
+
+    const parseJSON = (raw, fallback) => {
+      if (!raw) return fallback;
+      if (typeof raw === 'object') return raw;
+      try {
+        return JSON.parse(String(raw));
+      } catch (e) {
+        console.error('JSON inválido:', e);
+        return fallback;
+      }
+    };
+
+    const formatNumber = (value, decimals = 2) => {
+      const num = Number(value);
+      if (!Number.isFinite(num)) return '';
+      return num.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    };
+
+    const parseNumber = (value) => {
+      if (value === null || value === undefined || value === '') return NaN;
+      if (typeof value === 'number') return value;
+      const s = String(value).replace(/\./g, '').replace(',', '.');
+      return Number(s);
+    };
+
+    const debounce = (fn, delay = 300) => {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), delay);
+      };
+    };
+
+    const setLoading = (isLoading) => {
+      state.loading = isLoading;
+      els.loading.classList.toggle('hidden', !isLoading);
+    };
+
+    function normalizeColumns(cols) {
+      if (!Array.isArray(cols)) return [];
+      return cols.map((c, idx) => ({
+        columnName: c.columnName || `COL_${idx}`,
+        headerName: c.headerName || c.columnName || `Coluna ${idx + 1}`,
+        dataField: c.dataField || c.columnName || `COL_${idx}`,
+        columnType: c.columnType || 'data_text',
+        width: c.width || '140px',
+        minWidth: c.minWidth || '80px',
+        resizable: c.resizable !== false,
+        sortable: c.sortable !== false,
+        alignment: c.alignment || (c.columnType === 'data_number' ? 'right' : c.columnType === 'data_boolean_checkbox' ? 'center' : 'left'),
+        dropdownOptions: c.dropdownOptions || [],
+        dropdownOptionsQuery: c.dropdownOptionsQuery,
+        buttons: c.buttons || [],
+        onChangeAction: c.onChangeAction,
+        inputDateFormat: c.inputDateFormat
+      }));
+    }
+
+    function parseConfig() {
+      const cd = window.componentData || {};
+      state.config = {
+        title: cd.title ?? defaultConfig.title,
+        subtitle: cd.subtitle ?? defaultConfig.subtitle,
+        query: cd.query ?? cd.queryData ?? '',
+        jdbcId: Number(cd.jdbcId) || defaultConfig.jdbcId,
+        columns: normalizeColumns(parseJSON(cd.columns, [])),
+        headerButtons: parseJSON(cd.headerButtons, []),
+        enableSearch: cd.enableSearch === false ? false : true,
+        enablePagination: cd.enablePagination === false ? false : true,
+        pageSize: Number(cd.pageSize) || defaultConfig.pageSize,
+        renderBatchSize: Number(cd.renderBatchSize) || Number(cd.pageSize) || defaultConfig.renderBatchSize,
+        enableTotals: cd.enableTotals !== false,
+        totalsConfig: parseJSON(cd.totalsConfig, []),
+        searchVariable: cd.searchVariable || '',
+        rowIdVariable: cd.rowIdVariable || ':VAR_ROW_ID'
+      };
+      state.columns = state.config.columns;
+      state.batchSize = state.config.renderBatchSize;
+      els.title.textContent = state.config.title;
+      els.subtitle.textContent = state.config.subtitle;
+      if (!state.config.enableSearch) {
+        els.search.parentElement.classList.add('hidden');
+      }
+      if (!state.config.enablePagination) {
+        document.querySelector('.pagination').classList.add('hidden');
+      }
+    }
+
+    async function fetchDropdownOptions() {
+      const promises = state.columns
+        .filter(c => c.columnType === 'input_dropdown' && c.dropdownOptionsQuery)
+        .map(async (c) => {
+          try {
+            const res = await mitra.query({ query: c.dropdownOptionsQuery, jdbcId: state.config.jdbcId });
+            c.dropdownOptions = (res.data || []).map(r => ({ value: r[0], label: r[1] ?? r[0] }));
+          } catch (e) {
+            console.error('Erro ao carregar opções do dropdown', e);
+            c.dropdownOptions = c.dropdownOptions || [];
+          }
+        });
+      await Promise.all(promises);
+    }
+
+    function mapRows(headers, rows) {
+      const booleanFields = state.columns.filter(c => c.columnType === 'data_boolean_checkbox').map(c => c.dataField);
+      return rows.map((row) => {
+        const obj = {};
+        headers.forEach((h, idx) => {
+          const value = row[idx];
+          if (booleanFields.includes(h.name)) {
+            obj[h.name] = value === true || value === 1 || value === '1' || value === 'true';
+          } else {
+            obj[h.name] = value;
+          }
+        });
+        return obj;
+      });
+    }
+
+    async function fetchData() {
+      if (!state.config.query) {
+        renderPlaceholder('Defina a variável query (ou queryData) para carregar dados.');
+        return;
+      }
+      if (typeof mitra.query !== 'function') {
+        renderPlaceholder('Função queryMitra indisponível. Confirme se está rodando no contexto Mitra.');
+        console.error('queryMitra não encontrada no escopo global.');
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await mitra.query({ query: state.config.query, jdbcId: state.config.jdbcId });
+        const headers = res?.headers || [];
+        const data = res?.data || [];
+        if (!Array.isArray(headers) || headers.length === 0) {
+          renderPlaceholder('Nenhum cabeçalho retornado pela query. Confira a consulta.');
+          setLoading(false);
+          return;
+        }
+        state.data = mapRows(headers, data);
+        state.totalRecords = state.data.length;
+        if (state.totalRecords === 0) {
+          renderPlaceholder('Nenhum dado retornado pela query.');
+          setLoading(false);
+          return;
+        }
+        applyFilters();
+        computeTotals();
+      } catch (e) {
+        console.error('Erro ao buscar dados', e);
+        renderPlaceholder('Erro ao buscar dados. Verifique a configuração da query e o console.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderPlaceholder(text) {
+      els.tableBody.innerHTML = `<tr><td class="text-danger">${text}</td></tr>`;
+    }
+
+    function applyFilters() {
+      const term = state.searchTerm.toLowerCase().trim();
+      const filtered = !term
+        ? [...state.data]
+        : state.data.filter(row =>
+            Object.values(row).some(v => String(v ?? '').toLowerCase().includes(term))
+          );
+      state.filtered = filtered;
+      applySort();
+    }
+
+    function applySort() {
+      const { index, dir } = state.sort;
+      if (index < 0 || dir === 'none') {
+        state.filtered = [...state.filtered];
+      } else {
+        const col = state.columns[index];
+        const key = col.dataField;
+        const type = col.columnType;
+        state.filtered.sort((a, b) => {
+          const av = a[key];
+          const bv = b[key];
+          if (type === 'data_number' || type === 'input_number') {
+            const na = parseNumber(av);
+            const nb = parseNumber(bv);
+            if (isNaN(na) && isNaN(nb)) return 0;
+            if (isNaN(na)) return 1;
+            if (isNaN(nb)) return -1;
+            return dir === 'asc' ? na - nb : nb - na;
+          }
+          if (type === 'input_date') {
+            const da = new Date(av);
+            const db = new Date(bv);
+            const ta = da.getTime();
+            const tb = db.getTime();
+            if (isNaN(ta) && isNaN(tb)) return 0;
+            if (isNaN(ta)) return 1;
+            if (isNaN(tb)) return -1;
+            return dir === 'asc' ? ta - tb : tb - ta;
+          }
+          return dir === 'asc'
+            ? String(av ?? '').localeCompare(String(bv ?? ''), 'pt-BR')
+            : String(bv ?? '').localeCompare(String(av ?? ''), 'pt-BR');
+        });
+      }
+      state.page = 0;
+      state.displayed = [];
+      loadMore(true);
+    }
+
+    function loadMore(reset = false) {
+      if (reset) {
+        state.displayed = [];
+        state.page = 0;
+      }
+      const start = state.page * state.batchSize;
+      const nextChunk = state.filtered.slice(start, start + state.batchSize);
+      if (nextChunk.length === 0) return;
+      state.displayed = state.displayed.concat(nextChunk);
+      state.page += 1;
+      renderBody();
+      updateInfo();
+    }
+
+    function computeTotals() {
+      if (!state.config.enableTotals || !Array.isArray(state.config.totalsConfig)) {
+        state.totals = {};
+        renderTotals();
+        return;
+      }
+      const totals = {};
+      state.config.totalsConfig.forEach((t) => {
+        const key = t.dataField;
+        const type = (t.type || 'sum').toLowerCase();
+        const nums = state.data.map((r) => parseNumber(r[key])).filter((n) => Number.isFinite(n));
+        if (!nums.length) {
+          totals[key] = '—';
+          return;
+        }
+        if (type === 'avg') {
+          totals[key] = nums.reduce((a, b) => a + b, 0) / nums.length;
+        } else {
+          totals[key] = nums.reduce((a, b) => a + b, 0);
+        }
+      });
+      state.totals = totals;
+      renderTotals();
+    }
+
+    function renderTotals() {
+      els.totals.innerHTML = '';
+      if (!state.config.enableTotals || !Object.keys(state.totals).length) {
+        els.totals.textContent = 'Totais desabilitados';
+        return;
+      }
+      const label = document.createElement('span');
+      label.textContent = 'Totais:';
+      label.style.fontWeight = '700';
+      els.totals.appendChild(label);
+      Object.entries(state.totals).forEach(([key, val]) => {
+        const col = state.columns.find(c => c.dataField === key);
+        const decimals = col && col.columnType === 'data_number' ? 2 : 0;
+        const span = document.createElement('span');
+        span.textContent = `${col ? col.headerName : key}: ${typeof val === 'number' ? formatNumber(val, decimals) : val}`;
+        els.totals.appendChild(span);
+      });
+    }
+
+    function updateInfo() {
+      const displayedCount = state.displayed.length;
+      els.info.textContent = `${displayedCount} de ${state.totalRecords} registros`;
+      if (state.config.enablePagination) {
+        els.prev.disabled = state.page <= 1;
+        els.next.disabled = state.displayed.length >= state.filtered.length;
+      }
+    }
+
+    function createButton(btn) {
+      const el = document.createElement('button');
+      el.className = btn.primary ? 'btn btn-primary' : 'btn';
+      el.textContent = btn.label || 'Ação';
+      if (btn.bgColor) el.style.background = btn.bgColor;
+      if (btn.textColor) el.style.color = btn.textColor;
+      el.addEventListener('click', () => handleAction(btn.action, null));
+      return el;
+    }
+
+    function renderHeaderButtons() {
+      els.headerButtons.innerHTML = '';
+      state.config.headerButtons.forEach((btn) => {
+        if (!btn || !btn.action) return;
+        els.headerButtons.appendChild(createButton(btn));
+      });
+    }
+
+    function renderHeaders() {
+      els.tableHeaders.innerHTML = '';
+      state.columns.forEach((col, idx) => {
+        const th = document.createElement('th');
+        th.style.width = col.width;
+        th.style.minWidth = col.minWidth;
+        th.dataset.index = idx;
+        th.className = col.alignment === 'center' ? 'cell-center' : col.alignment === 'right' ? 'cell-right' : '';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'header-content';
+        wrap.title = 'Clique para ordenar';
+        if (!col.sortable) wrap.style.cursor = 'default';
+
+        const label = document.createElement('span');
+        label.textContent = col.headerName;
+        wrap.appendChild(label);
+
+        const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        icon.setAttribute('viewBox', '0 0 24 24');
+        icon.classList.add('sort-icon');
+        icon.innerHTML = '<path d="M7 14l5-5 5 5" stroke="currentColor" stroke-width="2" fill="none" />';
+        wrap.appendChild(icon);
+
+        if (col.sortable) {
+          wrap.addEventListener('click', () => toggleSort(idx));
+        }
+
+        const handle = document.createElement('div');
+        handle.className = 'resize-handle';
+        if (col.resizable) {
+          handle.addEventListener('mousedown', (ev) => startResize(ev, th, idx));
+        } else {
+          handle.style.cursor = 'default';
+        }
+
+        th.appendChild(wrap);
+        th.appendChild(handle);
+        els.tableHeaders.appendChild(th);
+      });
+    }
+
+    function renderBody() {
+      if (!state.displayed.length) {
+        els.tableBody.innerHTML = '<tr><td class="text-danger">Nenhum resultado encontrado.</td></tr>';
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      state.displayed.forEach((row) => {
+        const tr = document.createElement('tr');
+        state.columns.forEach((col) => {
+          const td = document.createElement('td');
+          td.className = col.alignment === 'center' ? 'cell-center' : col.alignment === 'right' ? 'cell-right' : '';
+          td.style.width = col.width;
+          td.style.minWidth = col.minWidth;
+          td.appendChild(renderCell(row, col));
+          tr.appendChild(td);
+        });
+        frag.appendChild(tr);
+      });
+      els.tableBody.innerHTML = '';
+      els.tableBody.appendChild(frag);
+    }
+
+    function renderCell(row, col) {
+      const val = row[col.dataField];
+      const span = document.createElement('span');
+      span.className = 'truncate';
+
+      switch (col.columnType) {
+        case 'data_number':
+          span.textContent = formatNumber(val, 2);
+          return span;
+        case 'data_boolean_checkbox': {
+          const wrap = document.createElement('label');
+          wrap.className = 'checkbox-cell';
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = val === true;
+          input.addEventListener('change', async () => {
+            await handleValueChange(row, col, input.checked ? 1 : 0);
+          });
+          wrap.appendChild(input);
+          return wrap;
+        }
+        case 'input_text':
+        case 'input_number': {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = col.columnType === 'input_number' ? formatNumber(val, 2) : (val ?? '');
+          input.style.width = '100%';
+          input.addEventListener('blur', async () => {
+            const newVal = col.columnType === 'input_number' ? parseNumber(input.value) : input.value;
+            if (String(newVal) === String(val ?? '')) return;
+            await handleValueChange(row, col, newVal);
+          });
+          return input;
+        }
+        case 'input_date': {
+          const input = document.createElement('input');
+          input.type = 'date';
+          const dateStr = val ? String(val).substring(0, 10) : '';
+          input.value = dateStr;
+          input.addEventListener('change', async () => {
+            await handleValueChange(row, col, input.value);
+          });
+          return input;
+        }
+        case 'input_dropdown': {
+          const select = document.createElement('select');
+          select.style.width = '100%';
+          const opts = col.dropdownOptions || [];
+          opts.forEach((opt) => {
+            const o = document.createElement('option');
+            o.value = opt.value;
+            o.textContent = opt.label;
+            select.appendChild(o);
+          });
+          select.value = val ?? '';
+          select.addEventListener('change', async () => {
+            await handleValueChange(row, col, select.value);
+          });
+          return select;
+        }
+        case 'data_iconphoto': {
+          const wrap = document.createElement('div');
+          wrap.className = 'icon-circle';
+          if (val && /^https?:/.test(String(val))) {
+            const img = document.createElement('img');
+            img.src = val;
+            img.alt = 'avatar';
+            wrap.appendChild(img);
+          } else {
+            wrap.textContent = (String(val || '') || '?').slice(0, 2).toUpperCase();
+          }
+          return wrap;
+        }
+        case 'action_button': {
+          const btn = document.createElement('button');
+          btn.className = 'btn';
+          btn.textContent = col.buttonText || 'Ação';
+          btn.addEventListener('click', () => handleAction(col.onChangeAction, row));
+          return btn;
+        }
+        case 'action_buttons_group': {
+          const wrap = document.createElement('div');
+          wrap.className = 'action-buttons';
+          (col.buttons || []).forEach((b) => {
+            if (!b.action) return;
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.textContent = b.hoverText || 'Ação';
+            if (b.bgColor) btn.style.background = b.bgColor;
+            if (b.icon) btn.title = b.icon;
+            btn.addEventListener('click', () => handleAction(b.action, row));
+            wrap.appendChild(btn);
+          });
+          return wrap;
+        }
+        default:
+          span.textContent = val ?? '';
+          return span;
+      }
+    }
+
+    async function handleValueChange(row, col, newValue) {
+      try {
+        if (state.config.rowIdVariable) {
+          const rowId = row[state.columns[0]?.dataField];
+          await mitra.setVar({ name: state.config.rowIdVariable, content: rowId });
+        }
+        if (col.onChangeAction) {
+          await handleAction(col.onChangeAction, row, newValue);
+        }
+        row[col.dataField] = newValue;
+        computeTotals();
+      } catch (e) {
+        console.error('Erro ao alterar valor', e);
+      }
+    }
+
+    function parseAction(action) {
+      if (!action || typeof action !== 'string') return null;
+      const [type, idStr] = action.split(':');
+      const id = Number(idStr);
+      if (!type || !Number.isFinite(id)) return null;
+      return { type: type.toLowerCase(), id };
+    }
+
+    async function handleAction(action, row, value) {
+      const parsed = parseAction(action);
+      if (!parsed) return;
+      try {
+        if (state.config.rowIdVariable && row) {
+          const rowId = row[state.columns[0]?.dataField];
+          await mitra.setVar({ name: state.config.rowIdVariable, content: rowId });
+        }
+        switch (parsed.type) {
+          case 'dbaction':
+            await mitra.dbaction({ id: parsed.id });
+            break;
+          case 'form':
+            await mitra.form({ id: parsed.id, contentId: row ? row[state.columns[0]?.dataField] : undefined });
+            break;
+          case 'modal':
+            mitra.modal({ id: parsed.id, width: 90, height: 90 });
+            break;
+          case 'action':
+            await mitra.action({ id: parsed.id });
+            break;
+          default:
+            break;
+        }
+        await fetchData();
+      } catch (e) {
+        console.error('Erro na ação Mitra', e);
+      }
+    }
+
+    function toggleSort(index) {
+      if (state.sort.index !== index) {
+        state.sort = { index, dir: 'asc' };
+      } else {
+        state.sort.dir = state.sort.dir === 'asc' ? 'desc' : state.sort.dir === 'desc' ? 'none' : 'asc';
+        if (state.sort.dir === 'none') state.sort.index = -1;
+      }
+      applySort();
+      updateSortIcons();
+    }
+
+    function updateSortIcons() {
+      const ths = els.tableHeaders.querySelectorAll('th');
+      ths.forEach((th, idx) => {
+        const icon = th.querySelector('.sort-icon path');
+        if (!icon) return;
+        const { index, dir } = state.sort;
+        if (idx !== index || dir === 'none') {
+          icon.setAttribute('d', 'M7 14l5-5 5 5');
+          icon.parentElement.style.color = 'var(--fg-muted)';
+        } else if (dir === 'asc') {
+          icon.setAttribute('d', 'M7 14l5-5 5 5');
+          icon.parentElement.style.color = 'var(--primary)';
+        } else {
+          icon.setAttribute('d', 'M7 10l5 5 5-5');
+          icon.parentElement.style.color = 'var(--primary)';
+        }
+      });
+    }
+
+    function startResize(ev, th, idx) {
+      ev.preventDefault();
+      state.resizing = { startX: ev.clientX, startWidth: th.offsetWidth, th, idx };
+      document.addEventListener('mousemove', onResize);
+      document.addEventListener('mouseup', stopResize);
+    }
+
+    function onResize(ev) {
+      if (!state.resizing) return;
+      const delta = ev.clientX - state.resizing.startX;
+      const newWidth = Math.max(60, state.resizing.startWidth + delta);
+      const col = state.columns[state.resizing.idx];
+      col.width = `${newWidth}px`;
+      state.resizing.th.style.width = col.width;
+      renderBody();
+    }
+
+    function stopResize() {
+      document.removeEventListener('mousemove', onResize);
+      document.removeEventListener('mouseup', stopResize);
+      state.resizing = null;
+    }
+
+    const onSearch = debounce(async (e) => {
+      const value = typeof e === 'string' ? e : e.target.value;
+      state.searchTerm = value;
+      applyFilters();
+      if (state.config.searchVariable) {
+        try { await mitra.setVar({ name: state.config.searchVariable, content: value }); } catch {}
+      }
+    }, 300);
+
+    function setupScroll() {
+      els.tableScroll.addEventListener('scroll', () => {
+        const { scrollTop, clientHeight, scrollHeight } = els.tableScroll;
+        if (scrollTop + clientHeight >= scrollHeight * 0.8) {
+          loadMore(false);
+        }
+      });
+    }
+
+    function setupPagination() {
+      els.prev.addEventListener('click', () => {
+        if (state.page <= 1) return;
+        state.page = Math.max(0, state.page - 2);
+        state.displayed = state.displayed.slice(0, state.page * state.batchSize);
+        loadMore(false);
+      });
+      els.next.addEventListener('click', () => loadMore(false));
+    }
+
+    async function init() {
+      parseConfig();
+      renderHeaderButtons();
+      renderHeaders();
+      updateSortIcons();
+      await fetchDropdownOptions();
+      await fetchData();
+      setupScroll();
+      if (state.config.enablePagination) {
+        setupPagination();
+      }
+    }
+
+    els.search.addEventListener('input', onSearch);
+
+    window.updateMitra = async () => {
+      await fetchData();
+    };
+
+     // IMPLEMENTAÇÃO DO PADRÃO waitForMitraAndInit
+     document.addEventListener('DOMContentLoaded', () => {
+       const waitForMitraAndInit = () => {
+         const maxWaitTime = 5000; // 5 segundos de timeout
+         const intervalTime = 100; // polling de 100ms
+         const startTime = Date.now();
+
+         const checkInterval = setInterval(() => {
+           // Verifica se componentData existe e se a query (obrigatória) está presente
+           if (window.componentData && (window.componentData.query || window.componentData.queryData)) {
+             clearInterval(checkInterval);
+             init(); // Inicia o componente
+           } else if (Date.now() - startTime > maxWaitTime) {
+             clearInterval(checkInterval);
+             console.error("Erro: Configuração (componentData.query ou queryData) não carregada a tempo.");
+             
+             // Renderiza mensagem de erro amigável usando Tailwind CSS
+             const container = document.getElementById('table-component');
+             if (container) {
+               container.innerHTML = `
+                 <div class="flex flex-col items-center justify-center h-full w-full bg-red-50 text-red-600 p-6">
+                   <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                   </svg>
+                   <h3 class="text-xl font-bold mb-1">Erro de Configuração</h3>
+                   <p class="text-sm opacity-90 text-center">Não foi possível carregar a configuração da tabela. <br/>A variável <strong>query</strong> ou <strong>queryData</strong> não foi encontrada.</p>
+                 </div>
+               `;
+             }
+           }
+         }, intervalTime);
+       };
+
+       waitForMitraAndInit();
+     });
+  </script>
+</body>
+</html>
