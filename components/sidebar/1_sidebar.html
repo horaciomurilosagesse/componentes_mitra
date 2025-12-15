@@ -2530,7 +2530,8 @@
         const valueCol = field.optionsValueColumn || null;
         const labelCol = field.optionsLabelColumn || null;
         
-        // Tenta detectar cabeçalhos na primeira linha
+        // Cabeçalho: não tenta adivinhar automaticamente (evita pular 1ª linha válida).
+        // Para queries que retornam cabeçalho, configure o campo com: hasHeader: true
         let startIndex = 0;
         let valueIndex = 0;
         let labelIndex = 1;
@@ -2538,10 +2539,9 @@
         if (resultado.data.length > 0 && Array.isArray(resultado.data[0])) {
           const firstRow = resultado.data[0];
           
-          // Verifica se primeira linha parece ser cabeçalho
-          const isHeader = firstRow.some(cell => typeof cell === 'string' && cell.toUpperCase() === cell);
-          
-          if (isHeader) {
+          const hasHeader = field.hasHeader === true;
+
+          if (hasHeader) {
             // Mapeia índices pelos nomes das colunas
             firstRow.forEach((colName, idx) => {
               const colUpper = String(colName).toUpperCase();
@@ -3063,9 +3063,7 @@
             if (textInput) {
               const value = textInput.value.trim();
               filterValues[field.id] = value;
-              if (value) {
-                variablesToSet.push({ name: field.variable, content: value });
-              }
+              variablesToSet.push({ name: field.variable, content: value });
             }
             break;
             
@@ -3074,9 +3072,7 @@
             if (selectInput) {
               const value = selectInput.value;
               filterValues[field.id] = value;
-              if (value) {
-                variablesToSet.push({ name: field.variable, content: value });
-              }
+              variablesToSet.push({ name: field.variable, content: value });
             }
             break;
             
@@ -3087,9 +3083,7 @@
             const multiselectValues = Array.from(multiselectCheckboxes).map(cb => cb.value).filter(v => v);
             const multiselectValue = multiselectValues.join(',');
             filterValues[field.id] = multiselectValue;
-            if (multiselectValue) {
-              variablesToSet.push({ name: field.variable, content: multiselectValue });
-            }
+            variablesToSet.push({ name: field.variable, content: multiselectValue });
             break;
             
           case 'checkbox':
@@ -3097,9 +3091,7 @@
             const checkedValues = Array.from(checkboxes).map(cb => cb.value).filter(v => v);
             const checkboxValue = checkedValues.join(',');
             filterValues[field.id] = checkboxValue;
-            if (checkboxValue) {
-              variablesToSet.push({ name: field.variable, content: checkboxValue });
-            }
+            variablesToSet.push({ name: field.variable, content: checkboxValue });
             break;
             
           case 'dateRange':
@@ -3110,12 +3102,8 @@
               const endValue = endInput.value;
               filterValues[`${field.id}_start`] = startValue;
               filterValues[`${field.id}_end`] = endValue;
-              if (startValue) {
-                variablesToSet.push({ name: field.variableStart, content: startValue });
-              }
-              if (endValue) {
-                variablesToSet.push({ name: field.variableEnd, content: endValue });
-              }
+              variablesToSet.push({ name: field.variableStart, content: startValue });
+              variablesToSet.push({ name: field.variableEnd, content: endValue });
             }
             break;
           case 'year':
@@ -3123,9 +3111,7 @@
             if (yearInput) {
               const value = yearInput.value;
               filterValues[field.id] = value;
-              if (value) {
-                variablesToSet.push({ name: field.variable, content: value });
-              }
+              variablesToSet.push({ name: field.variable, content: value });
             }
             break;
           case 'month':
@@ -3133,9 +3119,7 @@
             if (monthInput) {
               const value = monthInput.value;
               filterValues[field.id] = value;
-              if (value) {
-                variablesToSet.push({ name: field.variable, content: value });
-              }
+              variablesToSet.push({ name: field.variable, content: value });
             }
             break;
         }
