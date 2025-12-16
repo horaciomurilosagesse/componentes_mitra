@@ -1,0 +1,1195 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Card - CRM Análise Engenharia</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Configuração do Tailwind com as Cores da Marca e Tokens do Sistema -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        // Cores da marca (alinhadas com design system do board)
+                        brand: {
+                            orange: '#FF6600',
+                            orangeDark: '#E55A00',
+                            blueDark: '#002855',
+                            blueLight: '#3b82f6', 
+                            bg: '#F8FAFC',
+                            border: '#E2E8F0',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* CSS Tokens - Tema Light (Padrão) */
+        :root {
+            --background: 210 40% 98%;
+            --foreground: 222.2 84% 4.9%;
+            --primary: 215 100% 30%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96.1%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+
+        /* Tema Dark */
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFC;
+            color: #334155;
+        }
+
+        /* Utilitários Específicos para Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .form-label { display: block; font-size: 0.75rem; font-weight: 600; color: #64748B; margin-bottom: 0.5rem; }
+        .form-input, .form-select, .form-textarea { width: 100%; border-radius: 6px; border: 1px solid #E2E8F0; padding: 0.5rem 0.75rem; font-size: 0.875rem; background-color: white; outline: none; transition: all 0.2s; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #002855; box-shadow: 0 0 0 2px rgba(0, 40, 85, 0.1); background-color: white; }
+        .form-input[readonly] { background-color: #F1F5F9; cursor: not-allowed; }
+        .custom-checkbox { height: 1rem; width: 1rem; border-radius: 0.25rem; border-color: #E2E8F0; color: #002855; cursor: pointer; }
+
+        .btn-disabled {
+            background-color: #9ca3af !important;
+            background-image: none !important;
+            cursor: not-allowed !important;
+            opacity: 0.7;
+        }
+
+        /* Estilos para campos obrigatórios */
+        .required-asterisk {
+            color: #EF4444;
+            font-weight: 700;
+            margin-left: 2px;
+        }
+        
+        .required-field {
+            border-left: 3px solid #EF4444 !important;
+            padding-left: calc(1rem - 3px) !important;
+        }
+        
+        .required-label {
+            position: relative;
+        }
+        
+        .required-label::after {
+            content: '*';
+            color: #EF4444;
+            font-weight: 700;
+            margin-left: 2px;
+        }
+        
+        /* Ajuste para inputs e selects obrigatórios */
+        .required-field:focus {
+            border-left-color: #EF4444 !important;
+        }
+
+        /* Melhorias de transição e hover */
+        .transition-smooth {
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Responsividade para sidebar em mobile */
+        @media (max-width: 1024px) {
+            #sidebar {
+                position: fixed;
+                left: -100%;
+                top: 64px;
+                height: calc(100vh - 64px);
+                z-index: 30;
+                transition: left 0.3s ease-in-out;
+                box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+            }
+            
+            #sidebar.mobile-open {
+                left: 0;
+            }
+        }
+
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Header Fixo -->
+    <header class="bg-white border-b-2 border-brand-border h-16 flex items-center justify-between px-6 shrink-0 z-20 shadow-md">
+        <div class="flex items-center gap-4">
+            <!-- Botão para abrir sidebar em mobile -->
+            <button id="sidebar-toggle" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors duration-200" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+                <i class="ph ph-list text-slate-600 text-xl"></i>
+            </button>
+            
+            <div class="hidden md:flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
+                <i class="ph ph-wrench text-brand-orange text-sm"></i>
+                <span>CRM - Análise Engenharia</span>
+                <span class="text-brand-blueDark text-[0.65rem] font-bold uppercase ml-2 px-1.5 py-0.5 bg-blue-50 rounded">Enterprise</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button onclick="saveData()" id="save-button" class="bg-brand-orange hover:bg-brand-orangeDark text-white text-sm font-semibold py-2 px-5 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                <i class="ph ph-floppy-disk"></i> Salvar
+            </button>
+            <button id="btn-reprovar" onclick="reprovarCard()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-5 rounded-lg shadow-md hover:shadow-lg transition-all text-sm flex items-center gap-2">
+                <i class="ph ph-arrow-left font-bold"></i>
+                Reprovar para Comercial
+            </button>
+            <button id="btn-aprovar" onclick="aprovarCard()" class="bg-brand-blueDark hover:bg-[#001e40] text-white font-semibold py-2 px-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-sm flex items-center gap-2 btn-disabled" disabled title="Salve as alterações para poder aprovar">
+                Aprovar para Engenharia
+                <i class="ph ph-arrow-right font-bold"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        <!-- Overlay para mobile -->
+        <div id="sidebar-overlay" class="hidden lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-20" onclick="toggleSidebar()"></div>
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-80 bg-gradient-to-b from-slate-50 to-white border-r-2 border-brand-blueDark flex-shrink-0 overflow-y-auto hidden lg:block shadow-lg">
+            <!-- Header da Sidebar -->
+            <div class="p-6 border-b border-slate-200 bg-white">
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Item do Kanban</h2>
+                <h3 class="text-lg font-bold text-slate-800" id="sidebar-title">Carregando...</h3>
+            </div>
+            
+            <!-- Cards de Informações -->
+            <div class="p-6 space-y-4 pb-24">
+                <!-- Card Descrição -->
+                <div class="bg-white rounded-lg p-4 shadow-sm border border-slate-100">
+                    <div class="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wide">Descrição</div>
+                    <div id="sidebar-description" class="text-sm font-semibold text-slate-800 leading-relaxed">...</div>
+                </div>
+                
+                <!-- Card Cliente -->
+                <div class="bg-white rounded-lg p-4 shadow-sm border border-slate-100">
+                    <div class="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wide">Cliente</div>
+                    <div id="sidebar-cliente" class="text-sm font-semibold text-slate-800">...</div>
+                </div>
+                
+                <!-- Card Gestor -->
+                <div class="bg-white rounded-lg p-4 shadow-sm border border-slate-100">
+                    <div class="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wide">Gestor</div>
+                    <div id="sidebar-gestor" class="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">G1</div>
+                        <span>Gestor 1</span>
+                    </div>
+                </div>
+                
+                <!-- Card Prioridade -->
+                <div class="bg-white rounded-lg p-4 shadow-sm border border-slate-100">
+                    <div class="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wide">Prioridade</div>
+                    <div>
+                        <span id="sidebar-prioridade" class="inline-block text-xs font-bold px-3 py-1.5 rounded-full">Alta</span>
+                    </div>
+                </div>
+                
+                <!-- Card Contato -->
+                <div class="bg-white rounded-lg p-4 shadow-sm border border-slate-100">
+                    <div class="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wide">Contato</div>
+                    <div id="sidebar-contato" class="text-sm font-normal text-slate-600">...</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto bg-white flex flex-col h-full"> 
+            <!-- Header de Contexto -->
+            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 shrink-0">
+                <div class="flex items-center gap-2 text-sm text-slate-600">
+                    <i class="ph ph-folder-open text-brand-blueDark"></i>
+                    <span class="font-medium">Itens da Solicitação</span>
+                </div>
+            </div>
+            
+            <!-- Tabs Navigation -->
+            <div class="border-b-2 border-slate-200 bg-white shrink-0">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <span id="tab-cabecalho" class="cursor-pointer border-b-2 border-transparent text-slate-500 py-4 px-1 text-sm font-semibold hover:text-brand-orange transition-colors duration-200" onclick="switchTab('cabecalho')">SO - Formulário</span>
+                    <span id="tab-formulario" class="cursor-pointer border-b-2 border-brand-blueDark text-brand-blueDark py-4 px-1 text-sm font-semibold hover:text-brand-orange transition-colors duration-200" onclick="switchTab('formulario')">Formulário - Análise</span>
+                    <span id="tab-anexos" class="cursor-pointer border-b-2 border-transparent text-slate-500 py-4 px-1 text-sm font-semibold hover:text-brand-orange transition-colors duration-200" onclick="switchTab('anexos')">Anexos</span>
+                </nav>
+            </div>
+
+            <!-- TAB CONTENT: SO - Formulário (Visível por padrão) -->
+            <div id="content-cabecalho" class="hidden animate-in fade-in duration-300 p-8 pb-9">
+                <form onsubmit="return false;">
+                    <!-- Card: Informações Principais -->
+                    <div class="bg-slate-50 rounded-xl p-6 border border-slate-200 mb-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i class="ph ph-info text-brand-blueDark text-lg"></i>
+                            <h3 class="text-base font-bold text-slate-800">Informações Principais</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">Descrição</label>
+                                <input id="input-descricao" type="text" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm" value="" placeholder="Digite a descrição">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide required-label">Gestor</label>
+                                <select id="select-gestor" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm required-field">
+                                    <option value="">Selecione um gestor</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide required-label">Prioridade</label>
+                                <select id="select-prioridade" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm required-field">
+                                    <option>Alta</option><option>Média</option><option>Baixa</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide required-label">Cliente</label>
+                                <select id="select-cliente" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm required-field"><option>CAT</option></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Dados Comerciais -->
+                    <div class="bg-slate-50 rounded-xl p-6 border border-slate-200 mb-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i class="ph ph-currency-dollar text-brand-blueDark text-lg"></i>
+                            <h3 class="text-base font-bold text-slate-800">Dados Comerciais</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">Nº SO</label>
+                                <input id="input-num-so" type="text" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm" value="" placeholder="Digite o número da SO">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">Data</label>
+                                <input id="input-data" type="date" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide required-label">Atual/Novo</label>
+                                <select id="select-tipo-cliente" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm required-field"><option>Atual</option><option>Novo</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">Contato</label>
+                                <input id="input-contato" type="text" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm" value="" placeholder="Digite o contato">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">E-mail</label>
+                                <input id="input-email" type="email" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm" value="" placeholder="Digite o e-mail">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">Data Retorno</label>
+                                <input id="input-data-retorno" type="date" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">Nº RFQ</label>
+                                <input id="input-num-rfq" type="text" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm" value="" placeholder="Digite o número do RFQ">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Documentação -->
+                    <div class="bg-slate-50 rounded-xl p-6 border border-slate-200 mb-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i class="ph ph-file-text text-brand-blueDark text-lg"></i>
+                            <h3 class="text-base font-bold text-slate-800">Documentação</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide required-label">Acordo de Confidencialidade</label>
+                                <select id="select-acordo-conf" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm required-field"><option>Sim</option><option>Não</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide required-label">Manual de Qualidade do Fornecedor</label>
+                                <select id="select-manual-qualidade" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm required-field"><option>Sim</option><option>Não</option></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Condições -->
+                    <div class="bg-slate-50 rounded-xl p-6 border border-slate-200 mb-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i class="ph ph-handshake text-brand-blueDark text-lg"></i>
+                            <h3 class="text-base font-bold text-slate-800">Condições</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">Cond. Pag. Peça</label>
+                                <input id="input-cond-pag-peca" type="text" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm" placeholder="Digite a condição de pagamento">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">Cond. Pag. Ferramental</label>
+                                <input id="input-cond-pag-ferramental" type="text" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm" placeholder="Digite a condição de pagamento">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">Condição de entrega</label>
+                                <input id="input-cond-entrega" type="text" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm" placeholder="Digite a condição de entrega">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wide">SOP</label>
+                                <input id="input-sop" type="date" class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm text-slate-900 bg-white focus:border-brand-blueDark focus:ring-1 focus:ring-brand-blueDark focus:outline-none transition-all shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- TAB CONTENT: Formulário - Análise -->
+            <div id="content-formulario" class="block space-y-10 animate-in fade-in duration-300 p-8 pb-9">
+                
+                <section>
+                    <div class="flex items-center gap-2 mb-6 pb-3 border-b-2 border-slate-200">
+                        <i class="ph ph-package text-brand-blueDark text-xl"></i>
+                        <h3 class="text-lg font-bold text-slate-800">Informações Peça</h3>
+                    </div>
+                    <div class="space-y-6">
+                        <!-- Linha 1: Identificação -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="form-label">Part number:</label>
+                                <input type="text" id="form_part_number" class="form-input" placeholder="Digite o part number">
+                            </div>
+                            <div>
+                                <label class="form-label">Nº SO:</label>
+                                <input type="text" id="form_num_so" class="form-input" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Linha 2: Descrição -->
+                        <div>
+                            <label class="form-label">Descrição Peça:</label>
+                            <textarea id="form_descricao_peca" class="form-textarea" rows="3" placeholder="Descreva a peça"></textarea>
+                        </div>
+
+                        <!-- Linha 3: Cliente e Projeto -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="form-label">Cliente:</label>
+                                <input type="text" id="form_cliente" class="form-input" value="CAT" readonly>
+                            </div>
+                            <div>
+                                <label class="form-label">Projeto:</label>
+                                <textarea id="form_projeto" class="form-textarea" rows="3" placeholder="Informações do projeto"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Linha 4: Embalagem -->
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <label class="form-label mb-3">Embalagem:</label>
+                            <div class="flex flex-wrap gap-6">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_embalagem_retornavel" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">Retornável</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_embalagem_descartavel" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">Descartável</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Linha 5: Volumes -->
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <label class="form-label mb-3">Volumes (por ano):</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">1º ano</label>
+                                    <input type="text" id="form_volume_ano1" class="form-input" placeholder="0">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">2º ano</label>
+                                    <input type="text" id="form_volume_ano2" class="form-input" placeholder="0">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">3º ano</label>
+                                    <input type="text" id="form_volume_ano3" class="form-input" placeholder="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Linha 6: Datas -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="form-label">Data:</label>
+                                <input type="date" id="form_data" class="form-input">
+                            </div>
+                            <div>
+                                <label class="form-label">Data Retorno:</label>
+                                <input type="date" id="form_data_retorno" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="border-t-2 border-slate-200 pt-8 mt-8">
+                    <div class="flex items-center gap-2 mb-6 pb-3 border-b-2 border-slate-200">
+                        <i class="ph ph-gear text-brand-blueDark text-xl"></i>
+                        <h3 class="text-lg font-bold text-slate-800">Análise de Processos</h3>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Processo Atual -->
+                            <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                <h4 class="text-md font-bold text-slate-800 mb-4">Processo Atual:</h4>
+                                <div class="space-y-2.5 mb-4">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_atual_spray" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Spray up/ Hand lay up</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_atual_rtm" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">RTM</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_atual_smc" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">SMC</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_atual_pintura" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Pintura</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_atual_injetado" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Injetado</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_atual_chapa" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Chapa metálica</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="form-label">Outro (especificar):</label>
+                                    <textarea id="form_proc_atual_outro" class="form-textarea" rows="3" placeholder="Descreva outro processo"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Processo Orçamento -->
+                            <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                <h4 class="text-md font-bold text-slate-800 mb-4">Processo Orçamento:</h4>
+                                <div class="space-y-2.5 mb-4">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_orc_spray" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Spray up/ Hand lay up</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_orc_rtm" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">RTM</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_orc_smc" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">SMC</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_orc_pintura" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Pintura</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="form-label">Outro (especificar - PO):</label>
+                                    <textarea id="form_proc_orc_outro" class="form-textarea" rows="3" placeholder="Descreva outro processo de orçamento"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="border-t-2 border-slate-200 pt-8 mt-8">
+                    <div class="flex items-center gap-2 mb-6 pb-3 border-b-2 border-slate-200">
+                        <i class="ph ph-folder text-brand-blueDark text-xl"></i>
+                        <h3 class="text-lg font-bold text-slate-800">Informações Projeto</h3>
+                    </div>
+                    <div class="space-y-6">
+                        <!-- Alteração de Processo -->
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <label class="form-label mb-3">Se houver alteração de processo, necessita alteração no projeto?</label>
+                            <div class="flex flex-wrap gap-6">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_proj_alter_sim" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">SIM</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_proj_alter_nao" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">NÃO</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Responsável pela Alteração -->
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <label class="form-label mb-3">Caso sim, quem é o responsável pela alteração?</label>
+                            <div class="flex flex-wrap gap-6">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_proj_resp_tec" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">Tecnofibras</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_proj_resp_cli" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">Cliente</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Tipo de Projeto -->
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <label class="form-label mb-3">Tipo de Projeto:</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_proj_novo" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">Novo Item</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_proj_pecas_prot" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">Peças Protótipos</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_proj_alteracao" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">Alteração</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_proj_pecas_prod" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">Peças de Produção</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Exigências e Observações -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="form-label">Exigências do cliente:</label>
+                                <textarea id="form_proj_exigencias" class="form-textarea" rows="4" placeholder="Descreva as exigências do cliente"></textarea>
+                            </div>
+                            <div>
+                                <label class="form-label">Observações:</label>
+                                <textarea id="form_proj_obs" class="form-textarea" rows="4" placeholder="Adicione observações sobre o projeto"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="border-t-2 border-slate-200 pt-8 mt-8">
+                    <div class="flex items-center gap-2 mb-6 pb-3 border-b-2 border-slate-200">
+                        <i class="ph ph-file-doc text-brand-blueDark text-xl"></i>
+                        <h3 class="text-lg font-bold text-slate-800">Documentos Fornecidos</h3>
+                    </div>
+                    <div class="space-y-6">
+                        <!-- Tipos de Documentos -->
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <label class="form-label mb-3">Tipos de Documentos:</label>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_doc_2d" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">2D</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_doc_3d" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">3D</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_doc_normas" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">Normas</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="form_doc_imagens" class="custom-checkbox">
+                                    <span class="text-sm font-medium text-slate-700">Imagens</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Outro Documento -->
+                        <div>
+                            <label class="form-label">Outro (especificar):</label>
+                            <textarea id="form_doc_outro" class="form-textarea" rows="3" placeholder="Descreva outros documentos fornecidos"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="border-t-2 border-slate-200 pt-8 mt-8">
+                    <div class="flex items-center gap-2 mb-6 pb-3 border-b-2 border-slate-200">
+                        <i class="ph ph-calculator text-brand-blueDark text-xl"></i>
+                        <h3 class="text-lg font-bold text-slate-800">Informações Orçamento</h3>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Peças -->
+                            <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                <label class="form-label mb-3">Peças:</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_peca_moldagem" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Moldagem</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_peca_corte" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Corte</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_peca_montagem" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Montagem</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_peca_pintura" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Pintura</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_peca_componentes" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Componentes</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_peca_embalagem" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Embalagem</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Processo -->
+                            <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                <label class="form-label mb-3">Processo:</label>
+                                <div class="space-y-2.5">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_ferramental_def" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Ferramental definitivo</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_ferramental_prot" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Ferramental protótipo</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_meios_prod" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Meios produtivos</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_custo_dev" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Custo de desenvolvimento</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="form_proc_testes_homolog" class="custom-checkbox">
+                                        <span class="text-sm font-medium text-slate-700">Testes de homologação de material e produto</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fornecedor Tinta -->
+                        <div>
+                            <label class="form-label">Fornecedor Tinta</label>
+                            <input type="text" id="form_fornecedor_tinta" class="form-input" placeholder="Nome do fornecedor de tinta">
+                        </div>
+
+                        <!-- Observações -->
+                        <div>
+                            <label class="form-label">Observações</label>
+                            <textarea id="form_obs_orcamento" class="form-textarea" rows="3" placeholder="Adicione observações sobre o orçamento"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="border-t-2 border-slate-200 pt-8 mt-8">
+                    <div class="flex items-center gap-2 mb-6 pb-3 border-b-2 border-slate-200">
+                        <i class="ph ph-clipboard-text text-brand-blueDark text-xl"></i>
+                        <h3 class="text-lg font-bold text-slate-800">Análise da Engenharia</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label for="analise_responsavel" class="form-label">Responsável pela Análise</label>
+                            <input type="text" id="analise_responsavel" class="form-input" placeholder="Nome do responsável">
+                        </div>
+                        <div>
+                            <label for="analise_complexidade" class="form-label">Complexidade</label>
+                            <select id="analise_complexidade" class="form-select">
+                                <option value="">Selecione...</option>
+                                <option>Baixa</option>
+                                <option>Média</option>
+                                <option>Alta</option>
+                                <option>Crítica</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="analise_horas_estimadas" class="form-label">Horas Estimadas</label>
+                            <input type="number" id="analise_horas_estimadas" class="form-input" placeholder="0">
+                        </div>
+                        <div class="md:col-span-2 lg:col-span-3">
+                            <label for="analise_observacoes" class="form-label">Observações da Análise</label>
+                            <textarea id="analise_observacoes" rows="6" class="form-textarea" placeholder="Adicione observações sobre a análise"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- TAB CONTENT: Anexos -->
+            <div id="content-anexos" class="hidden h-full flex flex-col animate-in fade-in duration-300">
+                <div class="p-4 bg-slate-50 border-b border-brand-border">
+                    <h3 class="text-lg font-bold text-slate-800">Documentos Anexos</h3>
+                </div>
+                <div class="flex-1 overflow-x-auto p-8">
+                    <p class="text-center text-slate-500">Funcionalidade de anexos a ser implementada.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const MITRA_UPDATE_EVENT_NAME = 'mitra-update-crm-details-component';
+
+        function updateMitra() {
+            document.body.dispatchEvent(new CustomEvent(MITRA_UPDATE_EVENT_NAME));
+        }
+        
+        function mapQueryToObject(queryResult) {
+            if (!queryResult || !queryResult.data || !queryResult.headers) return [];
+            const headers = queryResult.headers.map(h => h.name.toUpperCase());
+            return queryResult.data.map(row => {
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = row[index];
+                });
+                return obj;
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('mobile-open');
+                sidebar.classList.toggle('hidden');
+                overlay.classList.toggle('hidden');
+            }
+        }
+
+        function switchTab(tabName) {
+            const contents = ['cabecalho', 'formulario', 'anexos'];
+            contents.forEach(id => {
+                const el = document.getElementById(`content-${id}`);
+                if (el) el.classList.add('hidden');
+                const link = document.getElementById(`tab-${id}`);
+                if (link) {
+                    link.classList.remove('border-brand-blueDark', 'text-brand-blueDark');
+                    link.classList.add('border-transparent', 'text-slate-500');
+                }
+            });
+
+            const selectedContent = document.getElementById(`content-${tabName}`);
+            if (selectedContent) selectedContent.classList.remove('hidden');
+            
+            const selectedLink = document.getElementById(`tab-${tabName}`);
+            if (selectedLink) {
+                selectedLink.classList.remove('border-transparent', 'text-slate-500');
+                selectedLink.classList.add('border-brand-blueDark', 'text-brand-blueDark');
+            }
+        }
+
+        function populateAllFields(data) {
+            const formatDate = (dateString) => (dateString || '').substring(0, 10);
+
+            // --- POPULATE SIDEBAR ---
+            const sidebarTitle = document.getElementById('sidebar-title');
+            if (sidebarTitle) sidebarTitle.innerText = data.TITULO || 'Carregando...';
+            document.getElementById('sidebar-description').innerText = data.TITULO || '...';
+            document.getElementById('sidebar-cliente').innerText = data.CLIENTE || 'N/A';
+            document.getElementById('sidebar-contato').innerText = data.CONTATO || 'N/A';
+            document.getElementById('sidebar-gestor').innerHTML = `<div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">${(data.GESTOR || 'G?').substring(0, 2)}</div> ${data.GESTOR || 'N/A'}`;
+            
+            // Atualizar badge de prioridade com cores dinâmicas
+            const prioridadeEl = document.getElementById('sidebar-prioridade');
+            if (prioridadeEl) {
+                const prioridade = data.PRIORIDADE || 'N/A';
+                prioridadeEl.innerText = prioridade;
+                prioridadeEl.className = 'inline-block text-xs font-bold px-3 py-1.5 rounded-full';
+                if (prioridade === 'Alta') {
+                    prioridadeEl.className += ' bg-red-100 text-red-700';
+                } else if (prioridade === 'Média') {
+                    prioridadeEl.className += ' bg-yellow-100 text-yellow-700';
+                } else if (prioridade === 'Baixa') {
+                    prioridadeEl.className += ' bg-green-100 text-green-700';
+                } else {
+                    prioridadeEl.className += ' bg-slate-100 text-slate-700';
+                }
+            }
+            
+            // --- POPULATE CABEÇALHO TAB ---
+            document.getElementById('input-descricao').value = data.TITULO || '';
+            document.getElementById('select-gestor').value = data.ID_GESTOR || '';
+            document.getElementById('select-prioridade').value = data.PRIORIDADE || '';
+            document.getElementById('input-num-so').value = data.NUM_SO || '';
+            document.getElementById('input-data').value = (data.DATA_CRIACAO || '').substring(0, 10);
+            document.getElementById('select-cliente').value = data.CLIENTE || '';
+            document.getElementById('select-tipo-cliente').value = data.TIPO || '';
+            document.getElementById('input-contato').value = data.CONTATO || '';
+            document.getElementById('input-email').value = data.EMAIL || '';
+            document.getElementById('input-data-retorno').value = (data.DATA_RETORNO || '').substring(0, 10);
+            document.getElementById('input-num-rfq').value = data.NUM_RFQ || '';
+            document.getElementById('select-acordo-conf').value = data.ACORDO_CONFIDENCIALIDADE || '';
+            document.getElementById('select-manual-qualidade').value = data.MANUAL_QUALIDADE || '';
+            document.getElementById('input-cond-pag-peca').value = data.COND_PAG_PECA || '';
+            document.getElementById('input-cond-pag-ferramental').value = data.COND_PAG_FERRAMENTAL || '';
+            document.getElementById('input-cond-entrega').value = data.CONDICAO_ENTREGA || '';
+            document.getElementById('input-sop').value = (data.SOP || '').substring(0, 10);
+
+            // --- POPULATE FORMULÁRIO TAB ---
+            document.getElementById('form_part_number').value = data.PART_NUMBER || '';
+            document.getElementById('form_descricao_peca').value = data.DESCRICAO_PECA || '';
+            document.getElementById('form_cliente').value = data.CLIENTE || '';
+            document.getElementById('form_projeto').value = data.PROJETO_TEXTO || '';
+            document.getElementById('form_num_so').value = data.NUM_SO || '';
+
+            document.getElementById('form_embalagem_retornavel').checked = data.EMBALAGEM_RETORNAVEL == '1';
+            document.getElementById('form_embalagem_descartavel').checked = data.EMBALAGEM_DESCARTAVEL == '1';
+
+            document.getElementById('form_volume_ano1').value = data.VOLUME_ANO1 || '';
+            document.getElementById('form_volume_ano2').value = data.VOLUME_ANO2 || '';
+            document.getElementById('form_volume_ano3').value = data.VOLUME_ANO3 || '';
+
+            document.getElementById('form_data').value = formatDate(data.DATA_FORM);
+            document.getElementById('form_data_retorno').value = formatDate(data.DATA_RETORNO_FORM);
+
+            document.getElementById('form_proc_atual_spray').checked = data.PROC_ATUAL_SPRAYUP_HAND == '1';
+            document.getElementById('form_proc_atual_rtm').checked = data.PROC_ATUAL_RTM == '1';
+            document.getElementById('form_proc_atual_smc').checked = data.PROC_ATUAL_SMC == '1';
+            document.getElementById('form_proc_atual_pintura').checked = data.PROC_ATUAL_PINTURA == '1';
+            document.getElementById('form_proc_atual_injetado').checked = data.PROC_ATUAL_INJETADO == '1';
+            document.getElementById('form_proc_atual_chapa').checked = data.PROC_ATUAL_CHAPA_METALICA == '1';
+            document.getElementById('form_proc_atual_outro').value = data.PROC_ATUAL_OUTRO || '';
+
+            document.getElementById('form_proc_orc_spray').checked = data.PROC_ORCAMENTO_SPRAYUP_HAND == '1';
+            document.getElementById('form_proc_orc_rtm').checked = data.PROC_ORCAMENTO_RTM == '1';
+            document.getElementById('form_proc_orc_smc').checked = data.PROC_ORCAMENTO_SMC == '1';
+            document.getElementById('form_proc_orc_pintura').checked = data.PROC_ORCAMENTO_PINTURA == '1';
+            document.getElementById('form_proc_orc_outro').value = data.PROC_ORCAMENTO_OUTRO || '';
+
+            document.getElementById('form_proj_alter_sim').checked = data.NECESSITA_ALTERACAO_PROJETO_SIM == '1';
+            document.getElementById('form_proj_alter_nao').checked = data.NECESSITA_ALTERACAO_PROJETO_NAO == '1';
+            document.getElementById('form_proj_resp_tec').checked = data.RESPONSAVEL_ALTERACAO_TECNOFIBRAS == '1';
+            document.getElementById('form_proj_resp_cli').checked = data.RESPONSAVEL_ALTERACAO_CLIENTE == '1';
+            document.getElementById('form_proj_novo').checked = data.PROJETO_NOVO_ITEM == '1';
+            document.getElementById('form_proj_pecas_prot').checked = data.PROJETO_PECAS_PROTOTIPOS == '1';
+            document.getElementById('form_proj_alteracao').checked = data.PROJETO_ALTERACAO == '1';
+            document.getElementById('form_proj_pecas_prod').checked = data.PROJETO_PECAS_PRODUCAO == '1';
+            document.getElementById('form_proj_exigencias').value = data.EXIGENCIAS_CLIENTE || '';
+            document.getElementById('form_proj_obs').value = data.OBSERVACOES_PROJETO || '';
+
+            document.getElementById('form_doc_2d').checked = data.DOC_2D == '1';
+            document.getElementById('form_doc_normas').checked = data.DOC_NORMAS == '1';
+            document.getElementById('form_doc_3d').checked = data.DOC_3D == '1';
+            document.getElementById('form_doc_imagens').checked = data.DOC_IMAGENS == '1';
+            document.getElementById('form_doc_outro').value = data.DOC_OUTRO || '';
+
+            document.getElementById('form_peca_moldagem').checked = data.PECAS_MOLDAGEM == '1';
+            document.getElementById('form_peca_corte').checked = data.PECAS_CORTE == '1';
+            document.getElementById('form_peca_montagem').checked = data.PECAS_MONTAGEM == '1';
+            document.getElementById('form_peca_pintura').checked = data.PECAS_PINTURA == '1';
+            document.getElementById('form_peca_componentes').checked = data.PECAS_COMPONENTES == '1';
+            document.getElementById('form_peca_embalagem').checked = data.PECAS_EMBALAGEM == '1';
+            document.getElementById('form_proc_ferramental_def').checked = data.PROCESSO_FERRAMENTAL_DEFINITIVO == '1';
+            document.getElementById('form_proc_ferramental_prot').checked = data.PROCESSO_FERRAMENTAL_PROTOTIPO == '1';
+            document.getElementById('form_proc_meios_prod').checked = data.PROCESSO_MEIOS_PRODUTIVOS == '1';
+            document.getElementById('form_proc_custo_dev').checked = data.PROCESSO_CUSTO_DESENVOLVIMENTO == '1';
+            document.getElementById('form_proc_testes_homolog').checked = data.PROCESSO_TESTES_HOMOLOGACAO == '1';
+            document.getElementById('form_fornecedor_tinta').value = data.FORNECEDOR_TINTA || '';
+            document.getElementById('form_obs_orcamento').value = data.OBSERVACOES_ORCAMENTO || '';
+
+            // Campos de análise
+            document.getElementById('analise_responsavel').value = data.RESPONSAVEL_ANALISE || '';
+            document.getElementById('analise_complexidade').value = data.COMPLEXIDADE || '';
+            document.getElementById('analise_horas_estimadas').value = data.HORAS_ESTIMADAS || '';
+            document.getElementById('analise_observacoes').value = data.OBSERVACOES_ANALISE || data.OBSERVACOES_PROJETO || '';
+        }
+
+        async function populateGestorDropdown() {
+            try {
+                const selectElement = document.getElementById('select-gestor');
+                if (!selectElement) {
+                    console.error("Elemento select-gestor não encontrado.");
+                    return;
+                }
+                
+                // Verifica se queryGestores está configurado
+                if (!componentData.queryGestores || componentData.queryGestores.trim() === '') {
+                    console.error("Query de gestores não configurada. Configure queryGestores no editor Mitra.");
+                    selectElement.innerHTML = '<option value="">Query não configurada</option>';
+                    return;
+                }
+                
+                // queryMitra recebe a query diretamente como string
+                const result = await queryMitra(componentData.queryGestores);
+                
+                if (!result || !result.data || result.data.length === 0) {
+                    console.warn("Nenhum gestor encontrado no banco de dados.");
+                    selectElement.innerHTML = '<option value="">Nenhum gestor encontrado</option>';
+                    return;
+                }
+                
+                const gestores = mapQueryToObject(result);
+
+                selectElement.innerHTML = '';
+
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Selecione um gestor';
+                selectElement.appendChild(defaultOption);
+
+                gestores.forEach(gestor => {
+                    const option = document.createElement('option');
+                    option.value = gestor.ID || '';
+                    option.textContent = gestor.NOME || 'Sem nome';
+                    selectElement.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error("Erro ao popular o dropdown de gestores:", error);
+                const selectElement = document.getElementById('select-gestor');
+                if (selectElement) {
+                    selectElement.innerHTML = '<option value="">Erro ao carregar gestores</option>';
+                }
+            }
+        }
+        
+        async function loadAndPopulateData() {
+            try {
+                // CORREÇÃO CRÍTICA: queryMitra recebe a query diretamente como string
+                const result = await queryMitra(componentData.queryData);
+                if (!result || !result.data || result.data.length === 0) {
+                    console.error("Dados da solicitação não encontrados para o ID fornecido.");
+                    return;
+                }
+                const data = mapQueryToObject(result)[0];
+                populateAllFields(data);
+            } catch (error) {
+                console.error("Erro ao carregar e popular os dados do card:", error);
+            }
+        }
+        
+        async function saveData() {
+            const btn = document.getElementById('save-button');
+            const originalHTML = btn.innerHTML;
+            try {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Salvando...`;
+
+                // --- SET HEADER VARIABLES ---
+                await setVariableMitra({ name: ':VAR_DESCRICAO', content: document.getElementById('input-descricao').value });
+                await setVariableMitra({ name: ':VAR_GESTOR_ID', content: document.getElementById('select-gestor').value });
+                await setVariableMitra({ name: ':VAR_PRIORIDADE', content: document.getElementById('select-prioridade').value });
+                await setVariableMitra({ name: ':VAR_NUM_SO', content: document.getElementById('input-num-so').value });
+                await setVariableMitra({ name: ':VAR_DATA', content: document.getElementById('input-data').value || null });
+                await setVariableMitra({ name: ':VAR_CLIENTE', content: document.getElementById('select-cliente').value });
+                await setVariableMitra({ name: ':VAR_TIPO_CLIENTE', content: document.getElementById('select-tipo-cliente').value });
+                await setVariableMitra({ name: ':VAR_CONTATO', content: document.getElementById('input-contato').value });
+                await setVariableMitra({ name: ':VAR_EMAIL', content: document.getElementById('input-email').value });
+                await setVariableMitra({ name: ':VAR_D_RETORNO', content: document.getElementById('input-data-retorno').value || null });
+                await setVariableMitra({ name: ':VAR_NUM_RFQ', content: document.getElementById('input-num-rfq').value });
+                await setVariableMitra({ name: ':VAR_ACORDO_CONF', content: document.getElementById('select-acordo-conf').value });
+                await setVariableMitra({ name: ':VAR_MANUAL_QUALIDADE', content: document.getElementById('select-manual-qualidade').value });
+                await setVariableMitra({ name: ':VAR_COND_PAG_PECA', content: document.getElementById('input-cond-pag-peca').value });
+                await setVariableMitra({ name: ':VAR_COND_PAG_FERRAMENTAL', content: document.getElementById('input-cond-pag-ferramental').value });
+                await setVariableMitra({ name: ':VAR_COND_ENTREGA', content: document.getElementById('input-cond-entrega').value });
+                await setVariableMitra({ name: ':VAR_SOP', content: document.getElementById('input-sop').value || null });
+                
+                // --- SET FORMULÁRIO VARIABLES ---
+                const getCheckboxValue = (id) => document.getElementById(id).checked ? '1' : '0';
+                
+                await setVariableMitra({ name: ':VAR_PART_NUMBER', content: document.getElementById('form_part_number').value });
+                await setVariableMitra({ name: ':VAR_DESC_PECA', content: document.getElementById('form_descricao_peca').value });
+                await setVariableMitra({ name: ':VAR_PROJETO_TXT', content: document.getElementById('form_projeto').value });
+                await setVariableMitra({ name: ':VAR_EMB_RET', content: getCheckboxValue('form_embalagem_retornavel') });
+                await setVariableMitra({ name: ':VAR_EMB_DESC', content: getCheckboxValue('form_embalagem_descartavel') });
+                await setVariableMitra({ name: ':VAR_VOL_ANO1', content: document.getElementById('form_volume_ano1').value });
+                await setVariableMitra({ name: ':VAR_VOL_ANO2', content: document.getElementById('form_volume_ano2').value });
+                await setVariableMitra({ name: ':VAR_VOL_ANO3', content: document.getElementById('form_volume_ano3').value });
+                await setVariableMitra({ name: ':VAR_DATA_FORM', content: document.getElementById('form_data').value || null });
+                await setVariableMitra({ name: ':VAR_DATA_RET_FORM', content: document.getElementById('form_data_retorno').value || null });
+                await setVariableMitra({ name: ':VAR_PROC_ATUAL_SPRAY', content: getCheckboxValue('form_proc_atual_spray') });
+                await setVariableMitra({ name: ':VAR_PROC_ATUAL_RTM', content: getCheckboxValue('form_proc_atual_rtm') });
+                await setVariableMitra({ name: ':VAR_PROC_ATUAL_SMC', content: getCheckboxValue('form_proc_atual_smc') });
+                await setVariableMitra({ name: ':VAR_PROC_ATUAL_PINTURA', content: getCheckboxValue('form_proc_atual_pintura') });
+                await setVariableMitra({ name: ':VAR_PROC_ATUAL_INJETADO', content: getCheckboxValue('form_proc_atual_injetado') });
+                await setVariableMitra({ name: ':VAR_PROC_ATUAL_CHAPA', content: getCheckboxValue('form_proc_atual_chapa') });
+                await setVariableMitra({ name: ':VAR_PROC_ATUAL_OUTRO', content: document.getElementById('form_proc_atual_outro').value });
+                await setVariableMitra({ name: ':VAR_PROC_ORC_SPRAY', content: getCheckboxValue('form_proc_orc_spray') });
+                await setVariableMitra({ name: ':VAR_PROC_ORC_RTM', content: getCheckboxValue('form_proc_orc_rtm') });
+                await setVariableMitra({ name: ':VAR_PROC_ORC_SMC', content: getCheckboxValue('form_proc_orc_smc') });
+                await setVariableMitra({ name: ':VAR_PROC_ORC_PINTURA', content: getCheckboxValue('form_proc_orc_pintura') });
+                await setVariableMitra({ name: ':VAR_PROC_ORC_OUTRO', content: document.getElementById('form_proc_orc_outro').value });
+                await setVariableMitra({ name: ':VAR_PROJ_ALT_SIM', content: getCheckboxValue('form_proj_alter_sim') });
+                await setVariableMitra({ name: ':VAR_PROJ_ALT_NAO', content: getCheckboxValue('form_proj_alter_nao') });
+                await setVariableMitra({ name: ':VAR_PROJ_RESP_TEC', content: getCheckboxValue('form_proj_resp_tec') });
+                await setVariableMitra({ name: ':VAR_PROJ_RESP_CLI', content: getCheckboxValue('form_proj_resp_cli') });
+                await setVariableMitra({ name: ':VAR_PROJ_NOVO', content: getCheckboxValue('form_proj_novo') });
+                await setVariableMitra({ name: ':VAR_PROJ_PROT', content: getCheckboxValue('form_proj_pecas_prot') });
+                await setVariableMitra({ name: ':VAR_PROJ_ALT', content: getCheckboxValue('form_proj_alteracao') });
+                await setVariableMitra({ name: ':VAR_PROJ_PROD', content: getCheckboxValue('form_proj_pecas_prod') });
+                await setVariableMitra({ name: ':VAR_PROJ_EXIG', content: document.getElementById('form_proj_exigencias').value });
+                await setVariableMitra({ name: ':VAR_PROJ_OBS', content: document.getElementById('form_proj_obs').value });
+                await setVariableMitra({ name: ':VAR_DOC_2D', content: getCheckboxValue('form_doc_2d') });
+                await setVariableMitra({ name: ':VAR_DOC_NORMAS', content: getCheckboxValue('form_doc_normas') });
+                await setVariableMitra({ name: ':VAR_DOC_3D', content: getCheckboxValue('form_doc_3d') });
+                await setVariableMitra({ name: ':VAR_DOC_IMAGENS', content: getCheckboxValue('form_doc_imagens') });
+                await setVariableMitra({ name: ':VAR_DOC_OUTRO', content: document.getElementById('form_doc_outro').value });
+                await setVariableMitra({ name: ':VAR_PECA_MOLD', content: getCheckboxValue('form_peca_moldagem') });
+                await setVariableMitra({ name: ':VAR_PECA_CORTE', content: getCheckboxValue('form_peca_corte') });
+                await setVariableMitra({ name: ':VAR_PECA_MONT', content: getCheckboxValue('form_peca_montagem') });
+                await setVariableMitra({ name: ':VAR_PECA_PINT', content: getCheckboxValue('form_peca_pintura') });
+                await setVariableMitra({ name: ':VAR_PECA_COMP', content: getCheckboxValue('form_peca_componentes') });
+                await setVariableMitra({ name: ':VAR_PECA_EMB', content: getCheckboxValue('form_peca_embalagem') });
+                await setVariableMitra({ name: ':VAR_PROC_FERR_DEF', content: getCheckboxValue('form_proc_ferramental_def') });
+                await setVariableMitra({ name: ':VAR_PROC_FERR_PROT', content: getCheckboxValue('form_proc_ferramental_prot') });
+                await setVariableMitra({ name: ':VAR_PROC_MEIOS', content: getCheckboxValue('form_proc_meios_prod') });
+                await setVariableMitra({ name: ':VAR_PROC_CUSTO', content: getCheckboxValue('form_proc_custo_dev') });
+                await setVariableMitra({ name: ':VAR_PROC_TESTES', content: getCheckboxValue('form_proc_testes_homolog') });
+                await setVariableMitra({ name: ':VAR_FORN_TINTA', content: document.getElementById('form_fornecedor_tinta').value });
+                await setVariableMitra({ name: ':VAR_OBS_ORC', content: document.getElementById('form_obs_orcamento').value });
+
+                // --- SET VARIÁVEIS DA ABA DE ANÁLISE ---
+                await setVariableMitra({ name: ':VAR_ANALISE_RESPONSAVEL', content: document.getElementById('analise_responsavel').value });
+                await setVariableMitra({ name: ':VAR_ANALISE_COMPLEXIDADE', content: document.getElementById('analise_complexidade').value });
+                await setVariableMitra({ name: ':VAR_ANALISE_HORAS', content: document.getElementById('analise_horas_estimadas').value });
+                await setVariableMitra({ name: ':VAR_ANALISE_OBS', content: document.getElementById('analise_observacoes').value });
+
+                // --- EXECUTE DBACTIONS ---
+                await dbactionMitra(3); // Save Header
+                if (componentData.dbActionFormComercialId) {
+                    await dbactionMitra(parseInt(componentData.dbActionFormComercialId, 10)); // Save Form
+                }
+                
+                await loadAndPopulateData();
+                
+                // Habilitar botão de aprovar após salvar
+                const btnAprovar = document.getElementById('btn-aprovar');
+                if (btnAprovar) {
+                    btnAprovar.disabled = false;
+                    btnAprovar.classList.remove('btn-disabled');
+                    btnAprovar.title = ""; // Limpa a dica de ferramenta
+                }
+
+            } catch (error) {
+                console.error("Erro ao salvar os dados:", error);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+
+        async function aprovarCard() {
+            const btn = document.getElementById('btn-aprovar');
+            if (!btn) return;
+            const originalText = btn.innerHTML;
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i> Processando...';
+                
+                await setVariableMitra({ name: ':VAR_NOVA_FASE', content: '3' });
+                await actionMitra({ id: 3 });
+
+            } catch (error) {
+                console.error("Erro ao aprovar o card:", error);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        async function reprovarCard() {
+            const btn = document.getElementById('btn-reprovar');
+            if (!btn) return;
+            const originalText = btn.innerHTML;
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i> Processando...';
+                
+                await setVariableMitra({ name: ':VAR_NOVA_FASE', content: '1' });
+                await actionMitra({ id: 2 });
+
+            } catch (error) {
+                console.error("Erro ao reprovar o card:", error);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        async function initializeComponent() {
+            await populateGestorDropdown();
+            await loadAndPopulateData();
+            switchTab('formulario'); // Inicia na aba de formulário
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.addEventListener(MITRA_UPDATE_EVENT_NAME, loadAndPopulateData);
+
+            const waitForMitraAndInit = () => {
+                const maxWaitTime = 5000;
+                const intervalTime = 100;
+                const startTime = Date.now();
+                
+                const checkInterval = setInterval(() => {
+                    if (window.componentData && window.componentData.queryData && window.componentData.dbActionFormComercialId) {
+                        clearInterval(checkInterval);
+                        initializeComponent();
+                    } else if (Date.now() - startTime > maxWaitTime) {
+                        clearInterval(checkInterval);
+                        console.error("Erro: As configurações do componente (componentData) não foram carregadas a tempo.");
+                        document.body.innerHTML = `<div class="p-8 text-center text-red-700 bg-red-50 h-full flex items-center justify-center">Erro Crítico: As configurações do componente não foram carregadas da plataforma.</div>`;
+                    }
+                }, intervalTime);
+            };
+            
+            waitForMitraAndInit();
+        });
+    </script>
+</body>
+</html>

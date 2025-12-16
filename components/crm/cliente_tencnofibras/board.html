@@ -1,0 +1,1584 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tecnofibras - Workflow (Clean)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        tecno: {
+                            blue: '#002855',   // Azul Escuro Institucional
+                            orange: '#FF6600', // Laranja Institucional
+                        }
+                    },
+                    boxShadow: {
+                        'clean': '0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #334155; padding: 24px}
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+        /* Colunas */
+        .kanban-board {
+            display: flex;
+            gap: 1.5rem;
+            height: calc(100vh - 280px);
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            align-items: flex-start;
+        }
+
+        .kanban-column {
+            min-width: 320px;
+            width: 320px;
+            background-color: #F1F5F9;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            max-height: 100%;
+            border: 1px solid #E2E8F0;
+        }
+
+        .column-header {
+            padding: 12px 16px;
+            background: white;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        /* Cores Topo Coluna - Apenas como fallback se a cor HEX não vier */
+        .col-border-blue { border-top: 4px solid #002855; }
+        .col-border-orange { border-top: 4px solid #F97316; }
+        .col-border-teal { border-top: 4px solid #14B8A6; }
+        .col-border-purple { border-top: 4px solid #8B5CF6; }
+        .col-border-indigo { border-top: 4px solid #6366F1; } 
+        .col-border-green { border-top: 4px solid #10B981; }
+        .col-border-pink { border-top: 4px solid #EC4899; }
+
+        .column-title { font-size: 0.875rem; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 8px; }
+        .column-count { background-color: #E2E8F0; color: #64748B; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 9999px; }
+
+        .column-filter { padding: 8px 12px; background-color: #F1F5F9; }
+        .filter-input { width: 100%; background: white; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; outline: none; transition: border-color 0.2s; }
+        .filter-input:focus { border-color: #94A3B8; }
+
+        .column-body { flex: 1; overflow-y: auto; padding: 0 12px 12px 12px; display: flex; flex-direction: column; gap: 10px; }
+
+        /* Cards */
+        .kanban-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+
+        .card-title { font-weight: 700; color: #1E293B; font-size: 0.9rem; margin-bottom: 8px; }
+        .card-info-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; font-size: 0.75rem; color: #64748B; }
+        .info-label { font-weight: 600; color: #94A3B8; }
+        .info-value { font-weight: 500; color: #475569; text-align: right; }
+        .card-footer { margin-top: 12px; display: flex; justify-content: flex-end; align-items: center; }
+        .priority-badge { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; color: white; }
+        .bg-prio-alta { background-color: #EF4444; }
+        .bg-prio-media { background-color: #F59E0B; }
+        .bg-prio-baixa { background-color: #10B981; }
+
+        /* KPI Cards */
+        .kpi-card { background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: center; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .kpi-title { font-size: 0.75rem; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 12px; }
+        .kpi-row { display: flex; justify-content: space-around; width: 100%; }
+        .kpi-item { display: flex; flex-direction: column; align-items: center; }
+        .kpi-label { font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 4px; color: #64748B; margin-bottom: 4px; }
+        .kpi-value { font-size: 1.2rem; font-weight: 800; color: #1E293B; }
+        .text-green { color: #10B981; } .text-orange { color: #F59E0B; } .text-red { color: #EF4444; }
+        
+        /* Modal Animação */
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-animate { animation: fadeIn 0.2s ease-out forwards; }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .toast {
+            background: white;
+            border-radius: 8px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-left: 4px solid;
+            min-width: 300px;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out forwards;
+        }
+        .toast-success { border-left-color: #10B981; }
+        .toast-error { border-left-color: #EF4444; }
+        .toast-warning { border-left-color: #F59E0B; }
+        .toast-info { border-left-color: #3B82F6; }
+        .toast-icon { font-size: 1.25rem; }
+        .toast-success .toast-icon { color: #10B981; }
+        .toast-error .toast-icon { color: #EF4444; }
+        .toast-warning .toast-icon { color: #F59E0B; }
+        .toast-info .toast-icon { color: #3B82F6; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; font-size: 0.875rem; color: #1E293B; margin-bottom: 2px; }
+        .toast-message { font-size: 0.75rem; color: #64748B; }
+        .toast-close {
+            background: none;
+            border: none;
+            color: #94A3B8;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+        .toast-close:hover { color: #64748B; }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        .toast.hiding { animation: slideOutRight 0.3s ease-out forwards; }
+
+        /* Skeleton Loaders */
+        .skeleton {
+            background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s ease-in-out infinite;
+            border-radius: 4px;
+        }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-column {
+            min-width: 320px;
+            width: 320px;
+            background-color: #F1F5F9;
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid #E2E8F0;
+        }
+        .skeleton-card {
+            height: 120px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        .skeleton-header {
+            height: 40px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+        }
+
+        /* Asterisco de campo obrigatório */
+        .required-asterisk {
+            color: #EF4444; /* red-500 */
+            font-weight: 700;
+            margin-left: 2px;
+        }
+
+        /* Animação de spinner */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+    </style>
+</head>
+<body class="p-6 h-screen flex flex-col overflow-hidden">
+
+    <header class="flex items-center justify-between mb-6 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#002855] rounded flex items-center justify-center text-[#FF6600] font-bold text-xl shadow-sm">T</div>
+            <span class="text-xl font-extrabold text-[#002855] tracking-tight">TECNOFIBRAS</span>
+        </div>
+
+        <button onclick="toggleModalCriacao()" class="bg-[#002855] hover:bg-[#001e40] text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-md transition-colors flex items-center gap-2">
+            <i class="ph ph-plus-circle text-lg"></i> Solicitação de Orçamento
+        </button>
+    </header>
+
+    <div class="flex-1 flex flex-col overflow-hidden max-w-[1920px] mx-auto w-full"> 
+
+        <div class="grid grid-cols-3 gap-6 mb-8 shrink-0">
+            <div class="kpi-card">
+                <div class="kpi-title">Solicitações</div>
+                <div class="kpi-row">
+                    <div class="kpi-item"><span class="kpi-label text-green"><i class="ph ph-thumbs-up-fill"></i> Fechadas</span><span class="kpi-value">0</span></div>
+                    <div class="kpi-item"><span class="kpi-label text-orange"><i class="ph ph-dots-three-circle-fill"></i> Pendentes</span><span class="kpi-value">7</span></div>
+                    <div class="kpi-item"><span class="kpi-label text-red"><i class="ph ph-thumbs-down-fill"></i> Perdidas</span><span class="kpi-value">0</span></div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Status das Cotações</div>
+                <div class="kpi-row">
+                    <div class="kpi-item"><span class="kpi-label text-green"><i class="ph ph-clock-fill"></i> Em dia</span><span class="kpi-value">1</span></div>
+                    <div class="kpi-item"><span class="kpi-label text-orange"><i class="ph ph-warning-circle-fill"></i> Em Atraso</span><span class="kpi-value">1</span></div>
+                    <div class="kpi-item"><span class="kpi-label text-red"><i class="ph ph-x-circle-fill"></i> Crítico</span><span class="kpi-value">1</span></div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Prioridades</div>
+                <div class="kpi-row">
+                    <div class="kpi-item"><span class="kpi-label text-green"><i class="ph ph-arrow-down"></i> Baixa</span><span class="kpi-value">1</span></div>
+                    <div class="kpi-item"><span class="kpi-label text-orange"><i class="ph ph-minus"></i> Média</span><span class="kpi-value">1</span></div>
+                    <div class="kpi-item"><span class="kpi-label text-red"><i class="ph ph-arrow-up"></i> Alta</span><span class="kpi-value">5</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-end mb-4 shrink-0">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Fluxo de Aprovação de Orçamento</h2>
+                <p class="text-sm text-gray-500">Acompanhe o andamento das solicitações de orçamento</p>
+            </div>
+            <div class="relative w-64">
+                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="global-search" onkeyup="filterCards()" placeholder="Filtrar em tudo..." class="w-full pl-9 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-md focus:outline-none focus:border-blue-500 shadow-sm">
+            </div>
+        </div>
+
+        <div class="kanban-board" id="kanban-board">
+            <!-- As colunas e cards serão renderizados dinamicamente aqui -->
+        </div>
+    </div>
+
+    <div id="modal-criar-card" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-[50000] backdrop-blur-sm">
+        <div class="bg-white w-[650px] max-h-[90vh] rounded-xl shadow-2xl flex flex-col modal-animate border border-gray-100">
+            <div class="flex justify-between items-center p-6 border-b border-gray-100">
+                <h3 class="text-lg font-bold text-slate-800">Adicionar solicitação de orçamento</h3>
+                <button onclick="toggleModalCriacao()" class="text-gray-400 hover:text-gray-600"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1">
+                <form id="form-criar-card" class="space-y-4" onsubmit="event.preventDefault(); criarNovoCard(event); return false;">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Descrição</label>
+                        <input type="text" id="input-descricao" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:bg-white focus:border-slate-400 outline-none transition-all" placeholder="Descrição">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Gestor<span class="required-asterisk">*</span></label>
+                            <select id="input-gestor" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none"><option value="">Carregando...</option></select>
+                            <span class="error-message text-red-500 text-xs mt-1 hidden"></span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Prioridade<span class="required-asterisk">*</span></label>
+                            <select id="input-prioridade" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none">
+                                <option value="Baixa">Baixa</option><option value="Média">Média</option><option value="Alta">Alta</option>
+                            </select>
+                            <span class="error-message text-red-500 text-xs mt-1 hidden"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Nº SO</label>
+                            <input type="text" id="input-so" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none" placeholder="Nº SO">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Data</label>
+                            <input type="date" id="input-data" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none text-gray-600">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Cliente<span class="required-asterisk">*</span></label>
+                            <select id="input-cliente" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none"><option value="">Selecionar</option><option>CAT</option></select>
+                            <span class="error-message text-red-500 text-xs mt-1 hidden"></span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Atual/Novo<span class="required-asterisk">*</span></label>
+                            <select id="input-tipo-cliente" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none"><option value="">Selecionar</option><option>Atual</option></select>
+                            <span class="error-message text-red-500 text-xs mt-1 hidden"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Contato</label><input type="text" id="input-contato" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none" placeholder="Contato"></div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">E-mail</label><input type="email" id="input-email" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none" placeholder="E-mail"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Data Retorno</label><input type="date" id="input-data-retorno" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none text-gray-600"></div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Nº RFQ</label><input type="text" id="input-rfq" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none" placeholder="Nº RFQ"></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Acordo de Confidencialidade<span class="required-asterisk">*</span></label>
+                        <select id="input-acordo-conf" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none"><option value="">Selecionar</option><option>Sim</option><option>Não</option></select>
+                        <span class="error-message text-red-500 text-xs mt-1 hidden"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Manual de Qualidade do Fornecedor<span class="required-asterisk">*</span></label>
+                        <select id="input-manual-qualidade" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none"><option value="">Selecionar</option><option>Sim</option><option>Não</option></select>
+                        <span class="error-message text-red-500 text-xs mt-1 hidden"></span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Cond. Pag. Peça</label><input type="text" id="input-cond-pag-peca" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none" placeholder="Cond. Pag. Peça"></div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Cond. Pag. Ferramental</label><input type="text" id="input-cond-pag-ferramental" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none" placeholder="Cond. Pag. Ferramental"></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Condição de entrega</label>
+                        <input type="text" id="input-cond-entrega" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none" placeholder="Condição de entrega">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">SOP</label>
+                        <input type="date" id="input-sop" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none text-gray-600">
+                    </div>
+
+                </form>
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
+                <button type="button" id="btn-salvar-card" onclick="criarNovoCard(event)" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-lg shadow-slate-200 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <span id="btn-salvar-text">Salvar</span>
+                    <span id="btn-salvar-spinner" class="hidden">
+                        <i class="ph ph-spinner animate-spin"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        /**
+         * Configurações e constantes do componente
+         * @type {Object}
+         */
+        const CONFIG = {
+            // Eventos
+            MITRA_UPDATE_EVENT_NAME: 'mitra-update-kanban',
+            
+            // Timeouts e intervalos
+            MAX_WAIT_TIME: 5000, // Tempo máximo de espera para componentData (ms)
+            CHECK_INTERVAL: 100, // Intervalo de verificação (ms)
+            
+            // Debounce
+            FILTER_DEBOUNCE_MS: 300, // Tempo de debounce para filtros (ms)
+            
+            // Cores padrão
+            DEFAULT_COLUMN_COLOR: '#CBD5E1',
+            DEFAULT_TEXT_COLOR: '#334155',
+            
+            // Prioridades
+            PRIORIDADES: {
+                BAIXA: 'Baixa',
+                MEDIA: 'Média',
+                ALTA: 'Alta'
+            },
+            
+            // KPIs - Valores padrão (podem ser sobrescritos por componentData)
+            KPI_DIAS_CRITICO_ATRASO: 7, // Dias de atraso para considerar crítico
+            KPI_DIAS_EM_DIA: 3 // Dias para considerar "em dia"
+        };
+
+        const MITRA_UPDATE_EVENT_NAME = CONFIG.MITRA_UPDATE_EVENT_NAME;
+        
+        /**
+         * Obtém valor de componentData com parsing seguro e tipo correto
+         * Todas as propriedades de componentData chegam como string
+         * 
+         * @param {string} key - Chave do componentData
+         * @param {*} defaultValue - Valor padrão se não encontrado
+         * @param {string} type - Tipo esperado: 'string', 'number', 'boolean', 'json'
+         * @returns {*} Valor convertido para o tipo correto
+         * 
+         * @example
+         * const id = getComponentDataValue('actionDeleteId', null, 'number');
+         * const config = getComponentDataValue('configTabela', {}, 'json');
+         */
+        function getComponentDataValue(key, defaultValue = null, type = 'string') {
+            if (!window.componentData || !window.componentData[key]) {
+                return defaultValue;
+            }
+            
+            const value = window.componentData[key];
+            
+            // Se já é o tipo esperado e não é string vazia, retorna direto
+            if (type === 'string') {
+                return value || defaultValue;
+            }
+            
+            // Para outros tipos, precisa converter de string
+            if (typeof value !== 'string') {
+                return value;
+            }
+            
+            // Se string vazia, retorna default
+            if (value.trim() === '') {
+                return defaultValue;
+            }
+            
+            try {
+                switch (type) {
+                    case 'number':
+                        const num = parseInt(value, 10);
+                        return isNaN(num) ? defaultValue : num;
+                    
+                    case 'boolean':
+                        return value.toLowerCase() === 'true' || value === '1';
+                    
+                    case 'json':
+                        return JSON.parse(value);
+                    
+                    default:
+                        return value;
+                }
+            } catch (error) {
+                console.warn(`Erro ao converter componentData.${key} para tipo ${type}:`, error);
+                return defaultValue;
+            }
+        }
+        
+        /**
+         * Valida se componentData possui todas as propriedades obrigatórias
+         * @param {Object} componentData - Objeto componentData a ser validado
+         * @returns {{isValid: boolean, missingFields: string[]}} Objeto com resultado da validação
+         */
+        function validateComponentData(componentData) {
+            const requiredFields = [
+                'colunasKanban',
+                'cardsKanban',
+                'queryGestores',
+                'idActionSalvar'
+            ];
+            
+            const missingFields = [];
+            
+            requiredFields.forEach(field => {
+                if (!componentData || !componentData[field] || componentData[field].trim() === '') {
+                    missingFields.push(field);
+                }
+            });
+            
+            return {
+                isValid: missingFields.length === 0,
+                missingFields
+            };
+        }
+        
+        /**
+         * Dispara evento para atualizar o componente Mitra
+         * Usado após operações que modificam dados (criar, excluir, etc.)
+         * O evento é capturado pelo sistema Mitra para recarregar o componente
+         * 
+         * @returns {void}
+         * 
+         * @example
+         * await criarNovoCard();
+         * updateMitra(); // Recarrega o board após criar card
+         */
+        function updateMitra() {
+            document.body.dispatchEvent(new CustomEvent(MITRA_UPDATE_EVENT_NAME));
+        }
+
+        /**
+         * Mostra uma notificação toast na tela
+         * 
+         * @param {string} type - Tipo do toast: 'success', 'error', 'warning', 'info'
+         * @param {string} title - Título da notificação
+         * @param {string} message - Mensagem da notificação
+         * @param {number} [duration=5000] - Duração em milissegundos antes de auto-remover (0 = não remove automaticamente)
+         * @returns {void}
+         * 
+         * @example
+         * showToast('success', 'Sucesso', 'Card criado com sucesso!');
+         * showToast('error', 'Erro', 'Falha ao salvar', 10000);
+         */
+        function showToast(type, title, message, duration = 5000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const icons = {
+                success: 'ph-check-circle-fill',
+                error: 'ph-x-circle-fill',
+                warning: 'ph-warning-circle-fill',
+                info: 'ph-info-fill'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <i class="ph ${icons[type] || icons.info} toast-icon"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="ph ph-x"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto-remover após duração
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.classList.add('hiding');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+        }
+
+        /**
+         * Abre modal de detalhes do card
+         * @param {number} screenId - ID da tela a ser aberta
+         * @param {number|string} cardId - ID do card
+         */
+        async function abrirModalCard(screenId, cardId) {
+            try {
+                // Validação de parâmetros
+                if (!screenId || isNaN(screenId)) {
+                    throw new Error(`ID da tela inválido: ${screenId}. Configure screenModalId no editor Mitra.`);
+                }
+                
+                if (!cardId) {
+                    throw new Error('ID do card não fornecido.');
+                }
+                
+                // Define variável com ID do card antes de abrir modal
+                if (typeof setVariableMitra === 'function') {
+                    await setVariableMitra({ name: ':VAR_CARD_ID', content: cardId.toString() });
+                } else {
+                    console.warn('setVariableMitra não está disponível. Continuando sem definir variável.');
+                }
+                
+                // Abre modal
+                if (typeof modalMitra === 'function') {
+                    await modalMitra({ id: screenId, width: 100, height: 100, closeOnReloading: true });
+                } else {
+                    console.warn(`Ambiente Local: Navegando para Tela ${screenId} com Card ID ${cardId}`);
+                    showToast('info', 'Ambiente Local', `Navegaria para tela ${screenId} com card ${cardId}`);
+                }
+            } catch (error) {
+                console.error(`Falha ao abrir modal do card ${cardId} na tela ${screenId}:`, error);
+                showToast('error', 'Erro', `Não foi possível abrir os detalhes: ${error.message || 'Erro desconhecido'}`);
+            }
+        }
+
+        /**
+         * Abre ou fecha o modal de criação de card
+         * Alterna a visibilidade do modal através de classes CSS
+         * 
+         * @returns {void}
+         * 
+         * @example
+         * toggleModalCriacao(); // Abre se fechado, fecha se aberto
+         */
+        function toggleModalCriacao() {
+            const modal = document.getElementById('modal-criar-card');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+
+        // Variável para armazenar o timeout do debounce
+        let filterDebounceTimeout = null;
+        
+        /**
+         * Filtra cards globalmente em todas as colunas com debounce
+         * Usa debounce para melhorar performance em buscas rápidas
+         */
+        function filterCards() {
+            // Limpa timeout anterior se existir
+            if (filterDebounceTimeout) {
+                clearTimeout(filterDebounceTimeout);
+            }
+            
+            // Cria novo timeout com debounce
+            filterDebounceTimeout = setTimeout(() => {
+                const input = document.getElementById('global-search');
+                if (!input) return;
+                
+                const filter = input.value.toLowerCase();
+                const cards = document.getElementsByClassName('task-card');
+                
+                for (let card of cards) {
+                    const textContent = card.innerText.toLowerCase();
+                    if (textContent.includes(filter)) {
+                        card.style.display = "";
+                    } else {
+                        card.style.display = "none";
+                    }
+                }
+                
+                // Atualizar contadores após filtro global
+                updateAllColumnCounts();
+            }, CONFIG.FILTER_DEBOUNCE_MS);
+        }
+
+        // Objeto para armazenar timeouts de debounce por coluna
+        const columnFilterDebounceTimeouts = {};
+        
+        /**
+         * Filtra cards dentro de uma coluna específica com debounce
+         * @param {HTMLInputElement} input - Input do filtro
+         * @param {number} columnId - ID da coluna
+         */
+        function filterColumnCards(input, columnId) {
+            // Limpa timeout anterior para esta coluna se existir
+            if (columnFilterDebounceTimeouts[columnId]) {
+                clearTimeout(columnFilterDebounceTimeouts[columnId]);
+            }
+            
+            // Cria novo timeout com debounce
+            columnFilterDebounceTimeouts[columnId] = setTimeout(() => {
+                const filter = input.value.toLowerCase();
+                const columnBody = document.getElementById(`coluna-${columnId}`);
+                if (!columnBody) return;
+
+                const cards = columnBody.querySelectorAll('.task-card');
+                let visibleCount = 0;
+
+                cards.forEach(card => {
+                    const textContent = card.innerText.toLowerCase();
+                    if (textContent.includes(filter)) {
+                        card.style.display = "";
+                        visibleCount++;
+                    } else {
+                        card.style.display = "none";
+                    }
+                });
+
+                // Atualizar contador da coluna
+                const countSpan = document.getElementById(`count-col-${columnId}`);
+                if (countSpan) {
+                    countSpan.textContent = visibleCount;
+                }
+            }, CONFIG.FILTER_DEBOUNCE_MS);
+        }
+
+        /**
+         * Converte resultado de queryMitra (array de arrays) em array de objetos
+         * 
+         * O resultado de queryMitra vem no formato:
+         * { data: [["1", "Nome"], ["2", "Outro"]], headers: [{name: "id"}, {name: "nome"}] }
+         * 
+         * É convertido para:
+         * [{ ID: "1", NOME: "Nome" }, { ID: "2", NOME: "Outro" }]
+         * 
+         * @param {Object} queryResult - Resultado de queryMitra com propriedades data e headers
+         * @param {Array<Array>} queryResult.data - Array de arrays com os dados
+         * @param {Array<Object>} queryResult.headers - Array de objetos com propriedade name
+         * @returns {Array<Object>} Array de objetos com propriedades em uppercase
+         * 
+         * @example
+         * const result = await queryMitra("SELECT ID, NOME FROM CLIENTES");
+         * const clientes = mapQueryToObject(result);
+         * // clientes = [{ ID: "1", NOME: "Cliente A" }, ...]
+         */
+        function mapQueryToObject(queryResult) {
+            if (!queryResult || !queryResult.data || !queryResult.headers) return [];
+            const headers = queryResult.headers.map(h => h.name.toUpperCase());
+            return queryResult.data.map(row => {
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = row[index];
+                });
+                return obj;
+            });
+        }
+
+        /**
+         * Calcula KPIs de status das solicitações (fechadas, pendentes, perdidas)
+         * @param {Array} cards - Array de cards do kanban
+         * @returns {Object} Objeto com contadores de status
+         */
+        function calculateStatusKPIs(cards) {
+            let fechadas = 0;
+            let pendentes = 0;
+            let perdidas = 0;
+
+            cards.forEach(card => {
+                const status = (card.STATUS || '').toLowerCase();
+                if (status.includes('fechad') || status.includes('concluíd')) {
+                    fechadas++;
+                } else if (status.includes('perdid') || status.includes('cancelad')) {
+                    perdidas++;
+                } else {
+                    pendentes++;
+                }
+            });
+
+            return { fechadas, pendentes, perdidas };
+        }
+        
+        /**
+         * Calcula KPIs de status das cotações baseado em data de retorno
+         * @param {Array} cards - Array de cards do kanban
+         * @returns {Object} Objeto com contadores de status de cotações
+         */
+        function calculateCotacaoKPIs(cards) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            
+            let emDia = 0;
+            let emAtraso = 0;
+            let critico = 0;
+            
+            // Obtém limites configuráveis do componentData ou usa padrões
+            const diasCritico = getComponentDataValue('kpiDiasCriticoAtraso', CONFIG.KPI_DIAS_CRITICO_ATRASO, 'number');
+            const diasEmDia = getComponentDataValue('kpiDiasEmDia', CONFIG.KPI_DIAS_EM_DIA, 'number');
+
+            cards.forEach(card => {
+                if (card.DATA_RETORNO) {
+                    try {
+                        const dataRetorno = new Date(card.DATA_RETORNO);
+                        dataRetorno.setHours(0, 0, 0, 0);
+                        const diffDias = Math.floor((dataRetorno - hoje) / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDias < 0) {
+                            // Atrasado
+                            if (diffDias <= -diasCritico) {
+                                critico++;
+                            } else {
+                                emAtraso++;
+                            }
+                        } else if (diffDias <= diasEmDia) {
+                            // Em dia (até X dias para retorno)
+                            emDia++;
+                        }
+                    } catch (e) {
+                        // Ignora datas inválidas
+                        console.warn(`Data de retorno inválida para card ${card.ID}:`, card.DATA_RETORNO);
+                    }
+                }
+            });
+
+            return { emDia, emAtraso, critico };
+        }
+        
+        /**
+         * Calcula KPIs de prioridades
+         * @param {Array} cards - Array de cards do kanban
+         * @returns {Object} Objeto com contadores de prioridades
+         */
+        function calculatePrioridadeKPIs(cards) {
+            let prioridadeBaixa = 0;
+            let prioridadeMedia = 0;
+            let prioridadeAlta = 0;
+
+            cards.forEach(card => {
+                const prioridade = (card.PRIORIDADE || 'Baixa').toLowerCase();
+                if (prioridade === 'alta') {
+                    prioridadeAlta++;
+                } else if (prioridade === 'média' || prioridade === 'media') {
+                    prioridadeMedia++;
+                } else {
+                    prioridadeBaixa++;
+                }
+            });
+
+            return { prioridadeBaixa, prioridadeMedia, prioridadeAlta };
+        }
+        
+        /**
+         * Calcula KPIs dinamicamente a partir dos cards
+         * @param {Array} cards - Array de cards do kanban
+         * @returns {Object} Objeto com os KPIs calculados
+         */
+        function calculateKPIs(cards) {
+            if (!cards || cards.length === 0) {
+                return {
+                    fechadas: 0,
+                    pendentes: 0,
+                    perdidas: 0,
+                    emDia: 0,
+                    emAtraso: 0,
+                    critico: 0,
+                    prioridadeBaixa: 0,
+                    prioridadeMedia: 0,
+                    prioridadeAlta: 0
+                };
+            }
+
+            const statusKPIs = calculateStatusKPIs(cards);
+            const cotacaoKPIs = calculateCotacaoKPIs(cards);
+            const prioridadeKPIs = calculatePrioridadeKPIs(cards);
+
+            return {
+                ...statusKPIs,
+                ...cotacaoKPIs,
+                ...prioridadeKPIs
+            };
+        }
+
+        /**
+         * Atualiza os KPIs no DOM
+         * Atualiza os valores exibidos nos três cards de KPI no topo da página
+         * 
+         * @param {Object} kpis - Objeto com os KPIs calculados
+         * @param {number} kpis.fechadas - Número de solicitações fechadas
+         * @param {number} kpis.pendentes - Número de solicitações pendentes
+         * @param {number} kpis.perdidas - Número de solicitações perdidas
+         * @param {number} kpis.emDia - Número de cotações em dia
+         * @param {number} kpis.emAtraso - Número de cotações em atraso
+         * @param {number} kpis.critico - Número de cotações críticas
+         * @param {number} kpis.prioridadeBaixa - Número de cards com prioridade baixa
+         * @param {number} kpis.prioridadeMedia - Número de cards com prioridade média
+         * @param {number} kpis.prioridadeAlta - Número de cards com prioridade alta
+         * @returns {void}
+         */
+        function updateKPIs(kpis) {
+            const kpiCards = document.querySelectorAll('.kpi-card');
+            if (kpiCards.length < 3) return;
+
+            // Primeiro KPI Card - Solicitações
+            const kpi1 = kpiCards[0];
+            const fechadasEl = kpi1.querySelector('.kpi-item:nth-child(1) .kpi-value');
+            const pendentesEl = kpi1.querySelector('.kpi-item:nth-child(2) .kpi-value');
+            const perdidasEl = kpi1.querySelector('.kpi-item:nth-child(3) .kpi-value');
+            if (fechadasEl) fechadasEl.textContent = kpis.fechadas;
+            if (pendentesEl) pendentesEl.textContent = kpis.pendentes;
+            if (perdidasEl) perdidasEl.textContent = kpis.perdidas;
+
+            // Segundo KPI Card - Status das Cotações
+            const kpi2 = kpiCards[1];
+            const emDiaEl = kpi2.querySelector('.kpi-item:nth-child(1) .kpi-value');
+            const emAtrasoEl = kpi2.querySelector('.kpi-item:nth-child(2) .kpi-value');
+            const criticoEl = kpi2.querySelector('.kpi-item:nth-child(3) .kpi-value');
+            if (emDiaEl) emDiaEl.textContent = kpis.emDia;
+            if (emAtrasoEl) emAtrasoEl.textContent = kpis.emAtraso;
+            if (criticoEl) criticoEl.textContent = kpis.critico;
+
+            // Terceiro KPI Card - Prioridades
+            const kpi3 = kpiCards[2];
+            const baixaEl = kpi3.querySelector('.kpi-item:nth-child(1) .kpi-value');
+            const mediaEl = kpi3.querySelector('.kpi-item:nth-child(2) .kpi-value');
+            const altaEl = kpi3.querySelector('.kpi-item:nth-child(3) .kpi-value');
+            if (baixaEl) baixaEl.textContent = kpis.prioridadeBaixa;
+            if (mediaEl) mediaEl.textContent = kpis.prioridadeMedia;
+            if (altaEl) altaEl.textContent = kpis.prioridadeAlta;
+        }
+        
+        /**
+         * Atualiza os contadores de cards em todas as colunas
+         * Percorre todas as colunas do kanban e atualiza o número exibido no header
+         * 
+         * @returns {void}
+         */
+        function updateAllColumnCounts() {
+            const columns = document.querySelectorAll('.kanban-column');
+            columns.forEach(column => {
+                const countSpan = column.querySelector('.column-count');
+                const body = column.querySelector('.column-body');
+                if (countSpan && body) {
+                    const cardCount = body.querySelectorAll('.task-card').length;
+                    countSpan.textContent = cardCount;
+                }
+            });
+        }
+        
+        /**
+         * Exclui um card do kanban
+         * @param {Event} event - Evento do clique
+         * @param {number|string} cardId - ID do card a ser excluído
+         */
+        async function excluirCard(event, cardId) {
+            event.stopPropagation(); // Impede que o modal de detalhes seja aberto
+            if (confirm('Tem certeza que deseja excluir esta solicitação?')) {
+                try {
+                    await setVariableMitra({ name: ':VAR_CARD_ID', content: cardId.toString() });
+                    
+                    // Obtém ID da action de exclusão do componentData
+                    const actionDeleteId = getComponentDataValue('actionDeleteId', null, 'number');
+                    
+                    if (!actionDeleteId || isNaN(actionDeleteId)) {
+                        throw new Error('ID da action de exclusão não configurado. Configure actionDeleteId no editor Mitra.');
+                    }
+                    
+                    // actionMitra recebe objeto com propriedade id
+                    await actionMitra({ id: actionDeleteId });
+                    updateMitra(); // Atualiza o quadro após a exclusão
+                    showToast('success', 'Sucesso', 'Solicitação excluída com sucesso!');
+                } catch (error) {
+                    console.error(`Falha ao excluir card ${cardId} no componente board Tecnofibras:`, error);
+                    showToast('error', 'Erro', 'Não foi possível excluir a solicitação. Verifique o console para mais detalhes.');
+                }
+            }
+        }
+
+        /**
+         * Cria HTML de um card do kanban
+         * @param {Object} card - Objeto com dados do card
+         * @param {number} card.ID - ID do card
+         * @param {string} card.TITULO - Título do card
+         * @param {string} card.PRIORIDADE - Prioridade (Baixa, Média, Alta)
+         * @param {string} card.CONTATO - Contato (opcional)
+         * @param {string} card.NUM_RFQ - Número RFQ (opcional)
+         * @param {string} card.NUM_SO - Número SO (opcional)
+         * @param {string} card.DATA_RETORNO_FMT - Data de retorno formatada (opcional)
+         * @param {number} card.ID_TELA_MODAL - ID da tela modal (opcional)
+         * @returns {string} HTML do card
+         */
+        function createCardHTML(card) {
+            const prioridade = (card.PRIORIDADE || 'Baixa').toLowerCase();
+            let borderColorClass = 'card-border-green';
+            let badgeBgClass = 'bg-prio-baixa';
+
+            if (prioridade === 'alta') {
+                borderColorClass = 'card-border-red';
+                badgeBgClass = 'bg-prio-alta';
+            } else if (prioridade === 'média' || prioridade === 'media') {
+                borderColorClass = 'card-border-orange';
+                badgeBgClass = 'bg-prio-media';
+            }
+            
+            let infoGrid = '';
+            if (card.CONTATO) infoGrid += `<span class="info-label">Contato:</span> <span class="info-value">${card.CONTATO}</span>`;
+            if (card.NUM_RFQ) infoGrid += `<span class="info-label">Nº RFQ:</span> <span class="info-value">${card.NUM_RFQ}</span>`;
+            if (card.NUM_SO) infoGrid += `<span class="info-label">Nº SO:</span> <span class="info-value">${card.NUM_SO}</span>`;
+            if (card.DATA_RETORNO_FMT) infoGrid += `<span class="info-label">Data Retorno:</span> <span class="info-value">${card.DATA_RETORNO_FMT}</span>`;
+            
+            // Obtém ID da tela modal do card ou do componentData
+            const idTelaModal = card.ID_TELA_MODAL || getComponentDataValue('screenModalId', null, 'number');
+
+            return `
+                <div class="kanban-card relative ${borderColorClass} task-card group" onclick="abrirModalCard(${idTelaModal}, ${card.ID})">
+                    <button onclick="excluirCard(event, ${card.ID})" class="absolute top-2 right-2 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity z-10 p-1 rounded-full hover:bg-red-50">
+                        <i class="ph ph-trash text-lg"></i>
+                    </button>
+                    <h4 class="card-title">${card.TITULO || 'Sem Título'}</h4>
+                    <div class="card-info-grid">${infoGrid}</div>
+                    <div class="card-footer">
+                        <span class="priority-badge ${badgeBgClass}">${card.PRIORIDADE || 'Baixa'}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        /**
+         * Renderiza skeleton loaders para o board
+         * @param {HTMLElement} board - Elemento do board
+         */
+        function renderSkeletonLoaders(board) {
+            const skeletonHTML = `
+                <div class="skeleton-column">
+                    <div class="skeleton skeleton-header"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+                <div class="skeleton-column">
+                    <div class="skeleton skeleton-header"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+                <div class="skeleton-column">
+                    <div class="skeleton skeleton-header"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+            `;
+            board.innerHTML = skeletonHTML;
+        }
+
+        /**
+         * Renderiza as colunas do kanban
+         * @param {HTMLElement} board - Elemento do board
+         * @param {Array} colunas - Array de objetos de colunas
+         */
+        function renderColumns(board, colunas) {
+            if (colunas.length === 0) {
+                board.innerHTML = `
+                    <div class="text-slate-500 p-8 text-center bg-slate-50 rounded-lg">
+                        <i class="ph ph-folder-open text-4xl mb-4 text-slate-400"></i>
+                        <p class="font-semibold">Nenhuma coluna configurada</p>
+                        <p class="text-sm text-slate-400 mt-2">Configure as colunas do kanban no editor Mitra</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            board.innerHTML = ''; // Limpa o loading
+            
+            colunas.forEach(col => {
+                const columnHTML = `
+                    <div class="kanban-column">
+                        <div class="column-header" style="border-top: 4px solid ${col.COR_HEX || CONFIG.DEFAULT_COLUMN_COLOR}">
+                            <div class="column-title">
+                                <i class="ph ph-${col.ICONE || 'folder-simple'} text-lg" style="color: ${col.COR_HEX || CONFIG.DEFAULT_TEXT_COLOR}"></i>
+                                ${col.DESCRICAO || 'Sem descrição'}
+                            </div>
+                            <span class="column-count" id="count-col-${col.ID}">0</span>
+                        </div>
+                        <div class="column-filter">
+                            <input type="text" placeholder="Filtrar..." class="filter-input" data-column-id="${col.ID}" onkeyup="filterColumnCards(this, ${col.ID})">
+                        </div>
+                        <div class="column-body" id="coluna-${col.ID}"></div>
+                    </div>
+                `;
+                board.insertAdjacentHTML('beforeend', columnHTML);
+            });
+        }
+        
+        /**
+         * Renderiza os cards nas colunas apropriadas
+         * @param {Array} cards - Array de objetos de cards
+         */
+        function renderCards(cards) {
+            cards.forEach(card => {
+                const targetColumnBody = document.getElementById(`coluna-${card.ID_FASE}`);
+                if (targetColumnBody) {
+                    const cardHTML = createCardHTML(card);
+                    targetColumnBody.insertAdjacentHTML('beforeend', cardHTML);
+                } else {
+                    console.warn(`Coluna com ID ${card.ID_FASE} não encontrada para o card ${card.ID}.`);
+                }
+            });
+        }
+        
+        /**
+         * Mostra estado vazio nas colunas sem cards
+         * @param {Array} colunas - Array de objetos de colunas
+         */
+        function showEmptyColumnStates(colunas) {
+            colunas.forEach(col => {
+                const columnBody = document.getElementById(`coluna-${col.ID}`);
+                if (columnBody && columnBody.querySelectorAll('.task-card').length === 0) {
+                    columnBody.innerHTML = `
+                        <div class="text-center py-8 text-slate-400">
+                            <i class="ph ph-inbox text-3xl mb-2"></i>
+                            <p class="text-xs">Nenhum card nesta coluna</p>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        /**
+         * Busca colunas do kanban via query
+         * @returns {Promise<Array>} Array de objetos de colunas
+         * @throws {Error} Quando query falha ou não retorna dados
+         */
+        async function fetchColumns() {
+            const queryColunas = componentData.colunasKanban;
+            if (!queryColunas || queryColunas.trim() === '') {
+                throw new Error('Query de colunas (colunasKanban) não configurada. Configure no editor Mitra.');
+            }
+            
+            const colunasResult = await queryMitra(queryColunas);
+            if (!colunasResult || !colunasResult.data) {
+                throw new Error('Falha ao buscar colunas do kanban. Verifique a query colunasKanban e se há dados no banco.');
+            }
+            
+            return mapQueryToObject(colunasResult);
+        }
+        
+        /**
+         * Busca cards do kanban via query
+         * @returns {Promise<Array>} Array de objetos de cards
+         * @throws {Error} Quando query falha ou não retorna dados
+         */
+        async function fetchCards() {
+            const queryCards = componentData.cardsKanban;
+            if (!queryCards || queryCards.trim() === '') {
+                throw new Error('Query de cards (cardsKanban) não configurada. Configure no editor Mitra.');
+            }
+            
+            const cardsResult = await queryMitra(queryCards);
+            if (!cardsResult || !cardsResult.data) {
+                throw new Error('Falha ao buscar cards do kanban. Verifique a query cardsKanban e se há dados no banco.');
+            }
+            
+            return mapQueryToObject(cardsResult);
+        }
+        
+        /**
+         * Renderiza mensagem de erro no board
+         * @param {HTMLElement} board - Elemento do board
+         * @param {string} errorMsg - Mensagem de erro
+         */
+        function renderError(board, errorMsg) {
+            board.innerHTML = `
+                <div class="text-red-600 p-6 bg-red-50 rounded-lg border border-red-200">
+                    <div class="flex items-start gap-3">
+                        <i class="ph ph-warning-circle-fill text-2xl text-red-600"></i>
+                        <div class="flex-1">
+                            <p class="font-bold mb-2 text-lg">Falha ao carregar o quadro</p>
+                            <p class="text-sm mb-3">${errorMsg}</p>
+                            <div class="text-xs text-gray-600 bg-white p-3 rounded border border-red-100">
+                                <p class="font-semibold mb-1">Possíveis soluções:</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Verifique se todas as variáveis do componentData estão configuradas no editor Mitra</li>
+                                    <li>Confirme se as queries SQL estão corretas e retornam dados</li>
+                                    <li>Verifique o console do navegador para mais detalhes técnicos</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        /**
+         * Renderiza o board kanban completo (colunas e cards)
+         * @throws {Error} Quando componentData está incompleto ou queries falham
+         */
+        async function renderBoard() {
+            const board = document.getElementById('kanban-board');
+            if (!board) {
+                const errorMsg = 'Elemento kanban-board não encontrado no DOM. Verifique se o HTML está correto.';
+                console.error(errorMsg);
+                document.body.innerHTML = `
+                    <div class="p-8 text-center text-red-700 bg-red-50 h-full flex items-center justify-center rounded-lg">
+                        <p class="font-bold">Erro Crítico: ${errorMsg}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            renderSkeletonLoaders(board);
+
+            try {
+                // Validar componentData antes de usar
+                const validation = validateComponentData(window.componentData);
+                if (!validation.isValid) {
+                    const missingFields = validation.missingFields.join(', ');
+                    throw new Error(`componentData incompleto. Campos obrigatórios faltando: ${missingFields}. Configure no editor Mitra.`);
+                }
+
+                // 1. Buscar e renderizar colunas
+                const colunas = await fetchColumns();
+                renderColumns(board, colunas);
+                
+                if (colunas.length === 0) {
+                    return; // Já renderizou mensagem de estado vazio
+                }
+
+                // 2. Buscar e renderizar cards
+                const cards = await fetchCards();
+                renderCards(cards);
+                
+                // 3. Atualizar contadores e estados
+                updateAllColumnCounts();
+                showEmptyColumnStates(colunas);
+                
+                // 4. Atualizar KPIs dinamicamente
+                const kpis = calculateKPIs(cards);
+                updateKPIs(kpis);
+
+            } catch (error) {
+                const errorMsg = error.message || 'Erro desconhecido ao renderizar o board';
+                console.error('Falha ao renderizar o quadro Kanban no componente board Tecnofibras:', error);
+                renderError(board, errorMsg);
+            }
+        }
+        
+        /**
+         * Limpa todas as mensagens de erro do formulário
+         * Remove classes de erro e oculta mensagens de validação
+         * 
+         * @returns {void}
+         */
+        function clearFormErrors() {
+            const errorMessages = document.querySelectorAll('.error-message');
+            const inputs = document.querySelectorAll('#form-criar-card input, #form-criar-card select');
+            
+            errorMessages.forEach(msg => {
+                msg.classList.add('hidden');
+                msg.textContent = '';
+            });
+            
+            inputs.forEach(input => {
+                input.classList.remove('border-red-500');
+                input.classList.add('border-gray-200');
+            });
+        }
+
+        /**
+         * Mostra mensagem de erro em um campo específico do formulário
+         * Adiciona classe de erro visual e exibe mensagem de validação
+         * 
+         * @param {string} fieldId - ID do campo de input/select
+         * @param {string} message - Mensagem de erro a ser exibida
+         * @returns {void}
+         */
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorSpan = field?.parentElement?.querySelector('.error-message');
+            
+            if (field) {
+                field.classList.remove('border-gray-200');
+                field.classList.add('border-red-500');
+            }
+            
+            if (errorSpan) {
+                errorSpan.textContent = message;
+                errorSpan.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Valida o formulário antes de salvar
+         * @returns {boolean} true se válido, false caso contrário
+         */
+        function validateForm() {
+            clearFormErrors();
+            let isValid = true;
+            const errors = [];
+
+            // Validar campos obrigatórios
+            const gestorId = document.getElementById('input-gestor')?.value;
+            if (!gestorId || gestorId === '' || gestorId === 'Selecionar') {
+                showFieldError('input-gestor', 'Gestor é obrigatório');
+                isValid = false;
+                errors.push('Gestor');
+            }
+
+            const prioridade = document.getElementById('input-prioridade')?.value;
+            if (!prioridade || prioridade === '') {
+                showFieldError('input-prioridade', 'Prioridade é obrigatória');
+                isValid = false;
+                errors.push('Prioridade');
+            }
+
+            const cliente = document.getElementById('input-cliente')?.value;
+            if (!cliente || cliente === '' || cliente === 'Selecionar') {
+                showFieldError('input-cliente', 'Cliente é obrigatório');
+                isValid = false;
+                errors.push('Cliente');
+            }
+
+            const tipoCliente = document.getElementById('input-tipo-cliente')?.value;
+            if (!tipoCliente || tipoCliente === '' || tipoCliente === 'Selecionar') {
+                showFieldError('input-tipo-cliente', 'Tipo de cliente é obrigatório');
+                isValid = false;
+                errors.push('Tipo de Cliente');
+            }
+
+            const acordoConf = document.getElementById('input-acordo-conf')?.value;
+            if (!acordoConf || acordoConf === '' || acordoConf === 'Selecionar') {
+                showFieldError('input-acordo-conf', 'Acordo de Confidencialidade é obrigatório');
+                isValid = false;
+                errors.push('Acordo de Confidencialidade');
+            }
+
+            const manualQualidade = document.getElementById('input-manual-qualidade')?.value;
+            if (!manualQualidade || manualQualidade === '' || manualQualidade === 'Selecionar') {
+                showFieldError('input-manual-qualidade', 'Manual de Qualidade é obrigatório');
+                isValid = false;
+                errors.push('Manual de Qualidade');
+            }
+
+            // Validar email se preenchido
+            const email = document.getElementById('input-email')?.value;
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showFieldError('input-email', 'E-mail inválido');
+                isValid = false;
+                errors.push('E-mail inválido');
+            }
+
+            if (!isValid) {
+                console.warn('Formulário inválido. Campos com erro:', errors);
+            }
+
+            return isValid;
+        }
+
+        /**
+         * Captura todos os valores do formulário de criação de card
+         * @returns {Object} Objeto com todos os valores do formulário
+         */
+        function captureFormData() {
+            return {
+                descricao: document.getElementById('input-descricao').value,
+                gestorId: document.getElementById('input-gestor').value,
+                prioridade: document.getElementById('input-prioridade').value,
+                numSo: document.getElementById('input-so').value,
+                data: document.getElementById('input-data').value || null,
+                cliente: document.getElementById('input-cliente').value,
+                tipoCliente: document.getElementById('input-tipo-cliente').value,
+                contato: document.getElementById('input-contato').value,
+                email: document.getElementById('input-email').value,
+                dataRetorno: document.getElementById('input-data-retorno').value || null,
+                numRfq: document.getElementById('input-rfq').value,
+                acordoConf: document.getElementById('input-acordo-conf').value,
+                manualQualidade: document.getElementById('input-manual-qualidade').value,
+                condPagPeca: document.getElementById('input-cond-pag-peca').value,
+                condPagFerramental: document.getElementById('input-cond-pag-ferramental').value,
+                condEntrega: document.getElementById('input-cond-entrega').value,
+                sop: document.getElementById('input-sop').value || null
+            };
+        }
+        
+        /**
+         * Define todas as variáveis Mitra necessárias para criar um card
+         * @param {Object} formData - Dados do formulário
+         */
+        async function setFormVariablesToMitra(formData) {
+            await setVariableMitra({ name: ':VAR_DESCRICAO', content: formData.descricao });
+            await setVariableMitra({ name: ':VAR_GESTOR_ID', content: formData.gestorId });
+            await setVariableMitra({ name: ':VAR_PRIORIDADE', content: formData.prioridade });
+            await setVariableMitra({ name: ':VAR_NUM_SO', content: formData.numSo });
+            await setVariableMitra({ name: ':VAR_DATA', content: formData.data });
+            await setVariableMitra({ name: ':VAR_CLIENTE', content: formData.cliente });
+            await setVariableMitra({ name: ':VAR_TIPO_CLIENTE', content: formData.tipoCliente });
+            await setVariableMitra({ name: ':VAR_CONTATO', content: formData.contato });
+            await setVariableMitra({ name: ':VAR_EMAIL', content: formData.email });
+            await setVariableMitra({ name: ':VAR_D_RETORNO', content: formData.dataRetorno });
+            await setVariableMitra({ name: ':VAR_NUM_RFQ', content: formData.numRfq });
+            await setVariableMitra({ name: ':VAR_ACORDO_CONF', content: formData.acordoConf });
+            await setVariableMitra({ name: ':VAR_MANUAL_QUALIDADE', content: formData.manualQualidade });
+            await setVariableMitra({ name: ':VAR_COND_PAG_PECA', content: formData.condPagPeca });
+            await setVariableMitra({ name: ':VAR_COND_PAG_FERRAMENTAL', content: formData.condPagFerramental });
+            await setVariableMitra({ name: ':VAR_COND_ENTREGA', content: formData.condEntrega });
+            await setVariableMitra({ name: ':VAR_SOP', content: formData.sop });
+        }
+        
+        /**
+         * Limpa e fecha o formulário de criação
+         */
+        function resetAndCloseForm() {
+            toggleModalCriacao();
+            const form = document.getElementById('form-criar-card');
+            if (form) {
+                form.reset();
+            }
+            clearFormErrors();
+        }
+        
+        /**
+         * Controla o estado de loading do botão de salvar
+         * @param {boolean} isLoading - true para ativar loading, false para desativar
+         */
+        function setButtonLoading(isLoading) {
+            const btn = document.getElementById('btn-salvar-card');
+            const btnText = document.getElementById('btn-salvar-text');
+            const btnSpinner = document.getElementById('btn-salvar-spinner');
+            
+            if (!btn || !btnText || !btnSpinner) return;
+            
+            if (isLoading) {
+                btn.disabled = true;
+                btnText.textContent = 'Salvando...';
+                btnSpinner.classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btnText.textContent = 'Salvar';
+                btnSpinner.classList.add('hidden');
+            }
+        }
+        
+        /**
+         * Cria um novo card no kanban
+         * Valida formulário, define variáveis Mitra e executa DBAction
+         * @param {Event} [event] - Evento do clique (opcional, para prevenir comportamento padrão)
+         */
+        async function criarNovoCard(event) {
+            // Prevenir comportamento padrão se evento foi passado
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            // Validar formulário antes de prosseguir
+            if (!validateForm()) {
+                showToast('warning', 'Validação', 'Preencha todos os campos obrigatórios');
+                return;
+            }
+
+            // Ativar estado de loading do botão
+            setButtonLoading(true);
+
+            try {
+                // Verificar se componentData está disponível
+                if (!window.componentData) {
+                    throw new Error('componentData não está disponível. Aguarde o carregamento do componente.');
+                }
+                
+                // 1. Capturar valores do formulário
+                const formData = captureFormData();
+
+                // 2. Verificar se idActionSalvar está configurado
+                const actionSalvarId = getComponentDataValue('idActionSalvar', null, 'number');
+                
+                if (!actionSalvarId || isNaN(actionSalvarId)) {
+                    throw new Error('ID da action de salvar não configurado. Configure idActionSalvar no editor Mitra.');
+                }
+                
+                // 3. Verificar se funções Mitra estão disponíveis
+                if (typeof setVariableMitra !== 'function') {
+                    throw new Error('setVariableMitra não está disponível. Verifique se está no ambiente Mitra.');
+                }
+                
+                if (typeof dbactionMitra !== 'function') {
+                    throw new Error('dbactionMitra não está disponível. Verifique se está no ambiente Mitra.');
+                }
+
+                // 4. Enviar para as variáveis Mitra
+                await setFormVariablesToMitra(formData);
+                
+                // 5. Executar a DBAction para salvar
+                // dbactionMitra recebe apenas o ID numérico (não objeto)
+                await dbactionMitra(actionSalvarId);
+                updateMitra();
+
+                // 6. Fechar o modal e limpar formulário
+                resetAndCloseForm();
+                
+                showToast('success', 'Sucesso', 'Solicitação criada com sucesso!');
+
+            } catch (error) {
+                const errorMsg = error.message || 'Erro desconhecido';
+                console.error('Falha ao criar novo card no componente board Tecnofibras:', error);
+                showToast('error', 'Erro', `Não foi possível criar a solicitação: ${errorMsg}`);
+            } finally {
+                // Sempre desativar loading, mesmo em caso de erro
+                setButtonLoading(false);
+            }
+        }
+        
+        /**
+         * Popula o dropdown de gestores com dados do banco
+         * @throws {Error} Quando query falha ou não retorna dados
+         */
+        async function populateDropdowns() {
+            try {
+                const gestorSelect = document.getElementById('input-gestor');
+                if (!gestorSelect) {
+                    console.warn('Elemento input-gestor não encontrado no DOM. Dropdown não será populado.');
+                    return;
+                }
+                
+                const queryGestores = getComponentDataValue('queryGestores', null, 'string');
+                if (!queryGestores || queryGestores.trim() === '') {
+                    console.warn('Query de gestores não configurada em componentData');
+                    gestorSelect.innerHTML = '<option value="">Query não configurada</option>';
+                    showToast('warning', 'Aviso', 'Query de gestores não configurada. Configure queryGestores no editor Mitra.');
+                    return;
+                }
+
+                const gestoresResult = await queryMitra(queryGestores);
+                if (!gestoresResult || !gestoresResult.data) {
+                    throw new Error('Falha ao buscar gestores. Verifique a query queryGestores e se há dados no banco.');
+                }
+                
+                const gestores = mapQueryToObject(gestoresResult);
+                
+                gestorSelect.innerHTML = '<option value="">Selecionar</option>'; // Reseta e adiciona a opção padrão
+
+                if (gestores.length === 0) {
+                    gestorSelect.innerHTML = '<option value="">Nenhum gestor encontrado</option>';
+                    console.warn('Query de gestores retornou 0 resultados.');
+                    return;
+                }
+
+                gestores.forEach(gestor => {
+                    const option = document.createElement('option');
+                    option.value = gestor.ID || '';
+                    option.textContent = gestor.NOME || 'Sem nome';
+                    gestorSelect.appendChild(option);
+                });
+
+            } catch (error) {
+                const errorMsg = `Falha ao popular dropdown de gestores: ${error.message || 'Erro desconhecido'}`;
+                console.error('Falha ao popular dropdown de gestores no componente board Tecnofibras:', error);
+                
+                const gestorSelect = document.getElementById('input-gestor');
+                if (gestorSelect) {
+                    gestorSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+                }
+                
+                showToast('error', 'Erro', errorMsg);
+            }
+        }
+
+        /**
+         * Inicializa o componente: popula dropdowns e renderiza o board
+         */
+        async function initializeComponent() {
+            await populateDropdowns();
+            await renderBoard();
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.addEventListener(MITRA_UPDATE_EVENT_NAME, renderBoard);
+
+            const waitForMitraAndInit = () => {
+                const startTime = Date.now();
+                const checkInterval = setInterval(() => {
+                    // Espera por uma variável obrigatória, por exemplo 'colunasKanban'
+                    if (window.componentData && window.componentData.colunasKanban) {
+                        const validation = validateComponentData(window.componentData);
+                        if (validation.isValid) {
+                            clearInterval(checkInterval);
+                            initializeComponent();
+                        } else if (Date.now() - startTime > CONFIG.MAX_WAIT_TIME) {
+                            clearInterval(checkInterval);
+                            const missingFields = validation.missingFields.join(', ');
+                            console.error(`Erro: As configurações do componente (componentData) não foram carregadas corretamente. Campos faltando: ${missingFields}`);
+                            document.getElementById('kanban-board').innerHTML = `
+                                <div class="p-8 text-center text-red-700 bg-red-50 h-full flex flex-col items-center justify-center rounded-lg">
+                                    <p class="font-bold mb-2">Erro Crítico: Configurações incompletas</p>
+                                    <p class="text-sm">Campos faltando: ${missingFields}</p>
+                                    <p class="text-xs mt-2 text-gray-600">Verifique as variáveis do componente no editor Mitra.</p>
+                                </div>
+                            `;
+                        }
+                    } else if (Date.now() - startTime > CONFIG.MAX_WAIT_TIME) {
+                        clearInterval(checkInterval);
+                        console.error("Erro: As configurações do componente (componentData) não foram carregadas a tempo.");
+                        document.getElementById('kanban-board').innerHTML = `
+                            <div class="p-8 text-center text-red-700 bg-red-50 h-full flex items-center justify-center rounded-lg">
+                                Erro Crítico: As configurações do componente não foram carregadas da plataforma.
+                            </div>
+                        `;
+                    }
+                }, CONFIG.CHECK_INTERVAL);
+            };
+            waitForMitraAndInit();
+        });
+    </script>
+</body>
+</html>

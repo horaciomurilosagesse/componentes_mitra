@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engenharia (Fornecedor)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: '#f97316',
+                            orangeDark: '#ea580c',
+                            blueDark: '#1e3a8a', 
+                            blueLight: '#3b82f6',
+                            bg: '#f3f4f6',
+                            border: '#e5e7eb',
+                            red: '#ef4444',
+                            redDark: '#dc2626',
+                            purple: '#8b5cf6',
+                            purpleDark: '#7c3aed',
+                            green: '#10b981',
+                            greenDark: '#059669'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        /* CSS Geral */
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Abas */
+        .tab-link {
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s;
+            white-space: nowrap;
+        }
+        .tab-link:hover { color: #ea580c; }
+        .tab-link.active { color: #8b5cf6; border-bottom: 2px solid #8b5cf6; }
+        .tabs-container { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+
+        /* Sidebar */
+        .sidebar-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #9ca3af; margin-bottom: 0.25rem; }
+        .sidebar-value { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+        
+        /* Tabela */
+        .table-header { 
+            background-color: #f3f4f6; 
+            color: #1f2937; 
+            font-weight: 700; 
+            font-size: 0.65rem; 
+            text-transform: uppercase; 
+            padding: 0.5rem; 
+            text-align: left; 
+            border-bottom: 1px solid #e5e7eb; 
+            white-space: nowrap;
+        }
+        .table-cell { 
+            padding: 0.4rem 0.5rem; 
+            font-size: 0.75rem; 
+            color: #4b5563; 
+            border-bottom: 1px solid #e5e7eb; 
+            vertical-align: middle; 
+        }
+        
+        /* Botões */
+        .btn-action { 
+            font-weight: 700; 
+            padding: 0.5rem 1rem; 
+            border-radius: 0.375rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            transition: all 0.2s; 
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body class="bg-brand-bg h-screen flex flex-col overflow-hidden font-sans">
+
+    <header class="bg-white border-b border-brand-border h-14 flex items-center justify-between px-6 shrink-0 z-20">
+        <div class="flex flex-col justify-center">
+            <span class="text-[0.6rem] font-bold text-gray-400 uppercase tracking-wider">SOLICITAÇÃO</span>
+            <h1 id="header-title" class="text-lg font-bold text-brand-blueDark uppercase leading-tight">YANNNNN</h1>
+        </div>
+        
+        <div class="hidden md:flex items-center">
+            <div class="bg-blue-50 text-brand-blueDark px-4 py-1 rounded-full text-xs font-bold border border-blue-100 shadow-sm flex items-center gap-2">
+                <i class="ph ph-gear"></i>
+                Engenharia (Fornecedor)
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button class="bg-brand-orange hover:bg-brand-orangeDark text-white text-xs font-bold py-1.5 px-3 rounded shadow-sm transition-all flex items-center gap-2">
+                <i class="ph ph-floppy-disk"></i> Salvar
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <aside class="w-64 bg-white border-r border-brand-border flex-shrink-0 overflow-y-auto p-5 hidden lg:block pb-20">
+            <div class="space-y-5">
+                <div><div class="sidebar-label">ID do Processo</div><div class="sidebar-value text-gray-500">#44</div></div>
+                <div><div class="sidebar-label">Gestor</div><div class="sidebar-value">Pedro</div></div>
+                <div><div class="sidebar-label">Data</div><div class="sidebar-value">02/06/2025</div></div>
+                <hr class="border-gray-100">
+                <div><div class="sidebar-label">Cliente</div><div class="sidebar-value">CAT</div></div>
+                <div><div class="sidebar-label">Nº RFQ</div><div class="sidebar-value text-gray-500">5655445</div></div>
+                <div><div class="sidebar-label">SOP</div><div class="sidebar-value text-gray-500">dd/mm/aaaa</div></div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto bg-white p-5 flex flex-col h-full"> 
+            
+            <div class="border-b border-brand-border mb-4 shrink-0">
+                <nav class="tabs-container -mb-px">
+                    <span class="tab-link active" onclick="switchTab(this, 'preview')">Preview</span>
+                    <span class="tab-link" onclick="switchTab(this, 'mp-componentes')">MP Componentes</span>
+                    <span class="tab-link" onclick="switchTab(this, 'mp-ctf')">MP Com CTF</span>
+                    <span class="tab-link" onclick="switchTab(this, 'ferramentais')">Ferramentais</span>
+                    <span class="tab-link" onclick="switchTab(this, 'equipamentos')">Equipamentos</span>
+                    <span class="tab-link" onclick="switchTab(this, 'embalagens')">Embalagens</span>
+                </nav>
+            </div>
+
+            <div id="content-preview" class="flex flex-col flex-1">
+                
+                <div class="flex justify-between items-center mb-3">
+                    <div class="relative">
+                        <i class="ph ph-magnifying-glass absolute left-0 top-1/2 -translate-y-1/2 text-purple-500"></i>
+                        <input type="text" placeholder="Buscar na tabela" class="pl-6 pr-4 py-1 text-xs border-none focus:ring-0 placeholder-gray-400 font-medium w-40">
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-md shadow-sm bg-white overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="table-header w-12 text-center">ID</th>
+                                    <th class="table-header w-16">Item</th>
+                                    <th class="table-header w-1/4">Nome Do Fornecedor</th>
+                                    <th class="table-header w-32">Tipo De Frete</th>
+                                    <th class="table-header w-32 text-right">Custo Do Item</th>
+                                    <th class="table-header w-32 text-right">Preço S/Imposto</th>
+                                    <th class="table-header w-32 text-right">Preço C/Imposto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="hover:bg-gray-50 border-b border-gray-100">
+                                    <td class="table-cell text-center text-gray-500">1</td>
+                                    <td class="table-cell font-bold text-gray-700">33</td>
+                                    <td class="table-cell font-medium text-brand-purpleDark">Pedro Sagesse 1</td>
+                                    <td class="table-cell">Sem Frete</td>
+                                    <td class="table-cell text-right">R$ 32.423</td>
+                                    <td class="table-cell text-right">R$ 32.423</td>
+                                    <td class="table-cell text-right font-bold text-green-600">R$ 40.000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-blank" class="hidden flex-col items-center justify-center flex-1 border-2 border-dashed border-gray-100 rounded-lg bg-gray-50 text-gray-400 text-sm h-64">
+                <i class="ph ph-folder-open text-3xl mb-2"></i>
+                <p>Conteúdo desta aba (MP/Ferramentas/etc) será carregado aqui.</p>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="bg-white border-t border-gray-200 p-4 px-8 flex justify-end items-center z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] h-16 shrink-0 sticky bottom-0">
+        <div class="flex gap-3">
+            <button onclick="reprovarParaCompras()" class="bg-brand-red hover:bg-brand-redDark text-white font-bold py-2 px-5 rounded shadow-md hover:shadow-lg transition-all text-xs flex items-center gap-2 btn-action">
+                Reprovar para Compras
+                <i class="ph ph-arrow-left font-bold"></i>
+            </button>
+            <button onclick="aprovarValidado()" class="bg-brand-purple hover:bg-brand-purpleDark text-white font-bold py-2 px-5 rounded shadow-md hover:shadow-lg transition-all text-xs flex items-center gap-2 btn-action">
+                Aprovar (Validado)
+                <i class="ph ph-check font-bold"></i>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        function switchTab(element, tabId) {
+            document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+            
+            const preview = document.getElementById('content-preview');
+            const blank = document.getElementById('content-blank');
+
+            if (tabId === 'preview') {
+                preview.classList.remove('hidden');
+                blank.classList.add('hidden');
+                blank.classList.remove('flex');
+            } else {
+                preview.classList.add('hidden');
+                blank.classList.remove('hidden');
+                blank.classList.add('flex');
+            }
+        }
+
+        async function reprovarParaCompras() {
+            try {
+                await setVariableMitra({ name: ':VAR_NOVA_FASE', content: '5' });
+                await actionMitra({ id: 10 });
+            } catch (error) {
+                console.error("Erro ao reprovar para Compras:", error);
+            }
+        }
+
+        async function aprovarValidado() {
+            try {
+                await setVariableMitra({ name: ':VAR_NOVA_FASE', content: '7' }); // Supondo que 'Validado' seja a fase 7
+                await actionMitra({ id: 11 });
+            } catch (error) {
+                console.error("Erro ao aprovar para Validado:", error);
+            }
+        }
+    </script>
+</body>
+</html>

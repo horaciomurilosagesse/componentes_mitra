@@ -1,0 +1,797 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Em Análise (Compras)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: '#f97316',
+                            orangeDark: '#ea580c',
+                            blueDark: '#1e3a8a', 
+                            blueLight: '#3b82f6',
+                            bg: '#f3f4f6',
+                            border: '#e5e7eb',
+                            red: '#ef4444',
+                            redDark: '#dc2626',
+                            purple: '#8b5cf6',
+                            purpleDark: '#7c3aed',
+                            green: '#10b981',
+                            greenDark: '#059669'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        /* CSS Geral */
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Abas */
+        .tab-link { color: #6b7280; border-bottom: 2px solid transparent; padding: 0.5rem 0.75rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: color 0.2s; white-space: nowrap; }
+        .tab-link:hover { color: #ea580c; }
+        .tab-link.active { color: #8b5cf6; border-bottom: 2px solid #8b5cf6; }
+        .tabs-container { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+
+        /* Sidebar */
+        .sidebar-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #9ca3af; margin-bottom: 0.25rem; }
+        .sidebar-value { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+        
+        /* Tabelas */
+        .table-header { background-color: #f3f4f6; color: #1f2937; font-weight: 700; font-size: 0.65rem; text-transform: uppercase; padding: 0.5rem; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+        .table-input { width: 100%; background: transparent; outline: none; font-size: 0.75rem; color: #4b5563; padding: 0.2rem 0; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
+        .table-input:focus { border-bottom-color: #8b5cf6; color: #111827; }
+        .table-cell { padding: 0.4rem 0.5rem; font-size: 0.75rem; color: #4b5563; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
+        
+        /* Células Específicas */
+        .readonly-cell { background-color: #fafafa; color: #6b7280; font-weight: 500; }
+        .readonly-cell input { pointer-events: none; }
+        .editable-cell { background-color: #f3f0ff; border-bottom: 1px solid #e5e7eb; padding: 0.4rem 0.5rem; }
+        .editable-cell input { color: #4c1d95; font-weight: 600; }
+
+        /* Linha Fornecedor */
+        .supplier-row { background-color: #f5f3ff; border-bottom: 1px solid #ddd6fe; }
+        .supplier-text { color: #7c3aed; font-weight: 700; font-size: 0.8rem; }
+
+        /* Menu Global Dropdown */
+        .global-dropdown { position: fixed; background-color: white; border: 1px solid #e5e7eb; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 99999; border-radius: 0.375rem; max-height: 200px; overflow-y: auto; min-width: 160px; display: none; }
+        .dropdown-item { padding: 0.5rem 0.75rem; font-size: 0.75rem; color: #4b5563; cursor: pointer; border-bottom: 1px solid #f9fafb; transition: background 0.1s; }
+        .dropdown-item:hover { background-color: #f3f0ff; color: #4c1d95; font-weight: 600; }
+        
+        /* Botões */
+        .btn-disparo { background-color: white; border: 1px solid #d1d5db; color: #374151; font-size: 0.75rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 0.25rem; transition: all 0.2s; }
+        .btn-disparo:hover { background-color: #f9fafb; border-color: #9ca3af; }
+        .btn-enviar { background-color: white; border: 1px solid #d1d5db; color: #ea580c; font-size: 0.75rem; font-weight: 700; padding: 0.4rem 1rem; border-radius: 0.25rem; display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s; }
+        .btn-enviar:hover { background-color: #fff7ed; border-color: #ea580c; }
+        .btn-add-line { background-color: white; border: 1px solid #e5e7eb; color: #374151; font-size: 0.75rem; font-weight: 500; padding: 0.4rem 0.8rem; border-radius: 0.375rem; display: flex; align-items: center; gap: 0.5rem; transition: background 0.2s; }
+        .btn-add-line:hover { background-color: #f9fafb; border-color: #d1d5db; }
+
+        .custom-checkbox { height: 0.9rem; width: 0.9rem; border-radius: 0.2rem; border-color: #d1d5db; color: #1e3a8a; cursor: pointer; }
+        .custom-radio { height: 1rem; width: 1rem; cursor: pointer; accent-color: #7c3aed; }
+        .column-menu-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .toggle-checkbox:checked { right: 0; border-color: #8b5cf6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #8b5cf6; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-animate { animation: fadeIn 0.2s ease-out forwards; }
+
+        /* Estilo da Tabela do Modal de Fornecedores */
+        .modal-table-header { background-color: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.7rem; text-align: left; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; }
+        .modal-table-cell { padding: 0.75rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    </style>
+</head>
+<body class="bg-brand-bg h-screen flex flex-col overflow-hidden font-sans">
+
+    <header class="bg-white border-b border-brand-border h-14 flex items-center justify-between px-6 shrink-0 z-20">
+        <div class="flex flex-col justify-center">
+            <span class="text-[0.6rem] font-bold text-gray-400 uppercase tracking-wider">SOLICITAÇÃO</span>
+            <h1 id="header-title" class="text-lg font-bold text-brand-blueDark uppercase leading-tight">YANNNNN</h1>
+        </div>
+        
+        <div class="hidden md:flex items-center">
+            <div class="bg-purple-50 text-brand-purple px-4 py-1 rounded-full text-xs font-bold border border-purple-100 shadow-sm flex items-center gap-2">
+                <i class="ph ph-shopping-cart"></i>
+                Em Análise (Compras)
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button onclick="saveData()" class="bg-brand-orange hover:bg-brand-orangeDark text-white text-xs font-bold py-1.5 px-3 rounded shadow-sm transition-all flex items-center gap-2">
+                <i class="ph ph-floppy-disk"></i> Salvar
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <aside class="w-64 bg-white border-r border-brand-border flex-shrink-0 overflow-y-auto p-5 hidden lg:block pb-20">
+            <div class="space-y-5">
+                <div><div class="sidebar-label">ID do Processo</div><div class="sidebar-value text-gray-500">#44</div></div>
+                <div><div class="sidebar-label">Gestor</div><div class="sidebar-value">Pedro</div></div>
+                <div><div class="sidebar-label">Data</div><div class="sidebar-value">02/06/2025</div></div>
+                <hr class="border-gray-100">
+                <div><div class="sidebar-label">Cliente</div><div class="sidebar-value">CAT</div></div>
+                <div><div class="sidebar-label">Nº RFQ</div><div class="sidebar-value text-gray-500">5655445</div></div>
+                <div><div class="sidebar-label">SOP</div><div class="sidebar-value text-gray-500">dd/mm/aaaa</div></div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto bg-white p-5 flex flex-col h-full"> 
+            
+            <div class="border-b border-brand-border mb-4 shrink-0">
+                <nav class="tabs-container -mb-px">
+                    <span class="tab-link active" onclick="switchTab(this, 'mp-componentes')">MP Componentes</span>
+                    <span class="tab-link" onclick="switchTab(this, 'mp-ctf')">MP Com CTF</span>
+                    <span class="tab-link" onclick="switchTab(this, 'ferramentais')">Ferramentais</span>
+                    <span class="tab-link" onclick="switchTab(this, 'equipamentos')">Equipamentos</span>
+                    <span class="tab-link" onclick="switchTab(this, 'embalagens')">Embalagens</span>
+                    <span class="tab-link" onclick="switchTab(this, 'disparo')">Disparo Para Fornecedor</span>
+                    <span class="tab-link" onclick="switchTab(this, 'escolha')">Escolha Da Melhor Opção</span>
+                    <span class="tab-link" onclick="switchTab(this, 'resultado')">Resultado</span>
+                </nav>
+            </div>
+
+            <div id="content-compras-generico" class="flex flex-col flex-1">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="relative">
+                        <i class="ph ph-magnifying-glass absolute left-0 top-1/2 -translate-y-1/2 text-purple-500"></i>
+                        <input type="text" placeholder="Buscar na tabela" class="pl-6 pr-4 py-1 text-xs border-none focus:ring-0 placeholder-gray-400 font-medium w-40">
+                    </div>
+                    <div class="flex gap-2 text-gray-400 relative">
+                        <button onclick="toggleColumnMenu('menu-mp')" class="hover:text-brand-purple p-1"><i class="ph ph-eye text-lg"></i></button>
+
+                         <div id="menu-mp" class="hidden absolute right-0 top-6 w-64 bg-white border border-gray-200 shadow-xl rounded-lg z-[100] p-3 column-menu-shadow">
+                            <h4 class="text-[0.65rem] font-bold text-gray-500 uppercase mb-2">Exibir Colunas:</h4>
+                            <div class="space-y-1 max-h-48 overflow-y-auto">
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-generica', 1)" class="custom-checkbox"> Descrição</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-generica', 2)" class="custom-checkbox"> Vol. Anual</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-generica', 3)" class="custom-checkbox"> Grupo MP</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-generica', 4)" class="custom-checkbox"> Obs. Eng</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-generica', 5)" class="custom-checkbox"> Prazo Ret</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-generica', 6)" class="custom-checkbox"> Anexo</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-generica', 7)" class="custom-checkbox"> Quantidade</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-generica', 8)" class="custom-checkbox"> Un. Medida</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-generica', 9)" class="custom-checkbox"> Custo Item</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-generica', 10)" class="custom-checkbox"> Obs/Compras</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-md shadow-sm bg-white overflow-visible pb-40"> 
+                    <div class="overflow-x-auto overflow-y-visible">
+                        <table class="w-full text-left border-collapse" id="tabela-generica">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="table-header w-10 col-0">Item</th>
+                                    <th class="table-header min-w-[150px] col-1">Descrição</th>
+                                    <th class="table-header w-20 col-2">Vol. Anual</th>
+                                    <th class="table-header w-24 col-3">Grupo de Mp</th>
+                                    <th class="table-header min-w-[120px] col-4">Observações/Eng</th>
+                                    <th class="table-header w-24 col-5">Prazo Retorno</th>
+                                    <th class="table-header w-12 text-center col-6">Anexo</th>
+                                    
+                                    <th class="table-header w-20 bg-purple-50 col-7">Quantidade</th>
+                                    <th class="table-header w-32 bg-purple-50 col-8">Unidade de Medida</th>
+                                    <th class="table-header w-24 text-right bg-purple-50 col-9">Custo Do Item</th>
+                                    
+                                    <th class="table-header min-w-[120px] bg-purple-50 col-10">Obs/Compras</th>
+                                    
+                                    <th class="table-header w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Conteúdo será injetado pelo JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-compras-disparo" class="hidden flex-col">
+                <div class="flex justify-end items-end mb-4 shrink-0">
+                    <div class="flex gap-3">
+                        <button class="btn-disparo" onclick="toggleModalPrazo()">Prazo</button>
+                        <button class="btn-disparo" onclick="toggleModalFornecedor()">Adicionar Fornecedor</button>
+                        <button class="btn-disparo" onclick="toggleModalEscolherFornecedor()">Fornecedores</button>
+                        <button class="btn-enviar"><i class="ph ph-envelope-simple"></i> Enviar</button>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center mb-3 relative shrink-0">
+                    <div class="relative">
+                        <i class="ph ph-magnifying-glass absolute left-0 top-1/2 -translate-y-1/2 text-purple-500"></i>
+                        <input type="text" placeholder="Buscar" class="pl-6 pr-4 py-1 text-xs border-none focus:ring-0 placeholder-gray-400 font-medium w-40">
+                    </div>
+                    <div class="flex gap-2 text-gray-400 relative">
+                        <button onclick="toggleColumnMenu('menu-disparo')" class="hover:text-brand-purple p-1"><i class="ph ph-eye text-lg"></i></button>
+
+                        <div id="menu-disparo" class="hidden absolute right-0 top-6 w-64 bg-white border border-gray-200 shadow-xl rounded-lg z-[100] p-3 column-menu-shadow">
+                            <h4 class="text-[0.65rem] font-bold text-gray-500 uppercase mb-2">Exibir Colunas:</h4>
+                            <div class="space-y-1 max-h-48 overflow-y-auto">
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 1)" class="custom-checkbox"> Item</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 2)" class="custom-checkbox"> Descrição</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 3)" class="custom-checkbox"> Vol. Anual</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 4)" class="custom-checkbox"> Grupo MP</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 5)" class="custom-checkbox"> Obs. Eng</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 6)" class="custom-checkbox"> Prazo Ret</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 7)" class="custom-checkbox"> SOP</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 8)" class="custom-checkbox"> Anexo</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 9)" class="custom-checkbox"> Quantidade</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 10)" class="custom-checkbox"> Un. Medida</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 11)" class="custom-checkbox"> Custo Item</label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 p-1 hover:bg-gray-50 rounded"><input type="checkbox" checked onchange="toggleColumn('tabela-disparo', 12)" class="custom-checkbox"> Obs/Compras</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-md overflow-hidden shadow-sm bg-white">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse" id="tabela-disparo">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="table-header w-12 text-center"></th> <!-- Adicionado -->
+                                    <th class="table-header w-16 text-center text-brand-blueDark">Selecionar</th>
+                                    <th class="table-header w-10 d-col-1">Item</th>
+                                    <th class="table-header min-w-[150px] d-col-2">Descrição</th>
+                                    <th class="table-header w-16 d-col-3">Volume</th>
+                                    <th class="table-header w-20 d-col-4">Grupo de Mp</th>
+                                    <th class="table-header min-w-[120px] d-col-5">Observações/Eng</th>
+                                    <th class="table-header w-24 d-col-6">Prazo Retorno</th>
+                                    <th class="table-header w-12 text-center d-col-7">SOP</th>
+                                    <th class="table-header w-12 text-center d-col-8">Anexo</th>
+                                    <th class="table-header w-20 bg-purple-50 d-col-9">Quantidade</th>
+                                    <th class="table-header w-24 bg-purple-50 d-col-10">Unidade de Medida</th>
+                                    <th class="table-header w-24 text-right bg-purple-50 d-col-11">Custo Do Item</th>
+                                    <th class="table-header min-w-[120px] bg-purple-50 d-col-12">Obs/Compras</th>
+                                    <th class="table-header w-24 text-center bg-gray-100">Item enviado?</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rows will be injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-compras-escolha" class="hidden flex-col">
+                <div class="flex justify-between items-center mb-4 relative shrink-0">
+                    <div class="relative">
+                        <i class="ph ph-magnifying-glass absolute left-0 top-1/2 -translate-y-1/2 text-purple-500"></i>
+                        <input type="text" placeholder="Buscar" class="pl-6 pr-4 py-1 text-xs border-none focus:ring-0 placeholder-gray-400 font-medium w-40">
+                    </div>
+                    <div class="flex gap-2 text-gray-400">
+                         <i class="ph ph-export cursor-pointer hover:text-gray-600 p-1"></i>
+                         <i class="ph ph-download-simple cursor-pointer hover:text-gray-600 p-1"></i>
+                         <i class="ph ph-eye cursor-pointer hover:text-gray-600 p-1"></i>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-md overflow-hidden shadow-sm bg-white">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse" id="tabela-escolha">
+                            <thead>
+                                <tr class="bg-gray-100 border-b border-gray-200">
+                                    <th class="table-header w-16">Escolher</th>
+                                    <th class="table-header w-10">Item</th>
+                                    <th class="table-header min-w-[120px]">Descrição</th>
+                                    <th class="table-header w-16">Volume</th>
+                                    <th class="table-header w-20">Grupo MP</th>
+                                    <th class="table-header min-w-[100px]">Obs. Eng</th>
+                                    <th class="table-header w-24">Prazo Retorno</th>
+                                    <th class="table-header w-16">SOP</th>
+                                    <th class="table-header w-12">Anexo</th>
+                                    <th class="table-header w-1/4">Nome Fornecedor</th>
+                                    <th class="table-header w-1/4">Obs Fornecedor</th>
+                                    <th class="table-header">Tipo de Frete</th>
+                                    <th class="table-header text-right">Custo Do Item</th>
+                                    <th class="table-header text-right">Preço Sem Impostos</th>
+                                    <th class="table-header text-right">Preço Com Impostos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rows will be injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-compras-resultado" class="hidden flex-col flex-1">
+                <div class="border border-gray-200 rounded-md shadow-sm bg-white overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse" id="tabela-resultado">
+                            <thead>
+                                <tr class="bg-gray-100 border-b border-gray-200">
+                                    <th class="table-header w-16 text-center">ID</th>
+                                    <th class="table-header">Item</th>
+                                    <th class="table-header">Nome Do Fornecedor</th>
+                                    <th class="table-header w-32">Tipo De Frete</th>
+                                    <th class="table-header w-32 text-right">Custo Do Item</th>
+                                    <th class="table-header w-32 text-right">Preço S/Imposto</th>
+                                    <th class="table-header w-32 text-right">Preço C/Imposto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rows will be injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="global-dropdown" class="global-dropdown">
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Metro (M)</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Caixa</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Unidade</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Centímetro (CM)</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Grama (G)</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Litro (L)</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Metro Cúbico (M³)</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Metro Quadrado (M²)</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Mililitro (ML)</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Milímetro (MM)</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Pacote</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Peça</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Quilograma (KG)</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Sem Unidade</div>
+        <div class="dropdown-item" onclick="selectGlobalOption(this)">Tonelada (T)</div>
+    </div>
+
+    <div id="modal-prazo" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[100000]">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative modal-animate">
+            <button onclick="toggleModalPrazo()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="ph ph-x text-lg"></i></button>
+            <h3 class="text-base font-bold text-gray-800 mb-6 pr-6">Informar parâmetro de horas limite</h3>
+            <div class="mb-6">
+                <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Parametro de Horas</label>
+                <input type="number" id="prazo-horas-input" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" value="24">
+            </div>
+            <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end">
+                <button onclick="salvarPrazo()" class="bg-brand-purple hover:bg-brand-purpleDark text-white font-bold py-2 px-6 rounded shadow-sm transition-all text-sm">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-fornecedor" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[100000]">
+        <div class="flex gap-4 items-start">
+            <div class="bg-white rounded-lg shadow-xl w-96 p-6 relative modal-animate">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-gray-800">Adicionar fornecedores</h3>
+                    <button onclick="toggleModalFornecedor()" class="text-gray-400 hover:text-gray-600"><i class="ph ph-x text-lg"></i></button>
+                </div>
+                <div class="space-y-4">
+                    <div><label class="block text-xs font-semibold text-gray-500 mb-1">Nome</label><input type="text" id="fornecedor-nome-input" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs"></div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Email *</label>
+                        <input type="email" id="fornecedor-email-input" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs">
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                     <button onclick="salvarNovoFornecedor()" class="w-full bg-brand-purple hover:bg-brand-purpleDark text-white font-bold py-2 rounded text-sm">Salvar Fornecedor</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-escolher-fornecedor" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[100000]">
+        <div class="bg-white rounded-lg shadow-xl w-[900px] h-[600px] flex flex-col relative modal-animate">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h3 class="text-base font-bold text-gray-800">Escolher Fornecedor do Disparo</h3>
+                <button onclick="toggleModalEscolherFornecedor()" class="text-gray-400 hover:text-gray-600"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-4 border-b border-gray-100">
+                <div class="relative w-full max-w-xs">
+                    <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" placeholder="Buscar" class="pl-9 pr-4 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:border-brand-blueDark w-full">
+                </div>
+            </div>
+            <div class="flex-1 overflow-auto p-4">
+                <table class="w-full text-left border-collapse border border-gray-200 rounded-lg">
+                    <thead class="bg-gray-100 sticky top-0 z-10">
+                        <tr>
+                            <th class="modal-table-header w-1/4">Solicitação de Orçamento</th>
+                            <th class="modal-table-header w-1/4">Fornecedores</th>
+                            <th class="modal-table-header w-1/3">Email do Fornecedor</th>
+                            <th class="modal-table-header w-20 text-center">Selecionar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-selecao-fornecedores-body">
+                        <!-- Rows will be injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-4 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-lg">
+                 <button onclick="selecionarFornecedores()" class="bg-brand-purple hover:bg-brand-purpleDark text-white font-bold py-2 px-6 rounded shadow-sm transition-all text-sm flex items-center gap-2">
+                    <i class="ph ph-check-circle text-lg"></i> Salvar Fornecedores
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-gray-200 p-4 px-8 flex justify-end items-center z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] h-16 shrink-0 sticky bottom-0">
+        <div class="flex gap-3">
+            <button onclick="reprovarParaEngenharia()" class="bg-brand-red hover:bg-brand-redDark text-white font-bold py-2 px-5 rounded shadow-md hover:shadow-lg transition-all text-xs flex items-center gap-2">
+                Reprovar para Engenharia
+                <i class="ph ph-arrow-left font-bold"></i>
+            </button>
+            <button onclick="aprovarParaCompras()" class="bg-brand-purple hover:bg-brand-purpleDark text-white font-bold py-2 px-5 rounded shadow-md hover:shadow-lg transition-all text-xs flex items-center gap-2">
+                Aprovar para Compras
+                <i class="ph ph-arrow-right font-bold"></i>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        let currentInput = null;
+        const dropdown = document.getElementById('global-dropdown');
+
+        function switchTab(element, tabId) {
+            document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+            
+            const containers = ['content-compras-generico', 'content-compras-disparo', 'content-compras-escolha', 'content-compras-resultado'];
+            containers.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById(id).classList.remove('flex');
+            });
+
+            if (tabId === 'disparo') {
+                document.getElementById('content-compras-disparo').classList.remove('hidden');
+                document.getElementById('content-compras-disparo').classList.add('flex');
+                renderTabelaDisparo();
+            } else if (tabId === 'escolha') {
+                document.getElementById('content-compras-escolha').classList.remove('hidden');
+                document.getElementById('content-compras-escolha').classList.add('flex');
+                renderTabelaEscolha();
+            } else if (tabId === 'resultado') {
+                document.getElementById('content-compras-resultado').classList.remove('hidden');
+                document.getElementById('content-compras-resultado').classList.add('flex');
+                renderTabelaResultado();
+            } else {
+                 document.getElementById('content-compras-generico').classList.remove('hidden');
+                 document.getElementById('content-compras-generico').classList.add('flex');
+            }
+        }
+
+        function openGlobalDropdown(inputElement) {
+            currentInput = inputElement;
+            const rect = inputElement.getBoundingClientRect();
+            dropdown.style.left = rect.left + 'px';
+            dropdown.style.top = (rect.bottom + 2) + 'px'; 
+            dropdown.style.width = Math.max(rect.width, 160) + 'px';
+            dropdown.style.display = 'block';
+        }
+
+        function selectGlobalOption(itemElement) {
+            if (currentInput) currentInput.value = itemElement.textContent;
+            dropdown.style.display = 'none';
+        }
+
+        function toggleColumnMenu(menuId) { document.getElementById(menuId).classList.toggle('hidden'); }
+        function toggleColumn(tableId, colIndex) {
+            const prefix = tableId === 'tabela-disparo' ? '.d-col-' : '.col-';
+            const selector = prefix + colIndex;
+            const table = document.getElementById(tableId);
+            if(table) table.querySelectorAll(selector).forEach(c => c.style.display = c.style.display === 'none' ? '' : 'none');
+        }
+        
+        function toggleModalPrazo() { document.getElementById('modal-prazo').classList.toggle('hidden'); document.getElementById('modal-prazo').classList.toggle('flex'); }
+        function toggleModalFornecedor() { document.getElementById('modal-fornecedor').classList.toggle('hidden'); document.getElementById('modal-fornecedor').classList.toggle('flex'); }
+        async function toggleModalEscolherFornecedor() { 
+            const modal = document.getElementById('modal-escolher-fornecedor');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+            if(modal.classList.contains('flex')) await renderFornecedoresModal();
+        }
+
+        // --- MODAL LOGIC ---
+        async function salvarPrazo() {
+            try {
+                const horas = document.getElementById('prazo-horas-input').value;
+                await setVariableMitra({ name: ':VAR_PARAMETRO_HORAS', content: horas });
+                await dbactionMitra(parseInt(componentData.dbActionSetPrazoId, 10));
+                toggleModalPrazo();
+            } catch (error) {
+                console.error("Erro ao salvar prazo:", error);
+            }
+        }
+        
+        async function salvarNovoFornecedor() {
+            try {
+                const nome = document.getElementById('fornecedor-nome-input').value;
+                const email = document.getElementById('fornecedor-email-input').value;
+                await setVariableMitra({ name: ':VAR_FORNECEDOR_NOME', content: nome });
+                await setVariableMitra({ name: ':VAR_FORNECEDOR_EMAIL', content: email });
+                await dbactionMitra(parseInt(componentData.dbActionAddFornecedorId, 10));
+                document.getElementById('fornecedor-nome-input').value = '';
+                document.getElementById('fornecedor-email-input').value = '';
+                toggleModalFornecedor();
+            } catch (error) {
+                console.error("Erro ao adicionar fornecedor:", error);
+            }
+        }
+
+        async function renderFornecedoresModal() {
+            const tbody = document.getElementById('tabela-selecao-fornecedores-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="modal-table-cell text-center">Carregando...</td></tr>';
+            try {
+                const result = await queryMitra({ query: componentData.queryFornecedores });
+                if (!result.data || result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="modal-table-cell text-center">Nenhum fornecedor encontrado.</td></tr>';
+                    return;
+                }
+                const headers = result.headers.map(h => h.name.toUpperCase());
+                const idIndex = headers.indexOf('ID');
+                const nomeIndex = headers.indexOf('NOME');
+                const emailIndex = headers.indexOf('EMAIL');
+
+                tbody.innerHTML = result.data.map(row => `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100" data-id="${row[idIndex]}">
+                        <td class="modal-table-cell">TESTE 02/06/25</td>
+                        <td class="modal-table-cell font-medium">${row[nomeIndex]}</td>
+                        <td class="modal-table-cell">${row[emailIndex]}</td>
+                        <td class="modal-table-cell text-center"><input type="checkbox" class="custom-checkbox supplier-select"></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error("Erro ao buscar fornecedores:", error);
+                tbody.innerHTML = '<tr><td colspan="4" class="modal-table-cell text-center text-red-500">Erro ao carregar fornecedores.</td></tr>';
+            }
+        }
+        
+        async function selecionarFornecedores() {
+            const checkedBoxes = document.querySelectorAll('#tabela-selecao-fornecedores-body input[type="checkbox"]:checked');
+            try {
+                for (const checkbox of checkedBoxes) {
+                    const row = checkbox.closest('tr');
+                    const fornecedorId = row.dataset.id;
+                    await setVariableMitra({ name: ':VAR_FORNECEDOR_ID', content: fornecedorId });
+                    await dbactionMitra(parseInt(componentData.dbActionAddCotacaoPlaceholderId, 10));
+                }
+                toggleModalEscolherFornecedor();
+                await renderTabelaDisparo();
+            } catch (error) {
+                console.error("Erro ao selecionar fornecedores:", error);
+            }
+        }
+
+        // --- MAIN TABLE LOGIC ---
+        async function renderTabelaGenerica() {
+            const tbody = document.querySelector('#tabela-generica tbody');
+            if (!tbody) {
+                console.error('Elemento tbody da tabela genérica não encontrado.');
+                return;
+            }
+            tbody.innerHTML = '<tr><td colspan="12" class="table-cell text-center">Carregando dados...</td></tr>';
+
+            try {
+                const result = await queryMitra({ query: componentData.queryData });
+                if (!result || !result.data || result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="12" class="table-cell text-center">Nenhum item encontrado.</td></tr>';
+                    return;
+                }
+
+                const headers = result.headers.map(h => h.name.toUpperCase());
+                const colMap = {
+                    item: headers.indexOf('ITEM'),
+                    descricao: headers.indexOf('DESCRICAO'),
+                    volAnual: headers.indexOf('VOL_ANUAL'),
+                    grupoMp: headers.indexOf('GRUPO_MP'),
+                    obsEng: headers.indexOf('OBS_ENG'),
+                    prazoRetorno: headers.indexOf('PRAZO_RETORNO'),
+                    quantidade: headers.indexOf('QUANTIDADE'),
+                    unidadeMedida: headers.indexOf('UNIDADE_MEDIDA'),
+                    custoItem: headers.indexOf('CUSTO_ITEM'),
+                    obsCompras: headers.indexOf('OBS_COMPRAS')
+                };
+
+                const tableHTML = result.data.map(row => `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100">
+                        <td class="table-cell readonly-cell font-medium text-gray-800 col-0">${row[colMap.item] || ''}</td>
+                        <td class="table-cell readonly-cell col-1"><input type="text" class="table-input" value="${row[colMap.descricao] || ''}" readonly></td>
+                        <td class="table-cell readonly-cell col-2"><input type="text" class="table-input" value="${row[colMap.volAnual] || ''}" readonly></td>
+                        <td class="table-cell readonly-cell col-3"><input type="text" class="table-input" value="${row[colMap.grupoMp] || ''}" readonly></td>
+                        <td class="table-cell readonly-cell col-4"><input type="text" class="table-input" value="${row[colMap.obsEng] || ''}" readonly></td>
+                        <td class="table-cell readonly-cell col-5"><input type="text" class="table-input" value="${row[colMap.prazoRetorno] || ''}" readonly></td>
+                        <td class="table-cell readonly-cell text-center col-6">-</td>
+                        <td class="editable-cell col-7"><input type="text" class="table-input text-center" placeholder="${row[colMap.quantidade] || ''}"></td>
+                        <td class="editable-cell col-8">
+                            <input type="text" class="table-input text-center cursor-pointer font-medium text-brand-purpleDark" readonly value="${row[colMap.unidadeMedida] || ''}" onclick="openGlobalDropdown(this)">
+                        </td>
+                        <td class="editable-cell col-9"><input type="text" class="table-input text-right font-medium" placeholder="${row[colMap.custoItem] || ''}"></td>
+                        <td class="editable-cell col-10"><input type="text" class="table-input" placeholder="${row[colMap.obsCompras] || ''}"></td>
+                        <td class="table-cell text-center"></td>
+                    </tr>
+                `).join('');
+
+                tbody.innerHTML = tableHTML;
+
+            } catch (error) {
+                console.error("Erro ao renderizar tabela genérica:", error);
+                tbody.innerHTML = '<tr><td colspan="12" class="table-cell text-center text-red-500">Erro ao carregar dados. Verifique o console.</td></tr>';
+            }
+        }
+        
+        async function fetchCotacoesData() {
+            try {
+                return await queryMitra({ query: componentData.queryCotacoes });
+            } catch (error) {
+                console.error("Erro ao buscar dados de cotações:", error);
+                return null;
+            }
+        }
+        
+        async function renderTabelaDisparo() {
+            const tbody = document.querySelector('#tabela-disparo tbody');
+            tbody.innerHTML = '<tr><td colspan="15" class="table-cell text-center">Carregando...</td></tr>';
+            
+            const result = await fetchCotacoesData();
+            if (!result || !result.data || result.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="15" class="table-cell text-center">Nenhuma cotação para exibir. Selecione fornecedores para começar.</td></tr>';
+                return;
+            }
+
+            const headers = result.headers.map(h => h.name.toUpperCase());
+            const colMap = {
+                cotacaoId: headers.indexOf('COTACAO_ID'),
+                fornecedorId: headers.indexOf('FORNECEDOR_ID'),
+                fornecedorNome: headers.indexOf('FORNECEDOR_NOME'),
+                itemId: headers.indexOf('ITEM_ID'),
+                itemDesc: headers.indexOf('ITEM_DESC'),
+                volAnual: headers.indexOf('VOL_ANUAL'),
+                grupoMp: headers.indexOf('GRUPO_MP'),
+                obsEng: headers.indexOf('OBS_ENG'),
+                prazoRetorno: headers.indexOf('PRAZO_RETORNO'),
+                quantidade: headers.indexOf('QUANTIDADE'),
+                unidadeMedida: headers.indexOf('UNIDADE_MEDIDA'),
+                custoItem: headers.indexOf('CUSTO_ITEM'),
+                obsCompras: headers.indexOf('OBS_COMPRAS'),
+                itemEnviado: headers.indexOf('ITEM_ENVIADO')
+            };
+
+            const groupedByFornecedor = result.data.reduce((acc, row) => {
+                const fornecedorId = row[colMap.fornecedorId];
+                if (!acc[fornecedorId]) {
+                    acc[fornecedorId] = { nome: row[colMap.fornecedorNome], itens: [] };
+                }
+                acc[fornecedorId].itens.push(row);
+                return acc;
+            }, {});
+
+            let tableHTML = '';
+            Object.entries(groupedByFornecedor).forEach(([fornecedorId, data], index) => {
+                const uniqueGroupClass = `group-rows-${index}`;
+                
+                tableHTML += `
+                    <tr class="supplier-row cursor-pointer bg-purple-50 border-b border-purple-200" onclick="toggleGroup('${uniqueGroupClass}', this)">
+                        <td class="table-cell text-center text-brand-purple"><i class="ph ph-minus-circle text-xl"></i></td>
+                        <td class="table-cell text-center"></td>
+                        <td class="table-cell" colspan="13"><span class="supplier-text ml-2 font-bold text-brand-purpleDark">Fornecedor: ${data.nome}</span></td>
+                    </tr>
+                `;
+
+                data.itens.forEach(item => {
+                    tableHTML += `
+                        <tr class="hover:bg-gray-50 border-b border-gray-100 ${uniqueGroupClass}">
+                            <td class="table-cell"></td><td class="table-cell"></td>
+                            <td class="table-cell readonly-cell d-col-1">${item[colMap.itemId] || ''}</td>
+                            <td class="table-cell readonly-cell d-col-2">${item[colMap.itemDesc] || ''}</td>
+                            <td class="table-cell readonly-cell d-col-3">${item[colMap.volAnual] || ''}</td>
+                            <td class="table-cell readonly-cell d-col-4">${item[colMap.grupoMp] || ''}</td>
+                            <td class="table-cell readonly-cell d-col-5">${item[colMap.obsEng] || ''}</td>
+                            <td class="table-cell readonly-cell d-col-6">${item[colMap.prazoRetorno] || ''}</td>
+                            <td class="table-cell readonly-cell text-center d-col-7">-</td>
+                            <td class="table-cell readonly-cell text-center d-col-8">-</td>
+                            <td class="editable-cell text-center d-col-9"><input type="text" class="table-input text-center" value="${item[colMap.quantidade] || ''}" data-cotacao-id="${item[colMap.cotacaoId]}" data-dbaction-id="${componentData.dbActionUpdateQtdId}"></td>
+                            <td class="editable-cell text-center d-col-10"><input type="text" class="table-input text-center cursor-pointer" value="${item[colMap.unidadeMedida] || ''}" readonly onclick="openGlobalDropdown(this)" data-cotacao-id="${item[colMap.cotacaoId]}" data-dbaction-id="${componentData.dbActionUpdateUnidadeId}"></td>
+                            <td class="editable-cell text-right d-col-11"><input type="text" class="table-input text-right" value="${item[colMap.custoItem] || ''}" data-cotacao-id="${item[colMap.cotacaoId]}" data-dbaction-id="${componentData.dbActionUpdateCustoId}"></td>
+                            <td class="editable-cell d-col-12"><input type="text" class="table-input" value="${item[colMap.obsCompras] || ''}" data-cotacao-id="${item[colMap.cotacaoId]}" data-dbaction-id="${componentData.dbActionUpdateObsId}"></td>
+                            <td class="table-cell text-center bg-gray-50 text-xs text-gray-500">${item[colMap.itemEnviado] ? 'Sim' : 'Não'}</td>
+                        </tr>
+                    `;
+                });
+            });
+            tbody.innerHTML = tableHTML;
+        }
+        
+        function toggleGroup(groupClass, headerRow) {
+            const icon = headerRow.querySelector('i');
+            const children = document.querySelectorAll(`.${groupClass}`);
+            children.forEach(c => c.classList.toggle('hidden'));
+            icon.classList.toggle('ph-minus-circle');
+            icon.classList.toggle('ph-plus-circle');
+        }
+
+        async function handleInlineEdit(event) {
+            const input = event.target;
+            const cotacaoId = input.dataset.cotacaoId;
+            const dbActionId = input.dataset.dbactionId;
+            const newValue = input.value;
+            
+            if (!cotacaoId || !dbActionId) return;
+            
+            try {
+                await setVariableMitra({ name: ':VAR_COTACAO_ID', content: cotacaoId });
+                await setVariableMitra({ name: ':VAR_COTACAO_VALOR', content: newValue });
+                await dbactionMitra(parseInt(dbActionId, 10));
+            } catch (error) {
+                console.error("Erro ao salvar alteração:", error);
+            }
+        }
+
+        async function renderTabelaEscolha() {
+             const tbody = document.querySelector('#tabela-escolha tbody');
+             tbody.innerHTML = '<tr><td colspan="15" class="table-cell text-center">Carregando...</td></tr>';
+             const result = await fetchCotacoesData();
+             if (!result || !result.data || result.data.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="15" class="table-cell text-center">Nenhum item para escolher.</td></tr>';
+                 return;
+             }
+             tbody.innerHTML = '<tr><td colspan="15" class="table-cell text-center">Funcionalidade em desenvolvimento.</td></tr>'; // Placeholder
+        }
+
+        async function renderTabelaResultado() {
+            const tbody = document.querySelector('#tabela-resultado tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="table-cell text-center">Carregando...</td></tr>';
+            const result = await fetchCotacoesData();
+            if (!result || !result.data || result.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="table-cell text-center">Nenhum resultado para exibir.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '<tr><td colspan="7" class="table-cell text-center">Funcionalidade em desenvolvimento.</td></tr>'; // Placeholder
+        }
+
+        async function initializeComponent() {
+            const tabelaDisparoBody = document.querySelector('#tabela-disparo tbody');
+            if (tabelaDisparoBody) {
+                tabelaDisparoBody.addEventListener('blur', handleInlineEdit, true);
+            }
+            await renderTabelaGenerica();
+        }
+
+        // --- EVENT LISTENERS ---
+        document.addEventListener('click', function(e) {
+            if(!e.target.closest('#global-dropdown') && e.target !== currentInput) dropdown.style.display = 'none';
+            if(!e.target.closest('[id^=\"menu-\"]') && !e.target.closest('button[onclick^=\"toggleColumnMenu\"]') && !e.target.closest('.custom-checkbox')) document.querySelectorAll('[id^=\"menu-\"]').forEach(m => m.classList.add('hidden'));
+            if(e.target.id === 'modal-prazo') toggleModalPrazo();
+            if(e.target.id === 'modal-fornecedor') toggleModalFornecedor();
+            if(e.target.id === 'modal-escolher-fornecedor') toggleModalEscolherFornecedor();
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+             const waitForMitraAndInit = () => {
+                const maxWaitTime = 5000; 
+                const intervalTime = 100;
+                const startTime = Date.now();
+                
+                const checkInterval = setInterval(() => {
+                    if (window.componentData && window.componentData.queryData) {
+                        clearInterval(checkInterval);
+                        initializeComponent();
+                    } else if (Date.now() - startTime > maxWaitTime) {
+                        clearInterval(checkInterval);
+                        console.error("ComponentData não carregado a tempo.");
+                        document.body.innerHTML = `<div class="p-8 text-center text-red-700 bg-red-50 h-full flex items-center justify-center">Erro Crítico: As configurações do componente não foram carregadas da plataforma.</div>`;
+                    }
+                }, intervalTime);
+            };
+            waitForMitraAndInit();
+        });
+    </script>
+</body>
+</html>

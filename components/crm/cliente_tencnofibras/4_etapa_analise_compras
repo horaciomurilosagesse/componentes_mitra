@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Em Análise (Compras)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: '#f97316',
+                            orangeDark: '#ea580c',
+                            blueDark: '#1e3a8a', 
+                            blueLight: '#3b82f6',
+                            bg: '#f3f4f6',
+                            border: '#e5e7eb',
+                            red: '#ef4444',
+                            redDark: '#dc2626',
+                            purple: '#8b5cf6',
+                            purpleDark: '#7c3aed'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        /* CSS Geral e Utilitários */
+        body { font-family: 'Inter', sans-serif; }
+        
+        .form-control {
+            width: 100%;
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            color: #111827;
+            background-color: #fff;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+        
+        /* Abas Principais (Agora são as antigas sub-abas) */
+        .tab-link {
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            padding: 1rem 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s;
+            margin-right: 1.5rem;
+            white-space: nowrap;
+        }
+        .tab-link:hover { color: #ea580c; }
+        .tab-link.active { color: #8b5cf6; border-bottom: 2px solid #8b5cf6; }
+
+        /* Sidebar e Textos */
+        .sidebar-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #9ca3af; margin-bottom: 0.25rem; }
+        .sidebar-value { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+        
+        /* Tabela */
+        .table-header { background-color: #f3f4f6; color: #1f2937; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        
+        /* Inputs da Tabela */
+        .table-input {
+            width: 100%;
+            background: transparent;
+            outline: none;
+            font-size: 0.8rem;
+            color: #4b5563;
+            padding: 0.2rem 0;
+            border-bottom: 1px solid transparent;
+        }
+        .table-input:focus {
+            border-bottom-color: #8b5cf6;
+            color: #111827;
+        }
+        .table-cell { padding: 0.5rem 1rem; font-size: 0.8rem; color: #4b5563; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
+        
+        /* Botão Adicionar Linha */
+        .btn-add-line {
+            background-color: white; border: 1px solid #e5e7eb; color: #374151; font-size: 0.875rem; font-weight: 500; padding: 0.5rem 1rem; border-radius: 0.375rem; display: flex; align-items: center; gap: 0.5rem; transition: background 0.2s;
+        }
+        .btn-add-line:hover { background-color: #f9fafb; border-color: #d1d5db; }
+
+        /* Menu de Colunas (Olho) */
+        .column-menu-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .custom-checkbox { height: 1rem; width: 1rem; border-radius: 0.25rem; border-color: #d1d5db; color: #1e3a8a; cursor: pointer; }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #8b5cf6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #8b5cf6; }
+    </style>
+</head>
+<body class="bg-brand-bg h-screen flex flex-col overflow-hidden font-sans">
+
+    <header class="bg-white border-b border-brand-border h-16 flex items-center justify-between px-6 shrink-0 z-20">
+        <div class="flex flex-col justify-center">
+            <span class="text-[0.65rem] font-bold text-gray-400 uppercase tracking-wider">SOLICITAÇÃO</span>
+            <h1 id="header-title" class="text-xl font-bold text-brand-blueDark uppercase leading-tight">YANNNNN</h1>
+        </div>
+        
+        <div class="hidden md:flex items-center">
+            <div class="bg-purple-50 text-brand-purple px-6 py-1.5 rounded-full text-sm font-bold border border-purple-100 shadow-sm flex items-center gap-2">
+                <i class="ph ph-shopping-cart"></i>
+                Em Análise (Compras)
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button onclick="saveData()" class="bg-brand-orange hover:bg-brand-orangeDark text-white text-sm font-bold py-1.5 px-4 rounded shadow-sm transition-all flex items-center gap-2">
+                <i class="ph ph-floppy-disk"></i> Salvar
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <aside class="w-72 bg-white border-r border-brand-border flex-shrink-0 overflow-y-auto p-6 hidden lg:block pb-20">
+            <div class="space-y-6">
+                <div><div class="sidebar-label">ID do Processo</div><div class="sidebar-value text-gray-500">#44</div></div>
+                <div><div class="sidebar-label">Gestor</div><div class="sidebar-value">Gestor 3</div></div>
+                <div><div class="sidebar-label">Data</div><div class="sidebar-value">-</div></div>
+                <hr class="border-gray-100">
+                <div><div class="sidebar-label">Cliente</div><div class="sidebar-value">Cliente Gamma</div></div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto bg-white p-6 pb-40 flex flex-col h-full"> 
+            
+            <div class="border-b border-brand-border mb-6 shrink-0">
+                <nav class="-mb-px flex overflow-x-auto">
+                    <span class="tab-link active" onclick="switchTab(this, 'mp-componentes')">MP Componentes</span>
+                    <span class="tab-link" onclick="switchTab(this, 'mp-ctf')">MP Com CTF</span>
+                    <span class="tab-link" onclick="switchTab(this, 'ferramentais')">Ferramentais</span>
+                    <span class="tab-link" onclick="switchTab(this, 'equipamentos')">Equipamentos</span>
+                    <span class="tab-link" onclick="switchTab(this, 'embalagens')">Embalagens</span>
+                </nav>
+            </div>
+
+            <div class="mb-4">
+                <button onclick="adicionarLinha()" class="btn-add-line shadow-sm">
+                    <i class="ph ph-plus text-lg"></i>
+                    Adicionar Linha
+                </button>
+            </div>
+
+            <div class="flex justify-between items-center mb-4 relative">
+                <div class="relative">
+                    <i class="ph ph-magnifying-glass absolute left-0 top-1/2 -translate-y-1/2 text-purple-500"></i>
+                    <input type="text" placeholder="Buscar na tabela" class="pl-6 pr-4 py-1 text-sm border-none focus:ring-0 placeholder-gray-400 font-medium w-40">
+                </div>
+                
+                <div class="flex gap-2 text-gray-400 relative">
+                     <button onclick="toggleColumnMenu()" class="hover:text-brand-purple transition-colors focus:outline-none p-1 rounded" title="Visualizar Colunas">
+                         <i class="ph ph-eye text-xl"></i>
+                     </button>
+
+                     <div id="column-menu" class="hidden absolute right-0 top-8 w-72 bg-white border border-gray-200 shadow-xl rounded-lg z-50 p-4 column-menu-shadow">
+                        <div class="mb-4 border-b border-gray-100 pb-4">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-3">Configuração padrão:</h4>
+                            <label class="flex items-center cursor-pointer mb-3">
+                                <div class="relative">
+                                    <input type="checkbox" class="sr-only toggle-checkbox">
+                                    <div class="w-8 h-4 bg-gray-200 rounded-full shadow-inner toggle-label transition-colors"></div>
+                                    <div class="dot absolute w-2 h-2 bg-white rounded-full shadow left-1 top-1 transition transform"></div>
+                                </div>
+                                <span class="ml-2 text-xs text-gray-600 font-medium">Salvar como padrão</span>
+                            </label>
+                            <button class="text-xs flex items-center justify-center gap-1 text-gray-500 border border-gray-200 rounded px-2 py-1.5 hover:bg-gray-50 w-full transition-colors font-medium">
+                                <i class="ph ph-arrow-counter-clockwise"></i> Restaurar padrão
+                            </button>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Colunas:</h4>
+                            <div class="space-y-2 max-h-60 overflow-y-auto">
+                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" checked onchange="toggleColumn(1)" class="custom-checkbox"> Descrição</label>
+                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" checked onchange="toggleColumn(2)" class="custom-checkbox"> Volume Anual</label>
+                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" checked onchange="toggleColumn(3)" class="custom-checkbox"> Grupo de Mp</label>
+                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" checked onchange="toggleColumn(4)" class="custom-checkbox"> Observações</label>
+                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" checked onchange="toggleColumn(5)" class="custom-checkbox"> Anexo</label>
+                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" checked onchange="toggleColumn(6)" class="custom-checkbox"> Prazo de Retorno</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border border-gray-200 rounded-md overflow-hidden shadow-sm bg-white">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse" id="tabela-compras">
+                        <thead>
+                            <tr>
+                                <th class="table-header w-12 col-0">Item</th>
+                                <th class="table-header col-1">Descrição</th>
+                                <th class="table-header col-2">Volume Anual</th>
+                                <th class="table-header col-3">Grupo de Mp</th>
+                                <th class="table-header col-4">Observações</th>
+                                <th class="table-header w-16 text-center col-5">Anexo</th>
+                                <th class="table-header w-32 text-center col-6">Prazo de Retorno</th>
+                                <th class="table-header w-10 col-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-compras">
+                            <tr class="hover:bg-gray-50 group border-b border-gray-100">
+                                <td class="table-cell font-medium text-gray-800 col-0">32</td>
+                                <td class="table-cell col-1"><input type="text" class="table-input" value="teste pedro solicitação diferente"></td>
+                                <td class="table-cell col-2"><input type="text" class="table-input" placeholder="Volume..."></td>
+                                <td class="table-cell col-3"><input type="text" class="table-input" value="fdfewf"></td>
+                                <td class="table-cell col-4"><input type="text" class="table-input" placeholder="Observação..."></td>
+                                <td class="table-cell text-center col-5">-</td>
+                                <td class="table-cell text-center col-6"><input type="date" class="bg-transparent outline-none text-xs text-center w-full" value="2025-05-14"></td>
+                                <td class="table-cell text-center col-7">
+                                    <button onclick="this.closest('tr').remove()" class="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="bg-white border-t border-gray-200 p-4 px-8 flex justify-end items-center z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] h-20 shrink-0 sticky bottom-0">
+        <div class="flex gap-4">
+            <button onclick="reprovarParaEngenharia()" class="bg-brand-red hover:bg-brand-redDark text-white font-bold py-2.5 px-6 rounded shadow-md hover:shadow-lg transition-all text-sm flex items-center gap-2">
+                Reprovar para Engenharia
+                <i class="ph ph-arrow-left font-bold"></i>
+            </button>
+
+            <button onclick="aprovarParaCompras()" class="bg-brand-purple hover:bg-brand-purpleDark text-white font-bold py-2.5 px-6 rounded shadow-md hover:shadow-lg transition-all text-sm flex items-center gap-2">
+                Aprovar para Compras
+                <i class="ph ph-arrow-right font-bold"></i>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        // Troca visual de abas
+        function switchTab(element, tabName) {
+            const tabs = document.querySelectorAll('.tab-link');
+            tabs.forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+            console.log("Aba ativa: " + tabName);
+        }
+
+        // Adicionar Linha (com visibilidade de coluna correta)
+        function adicionarLinha() {
+            const tbody = document.getElementById('tbody-compras');
+            const rowCount = tbody.rows.length + 32; 
+            const row = document.createElement('tr');
+            row.className = "hover:bg-gray-50 group border-b border-gray-100 animate-pulse";
+            setTimeout(() => row.classList.remove('animate-pulse'), 500);
+
+            row.innerHTML = `
+                <td class="table-cell font-medium text-gray-800 col-0">${rowCount}</td>
+                <td class="table-cell col-1"><input type="text" class="table-input" placeholder="Descrição..."></td>
+                <td class="table-cell col-2"><input type="text" class="table-input" placeholder="Vol..."></td>
+                <td class="table-cell col-3"><input type="text" class="table-input" placeholder="Grupo..."></td>
+                <td class="table-cell col-4"><input type="text" class="table-input" placeholder="Obs..."></td>
+                <td class="table-cell text-center col-5">-</td>
+                <td class="table-cell text-center col-6"><input type="date" class="bg-transparent outline-none text-xs text-center w-full"></td>
+                <td class="table-cell text-center col-7">
+                    <button onclick="this.closest('tr').remove()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <i class="ph ph-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            refreshColumnVisibility();
+        }
+
+        // Lógica do Olho (Mostrar/Ocultar Colunas)
+        function toggleColumnMenu() {
+            document.getElementById('column-menu').classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('column-menu');
+            const button = document.querySelector('button[title=\"Visualizar Colunas\"]');
+            if (menu && !menu.classList.contains('hidden') && !menu.contains(event.target) && !button.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        const columnState = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true };
+
+        function toggleColumn(colIndex) {
+            columnState[colIndex] = !columnState[colIndex];
+            refreshColumnVisibility();
+        }
+
+        function refreshColumnVisibility() {
+            for (let i = 1; i <= 6; i++) {
+                const cells = document.querySelectorAll(`.col-${i}`);
+                cells.forEach(cell => {
+                    cell.style.display = columnState[i] ? '' : 'none';
+                });
+            }
+        }
+
+        async function reprovarParaEngenharia() {
+            try {
+                await setVariableMitra({ name: ':VAR_NOVA_FASE', content: '3' });
+                await actionMitra({ id: 6 });
+            } catch (error) {
+                console.error("Erro ao reprovar para Engenharia:", error);
+            }
+        }
+
+        async function aprovarParaCompras() {
+            try {
+                await setVariableMitra({ name: ':VAR_NOVA_FASE', content: '5' });
+                await actionMitra({ id: 7 });
+            } catch (error) {
+                console.error("Erro ao aprovar para Compras:", error);
+            }
+        }
+    </script>
+</body>
+</html>
