@@ -42,6 +42,7 @@ Cada item aceita:
 - `buttons` (array) para `action_buttons_group` com `{ icon?, hoverText?, action, bgColor?, textColor? }`
 - `onChangeAction` (string) — ação Mitra no formato `tipo:id`
 - `inputDateFormat` (string) — formatação custom de entrada, se necessário
+- `valueVariable` (string) — variável global Mitra que recebe o valor alterado antes de `onChangeAction` em colunas editáveis (`input_*`, `data_boolean_checkbox`, `input_dropdown`). Ex.: `:VAR_STATUS_NOVO`
 
 Exemplo mínimo:
 ```json
@@ -66,6 +67,7 @@ Exemplo mínimo:
 #### Variáveis globais utilizadas
 - `:VAR_ROW_ID` (configurável via `rowIdVariable`) — recebe o ID da linha antes de qualquer ação
 - `:VAR_BUSCA` (opcional, via `searchVariable`) — sincroniza o termo de busca atual
+- `:VAR_*` (via `valueVariable` em colunas editáveis) — recebe o novo valor alterado antes de executar `onChangeAction`
 
 ### Exemplos
 
@@ -93,6 +95,20 @@ Exemplo mínimo:
   "totalsConfig": "[{\"dataField\":\"VALOR\",\"type\":\"sum\"}]",
   "columns": "[{\"columnName\":\"ID\",\"dataField\":\"ID\",\"columnType\":\"data_number\",\"width\":\"80px\"},{\"columnName\":\"CLIENTE\",\"dataField\":\"CLIENTE\",\"columnType\":\"data_text\",\"width\":\"200px\"},{\"columnName\":\"VALOR\",\"dataField\":\"VALOR\",\"columnType\":\"data_number\",\"width\":\"120px\"},{\"columnName\":\"DATA\",\"dataField\":\"DATA\",\"columnType\":\"input_date\",\"sortable\":true}]"
 }
+```
+
+#### Exemplo com Dropdown e DBAction
+**Descrição:** Dropdown que atualiza status no banco via DBAction usando `valueVariable`.
+```json
+{
+  "columns": "[{\"columnName\":\"STATUS\",\"dataField\":\"STATUS\",\"columnType\":\"input_dropdown\",\"dropdownOptionsQuery\":\"SELECT ID, NOME FROM STATUS\",\"onChangeAction\":\"dbaction:123\",\"valueVariable\":\":VAR_STATUS_NOVO\"}]"
+}
+```
+**DBAction (ID 123):**
+```sql
+UPDATE PEDIDOS
+SET STATUS = :VAR_STATUS_NOVO
+WHERE ID = :VAR_ROW_ID;
 ```
 
 ### Notas Importantes

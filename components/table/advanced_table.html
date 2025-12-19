@@ -418,7 +418,9 @@
       page: 0,
       totalRecords: 0,
       totals: {},
-      resizing: null
+      resizing: null,
+      lastRenderedIndex: 0,
+      isLoadingMore: false
     };
 
     const els = {
@@ -485,6 +487,27 @@
       };
     };
 
+    const throttle = (fn, wait = 180) => {
+      let last = 0;
+      let timeout;
+      return (...args) => {
+        const now = Date.now();
+        const remaining = wait - (now - last);
+        if (remaining <= 0) {
+          clearTimeout(timeout);
+          timeout = null;
+          last = now;
+          fn(...args);
+        } else if (!timeout) {
+          timeout = setTimeout(() => {
+            last = Date.now();
+            timeout = null;
+            fn(...args);
+          }, remaining);
+        }
+      };
+    };
+
     const setLoading = (isLoading) => {
       state.loading = isLoading;
       els.loading.classList.toggle('hidden', !isLoading);
@@ -506,7 +529,8 @@
         dropdownOptionsQuery: c.dropdownOptionsQuery,
         buttons: c.buttons || [],
         onChangeAction: c.onChangeAction,
-        inputDateFormat: c.inputDateFormat
+        inputDateFormat: c.inputDateFormat,
+        valueVariable: c.valueVariable || ''
       }));
     }
 
@@ -663,17 +687,28 @@
     }
 
     function loadMore(reset = false) {
+      if (state.isLoadingMore) return;
+      state.isLoadingMore = true;
+
       if (reset) {
         state.displayed = [];
         state.page = 0;
+        state.lastRenderedIndex = 0;
+        els.tableBody.innerHTML = '';
       }
+
       const start = state.page * state.batchSize;
       const nextChunk = state.filtered.slice(start, start + state.batchSize);
-      if (nextChunk.length === 0) return;
+      if (nextChunk.length === 0) {
+        state.isLoadingMore = false;
+        return;
+      }
+
       state.displayed = state.displayed.concat(nextChunk);
+      renderNewRows(start, start + nextChunk.length);
       state.page += 1;
-      renderBody();
       updateInfo();
+      state.isLoadingMore = false;
     }
 
     function computeTotals() {
@@ -792,23 +827,34 @@
     function renderBody() {
       if (!state.displayed.length) {
         els.tableBody.innerHTML = '<tr><td class="text-danger">Nenhum resultado encontrado.</td></tr>';
+        state.lastRenderedIndex = 0;
         return;
       }
+      els.tableBody.innerHTML = '';
+      state.lastRenderedIndex = 0;
+      renderNewRows(0, state.displayed.length);
+    }
+
+    function renderNewRows(startIndex, endIndex) {
       const frag = document.createDocumentFragment();
-      state.displayed.forEach((row) => {
+      const slice = state.displayed.slice(startIndex, endIndex);
+      slice.forEach((row, idx) => {
         const tr = document.createElement('tr');
-        state.columns.forEach((col) => {
+        const rowIndex = startIndex + idx;
+        tr.dataset.rowIndex = rowIndex;
+        state.columns.forEach((col, colIdx) => {
           const td = document.createElement('td');
           td.className = col.alignment === 'center' ? 'cell-center' : col.alignment === 'right' ? 'cell-right' : '';
           td.style.width = col.width;
           td.style.minWidth = col.minWidth;
+          td.dataset.colIndex = colIdx;
           td.appendChild(renderCell(row, col));
           tr.appendChild(td);
         });
         frag.appendChild(tr);
       });
-      els.tableBody.innerHTML = '';
       els.tableBody.appendChild(frag);
+      state.lastRenderedIndex = endIndex;
     }
 
     function renderCell(row, col) {
@@ -826,9 +872,9 @@
           const input = document.createElement('input');
           input.type = 'checkbox';
           input.checked = val === true;
-          input.addEventListener('change', async () => {
-            await handleValueChange(row, col, input.checked ? 1 : 0);
-          });
+          input.dataset.field = col.dataField;
+          input.dataset.colType = col.columnType;
+          input.dataset.action = 'value-change';
           wrap.appendChild(input);
           return wrap;
         }
@@ -836,13 +882,11 @@
         case 'input_number': {
           const input = document.createElement('input');
           input.type = 'text';
-          input.value = col.columnType === 'input_number' ? formatNumber(val, 2) : (val ?? '');
+          input.value = val ?? '';
           input.style.width = '100%';
-          input.addEventListener('blur', async () => {
-            const newVal = col.columnType === 'input_number' ? parseNumber(input.value) : input.value;
-            if (String(newVal) === String(val ?? '')) return;
-            await handleValueChange(row, col, newVal);
-          });
+          input.dataset.field = col.dataField;
+          input.dataset.colType = col.columnType;
+          input.dataset.action = 'value-change';
           return input;
         }
         case 'input_date': {
@@ -850,9 +894,9 @@
           input.type = 'date';
           const dateStr = val ? String(val).substring(0, 10) : '';
           input.value = dateStr;
-          input.addEventListener('change', async () => {
-            await handleValueChange(row, col, input.value);
-          });
+          input.dataset.field = col.dataField;
+          input.dataset.colType = col.columnType;
+          input.dataset.action = 'value-change';
           return input;
         }
         case 'input_dropdown': {
@@ -866,9 +910,9 @@
             select.appendChild(o);
           });
           select.value = val ?? '';
-          select.addEventListener('change', async () => {
-            await handleValueChange(row, col, select.value);
-          });
+          select.dataset.field = col.dataField;
+          select.dataset.colType = col.columnType;
+          select.dataset.action = 'value-change';
           return select;
         }
         case 'data_iconphoto': {
@@ -888,7 +932,8 @@
           const btn = document.createElement('button');
           btn.className = 'btn';
           btn.textContent = col.buttonText || 'Ação';
-          btn.addEventListener('click', () => handleAction(col.onChangeAction, row));
+          btn.dataset.action = col.onChangeAction || '';
+          btn.dataset.actionType = 'row-action';
           return btn;
         }
         case 'action_buttons_group': {
@@ -901,7 +946,8 @@
             btn.textContent = b.hoverText || 'Ação';
             if (b.bgColor) btn.style.background = b.bgColor;
             if (b.icon) btn.title = b.icon;
-            btn.addEventListener('click', () => handleAction(b.action, row));
+            btn.dataset.action = b.action;
+            btn.dataset.actionType = 'row-action';
             wrap.appendChild(btn);
           });
           return wrap;
@@ -917,6 +963,9 @@
         if (state.config.rowIdVariable) {
           const rowId = row[state.columns[0]?.dataField];
           await mitra.setVar({ name: state.config.rowIdVariable, content: rowId });
+        }
+        if (col.valueVariable) {
+          await mitra.setVar({ name: col.valueVariable, content: newValue });
         }
         if (col.onChangeAction) {
           await handleAction(col.onChangeAction, row, newValue);
@@ -1010,7 +1059,14 @@
       const col = state.columns[state.resizing.idx];
       col.width = `${newWidth}px`;
       state.resizing.th.style.width = col.width;
-      renderBody();
+      const rows = els.tableBody.querySelectorAll('tr');
+      rows.forEach((tr) => {
+        const cell = tr.children[state.resizing.idx];
+        if (cell) {
+          cell.style.width = col.width;
+          cell.style.minWidth = col.minWidth;
+        }
+      });
     }
 
     function stopResize() {
@@ -1029,12 +1085,13 @@
     }, 300);
 
     function setupScroll() {
-      els.tableScroll.addEventListener('scroll', () => {
+      const onScroll = throttle(() => {
         const { scrollTop, clientHeight, scrollHeight } = els.tableScroll;
         if (scrollTop + clientHeight >= scrollHeight * 0.8) {
           loadMore(false);
         }
-      });
+      }, 180);
+      els.tableScroll.addEventListener('scroll', onScroll);
     }
 
     function setupPagination() {
@@ -1042,9 +1099,68 @@
         if (state.page <= 1) return;
         state.page = Math.max(0, state.page - 2);
         state.displayed = state.displayed.slice(0, state.page * state.batchSize);
+        state.lastRenderedIndex = 0;
+        els.tableBody.innerHTML = '';
         loadMore(false);
       });
       els.next.addEventListener('click', () => loadMore(false));
+    }
+
+    function setupEventDelegation() {
+      els.tableBody.addEventListener('change', async (ev) => {
+        const target = ev.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target.dataset.action !== 'value-change') return;
+        const tr = target.closest('tr');
+        const rowIndex = Number(tr?.dataset.rowIndex);
+        if (!Number.isFinite(rowIndex)) return;
+        const row = state.displayed[rowIndex];
+        if (!row) return;
+        const field = target.dataset.field;
+        const col = state.columns.find(c => c.dataField === field);
+        if (!col) return;
+        let newVal;
+        if (col.columnType === 'data_boolean_checkbox') {
+          newVal = target.checked ? 1 : 0;
+        } else if (col.columnType === 'input_number') {
+          newVal = parseNumber(target.value);
+        } else {
+          newVal = target.value;
+        }
+        await handleValueChange(row, col, newVal);
+      });
+
+      els.tableBody.addEventListener('blur', async (ev) => {
+        const target = ev.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target.dataset.action !== 'value-change') return;
+        if (target.tagName.toLowerCase() !== 'input') return;
+        const tr = target.closest('tr');
+        const rowIndex = Number(tr?.dataset.rowIndex);
+        if (!Number.isFinite(rowIndex)) return;
+        const row = state.displayed[rowIndex];
+        if (!row) return;
+        const field = target.dataset.field;
+        const col = state.columns.find(c => c.dataField === field);
+        if (!col) return;
+        let newVal = target.value;
+        if (col.columnType === 'input_number') newVal = parseNumber(newVal);
+        if (String(newVal) === String(row[col.dataField] ?? '')) return;
+        await handleValueChange(row, col, newVal);
+      }, true);
+
+      els.tableBody.addEventListener('click', async (ev) => {
+        const target = ev.target;
+        if (!(target instanceof HTMLElement)) return;
+        const actionBtn = target.closest('[data-action-type="row-action"]');
+        if (!actionBtn) return;
+        const action = actionBtn.dataset.action;
+        if (!action) return;
+        const tr = actionBtn.closest('tr');
+        const rowIndex = Number(tr?.dataset.rowIndex);
+        const row = Number.isFinite(rowIndex) ? state.displayed[rowIndex] : null;
+        await handleAction(action, row);
+      });
     }
 
     async function init() {
@@ -1058,6 +1174,7 @@
       if (state.config.enablePagination) {
         setupPagination();
       }
+      setupEventDelegation();
     }
 
     els.search.addEventListener('input', onSearch);
